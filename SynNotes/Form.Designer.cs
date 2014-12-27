@@ -29,6 +29,22 @@
         private void InitializeComponent()
         {
       this.components = new System.ComponentModel.Container();
+      System.Windows.Forms.TreeNode treeNode28 = new System.Windows.Forms.TreeNode("Node1");
+      System.Windows.Forms.TreeNode treeNode29 = new System.Windows.Forms.TreeNode("Node2");
+      System.Windows.Forms.TreeNode treeNode30 = new System.Windows.Forms.TreeNode("Node3");
+      System.Windows.Forms.TreeNode treeNode31 = new System.Windows.Forms.TreeNode("Node4");
+      System.Windows.Forms.TreeNode treeNode32 = new System.Windows.Forms.TreeNode("Node0", new System.Windows.Forms.TreeNode[] {
+            treeNode28,
+            treeNode29,
+            treeNode30,
+            treeNode31});
+      System.Windows.Forms.TreeNode treeNode33 = new System.Windows.Forms.TreeNode("Node6");
+      System.Windows.Forms.TreeNode treeNode34 = new System.Windows.Forms.TreeNode("Node7");
+      System.Windows.Forms.TreeNode treeNode35 = new System.Windows.Forms.TreeNode("Node8");
+      System.Windows.Forms.TreeNode treeNode36 = new System.Windows.Forms.TreeNode("Node5", new System.Windows.Forms.TreeNode[] {
+            treeNode33,
+            treeNode34,
+            treeNode35});
       this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
       this.statusStrip1 = new System.Windows.Forms.StatusStrip();
       this.splitContainer1 = new System.Windows.Forms.SplitContainer();
@@ -108,8 +124,31 @@
       // treeView1
       // 
       this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.treeView1.Indent = 19;
       this.treeView1.Location = new System.Drawing.Point(0, 21);
       this.treeView1.Name = "treeView1";
+      treeNode28.Name = "Node1";
+      treeNode28.Text = "Node1";
+      treeNode29.Name = "Node2";
+      treeNode29.Text = "Node2";
+      treeNode30.Name = "Node3";
+      treeNode30.Text = "Node3";
+      treeNode31.Name = "Node4";
+      treeNode31.Text = "Node4";
+      treeNode32.Name = "Node0";
+      treeNode32.Text = "Node0";
+      treeNode33.Name = "Node6";
+      treeNode33.Text = "Node6";
+      treeNode34.Name = "Node7";
+      treeNode34.Text = "Node7";
+      treeNode35.Name = "Node8";
+      treeNode35.Text = "Node8";
+      treeNode36.Name = "Node5";
+      treeNode36.Text = "Node5";
+      this.treeView1.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
+            treeNode32,
+            treeNode36});
+      this.treeView1.ShowLines = false;
       this.treeView1.Size = new System.Drawing.Size(219, 579);
       this.treeView1.TabIndex = 1;
       // 
@@ -170,11 +209,11 @@
       this.scEdit.AutoComplete.IsCaseSensitive = false;
       this.scEdit.AutoComplete.ListString = "";
       this.scEdit.AutoComplete.MaxHeight = 10;
-      this.scEdit.Caret.CurrentLineBackgroundAlpha = 200;
+      this.scEdit.Caret.CurrentLineBackgroundAlpha = 50;
       this.scEdit.Caret.CurrentLineBackgroundColor = System.Drawing.Color.GreenYellow;
       this.scEdit.Caret.HighlightCurrentLine = true;
       this.scEdit.Caret.Width = 2;
-      this.scEdit.ConfigurationManager.Language = "php";
+      this.scEdit.ConfigurationManager.Language = "html";
       this.scEdit.Dock = System.Windows.Forms.DockStyle.Fill;
       this.scEdit.Folding.MarkerScheme = ScintillaNET.FoldMarkerScheme.Arrow;
       this.scEdit.Indentation.ShowGuides = true;
@@ -207,6 +246,9 @@
       this.MainMenuStrip = this.menuStrip1;
       this.Name = "Form1";
       this.Text = "SynNotes";
+      this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+      this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
+      this.Load += new System.EventHandler(this.Form1_Load);
       this.toolStripContainer1.BottomToolStripPanel.ResumeLayout(false);
       this.toolStripContainer1.BottomToolStripPanel.PerformLayout();
       this.toolStripContainer1.ContentPanel.ResumeLayout(false);
