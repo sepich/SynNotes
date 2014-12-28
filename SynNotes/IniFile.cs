@@ -5,11 +5,14 @@ using System.Linq;
 
 class IniFile {
   Dictionary<string, Dictionary<string, string>> ini = new Dictionary<string, Dictionary<string, string>>(StringComparer.InvariantCultureIgnoreCase);
+  private bool _defaults;
 
   public IniFile(string file) {
+    _defaults = false;
     var txt = "";
-    if (File.Exists(file)) 
+    if (File.Exists(file))
       txt = File.ReadAllText(file);
+    else _defaults = true;
 
     Dictionary<string, string> currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -44,11 +47,15 @@ class IniFile {
   }
 
   public string GetValue(string section, string key, string @default) {
-    if (!ini.ContainsKey(section))
+    if (!ini.ContainsKey(section)) {
+      SetValue(section, key, @default);
       return @default;
+    }
 
-    if (!ini[section].ContainsKey(key))
+    if (!ini[section].ContainsKey(key)) {
+      SetValue(section, key, @default);
       return @default;
+    }
 
     return ini[section][key];
   }
@@ -85,5 +92,9 @@ class IniFile {
     }
 
     File.WriteAllText(newFilePath, strToSave);
+  }
+
+  public bool defaults {
+    get { return _defaults; }
   }
 }
