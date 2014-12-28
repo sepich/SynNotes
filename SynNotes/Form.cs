@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace SynNotes {
   
@@ -26,6 +27,7 @@ namespace SynNotes {
       if (File.Exists(confuserdir + conffile)) ini = new IniFile(confuserdir + conffile);
       else ini = new IniFile(conffile);
       this.WindowState = (FormWindowState)FormWindowState.Parse(this.WindowState.GetType(), ini.GetValue("Form", "WindowState", "Normal"));
+      this.Form1_Resize(this, null); //trigger tray icon
       if (this.WindowState == FormWindowState.Normal) {
         this.Top = Int32.Parse(ini.GetValue("Form", "Top", "100"));
         this.Left = Int32.Parse(ini.GetValue("Form", "Left", "100"));
@@ -56,5 +58,34 @@ namespace SynNotes {
       }
       ini.SetValue("Form", "WindowState", this.WindowState.ToString());
     }
+
+    [DllImport("user32.dll")] private static extern int ShowWindow(IntPtr hWnd, uint Msg);
+    private const uint SW_RESTORE = 0x09;
+
+    private void notifyIcon1_Click(object sender, EventArgs e) {
+      MouseEventArgs me = (MouseEventArgs)e;
+      if (me.Button == MouseButtons.Left) ShowWindow(this.Handle, SW_RESTORE);
+    }
+
+    private void Form1_Resize(object sender, EventArgs e) {
+      // show tray icon when minimized
+      if (this.WindowState == FormWindowState.Minimized) {
+        notifyIcon1.Visible = true;
+        this.ShowInTaskbar = false;
+      }
+      else if (notifyIcon1.Visible) {
+        notifyIcon1.Visible = false;
+        this.ShowInTaskbar = true;
+      }
+    }
+
+    private void exitToolStripMenuItem1_Click(object sender, EventArgs e) {
+      this.Close();
+    }
+
+    private void openToolStripMenuItem1_Click(object sender, EventArgs e) {
+      ShowWindow(this.Handle, SW_RESTORE);
+    }
+
   }
 }
