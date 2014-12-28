@@ -29,90 +29,46 @@
         private void InitializeComponent()
         {
       this.components = new System.ComponentModel.Container();
-      System.Windows.Forms.TreeNode treeNode10 = new System.Windows.Forms.TreeNode("Node1");
-      System.Windows.Forms.TreeNode treeNode11 = new System.Windows.Forms.TreeNode("Node2");
-      System.Windows.Forms.TreeNode treeNode12 = new System.Windows.Forms.TreeNode("Node3");
-      System.Windows.Forms.TreeNode treeNode13 = new System.Windows.Forms.TreeNode("Node4");
-      System.Windows.Forms.TreeNode treeNode14 = new System.Windows.Forms.TreeNode("Node0", new System.Windows.Forms.TreeNode[] {
-            treeNode10,
-            treeNode11,
-            treeNode12,
-            treeNode13});
-      System.Windows.Forms.TreeNode treeNode15 = new System.Windows.Forms.TreeNode("Node6");
-      System.Windows.Forms.TreeNode treeNode16 = new System.Windows.Forms.TreeNode("Node7");
-      System.Windows.Forms.TreeNode treeNode17 = new System.Windows.Forms.TreeNode("Node8");
-      System.Windows.Forms.TreeNode treeNode18 = new System.Windows.Forms.TreeNode("Node5", new System.Windows.Forms.TreeNode[] {
-            treeNode15,
-            treeNode16,
-            treeNode17});
+      System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("Node1");
+      System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("Node2");
+      System.Windows.Forms.TreeNode treeNode3 = new System.Windows.Forms.TreeNode("Node3");
+      System.Windows.Forms.TreeNode treeNode4 = new System.Windows.Forms.TreeNode("Node4");
+      System.Windows.Forms.TreeNode treeNode5 = new System.Windows.Forms.TreeNode("Node0", new System.Windows.Forms.TreeNode[] {
+            treeNode1,
+            treeNode2,
+            treeNode3,
+            treeNode4});
+      System.Windows.Forms.TreeNode treeNode6 = new System.Windows.Forms.TreeNode("Node6");
+      System.Windows.Forms.TreeNode treeNode7 = new System.Windows.Forms.TreeNode("Node7");
+      System.Windows.Forms.TreeNode treeNode8 = new System.Windows.Forms.TreeNode("Node8");
+      System.Windows.Forms.TreeNode treeNode9 = new System.Windows.Forms.TreeNode("Node5", new System.Windows.Forms.TreeNode[] {
+            treeNode6,
+            treeNode7,
+            treeNode8});
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-      this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
-      this.statusBar = new System.Windows.Forms.StatusStrip();
       this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+      this.statusBar = new System.Windows.Forms.StatusStrip();
+      this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
+      this.cbSearch = new System.Windows.Forms.ComboBox();
       this.treeView1 = new System.Windows.Forms.TreeView();
-      this.comboBox1 = new System.Windows.Forms.ComboBox();
       this.scEdit = new ScintillaNET.Scintilla();
-      this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-      this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-      this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-      this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
-      this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
       this.contextMenuTray = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
       this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
       this.exitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-      this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
-      this.statusText2 = new System.Windows.Forms.ToolStripStatusLabel();
-      this.toolStripContainer1.BottomToolStripPanel.SuspendLayout();
-      this.toolStripContainer1.ContentPanel.SuspendLayout();
-      this.toolStripContainer1.TopToolStripPanel.SuspendLayout();
-      this.toolStripContainer1.SuspendLayout();
-      this.statusBar.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
       this.splitContainer1.Panel1.SuspendLayout();
       this.splitContainer1.Panel2.SuspendLayout();
       this.splitContainer1.SuspendLayout();
+      this.statusBar.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).BeginInit();
-      this.menuStrip1.SuspendLayout();
       this.contextMenuTray.SuspendLayout();
       this.SuspendLayout();
       // 
-      // toolStripContainer1
-      // 
-      // 
-      // toolStripContainer1.BottomToolStripPanel
-      // 
-      this.toolStripContainer1.BottomToolStripPanel.Controls.Add(this.statusBar);
-      // 
-      // toolStripContainer1.ContentPanel
-      // 
-      this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainer1);
-      this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(1014, 598);
-      this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
-      this.toolStripContainer1.Name = "toolStripContainer1";
-      this.toolStripContainer1.Size = new System.Drawing.Size(1014, 646);
-      this.toolStripContainer1.TabIndex = 0;
-      this.toolStripContainer1.Text = "toolStripContainer1";
-      // 
-      // toolStripContainer1.TopToolStripPanel
-      // 
-      this.toolStripContainer1.TopToolStripPanel.Controls.Add(this.menuStrip1);
-      // 
-      // statusBar
-      // 
-      this.statusBar.Dock = System.Windows.Forms.DockStyle.None;
-      this.statusBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.statusText,
-            this.statusText2});
-      this.statusBar.Location = new System.Drawing.Point(0, 0);
-      this.statusBar.Name = "statusBar";
-      this.statusBar.Size = new System.Drawing.Size(1014, 24);
-      this.statusBar.TabIndex = 2;
-      // 
       // splitContainer1
       // 
+      this.splitContainer1.BackColor = System.Drawing.Color.Gainsboro;
       this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
       this.splitContainer1.Location = new System.Drawing.Point(0, 0);
       this.splitContainer1.Margin = new System.Windows.Forms.Padding(0);
@@ -120,63 +76,95 @@
       // 
       // splitContainer1.Panel1
       // 
+      this.splitContainer1.Panel1.Controls.Add(this.statusBar);
+      this.splitContainer1.Panel1.Controls.Add(this.cbSearch);
       this.splitContainer1.Panel1.Controls.Add(this.treeView1);
-      this.splitContainer1.Panel1.Controls.Add(this.comboBox1);
       this.splitContainer1.Panel1.RightToLeft = System.Windows.Forms.RightToLeft.No;
       // 
       // splitContainer1.Panel2
       // 
       this.splitContainer1.Panel2.Controls.Add(this.scEdit);
       this.splitContainer1.Panel2.RightToLeft = System.Windows.Forms.RightToLeft.No;
-      this.splitContainer1.Size = new System.Drawing.Size(1014, 598);
-      this.splitContainer1.SplitterDistance = 219;
+      this.splitContainer1.Size = new System.Drawing.Size(1014, 646);
+      this.splitContainer1.SplitterDistance = 227;
       this.splitContainer1.TabIndex = 0;
+      // 
+      // statusBar
+      // 
+      this.statusBar.BackColor = System.Drawing.SystemColors.Control;
+      this.statusBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.statusText});
+      this.statusBar.Location = new System.Drawing.Point(0, 624);
+      this.statusBar.Name = "statusBar";
+      this.statusBar.Size = new System.Drawing.Size(227, 22);
+      this.statusBar.SizingGrip = false;
+      this.statusBar.TabIndex = 3;
+      // 
+      // statusText
+      // 
+      this.statusText.Name = "statusText";
+      this.statusText.Size = new System.Drawing.Size(212, 17);
+      this.statusText.Spring = true;
+      this.statusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+      // 
+      // cbSearch
+      // 
+      this.cbSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+      this.cbSearch.BackColor = System.Drawing.SystemColors.Control;
+      this.cbSearch.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+      this.cbSearch.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+      this.cbSearch.IntegralHeight = false;
+      this.cbSearch.ItemHeight = 18;
+      this.cbSearch.Location = new System.Drawing.Point(0, 0);
+      this.cbSearch.Margin = new System.Windows.Forms.Padding(0);
+      this.cbSearch.Name = "cbSearch";
+      this.cbSearch.Size = new System.Drawing.Size(227, 26);
+      this.cbSearch.TabIndex = 2;
       // 
       // treeView1
       // 
-      this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+      this.treeView1.BackColor = System.Drawing.SystemColors.Control;
+      this.treeView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
       this.treeView1.Indent = 19;
-      this.treeView1.Location = new System.Drawing.Point(0, 21);
+      this.treeView1.Location = new System.Drawing.Point(0, 26);
+      this.treeView1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
       this.treeView1.Name = "treeView1";
-      treeNode10.Name = "Node1";
-      treeNode10.Text = "Node1";
-      treeNode11.Name = "Node2";
-      treeNode11.Text = "Node2";
-      treeNode12.Name = "Node3";
-      treeNode12.Text = "Node3";
-      treeNode13.Name = "Node4";
-      treeNode13.Text = "Node4";
-      treeNode14.Name = "Node0";
-      treeNode14.Text = "Node0";
-      treeNode15.Name = "Node6";
-      treeNode15.Text = "Node6";
-      treeNode16.Name = "Node7";
-      treeNode16.Text = "Node7";
-      treeNode17.Name = "Node8";
-      treeNode17.Text = "Node8";
-      treeNode18.Name = "Node5";
-      treeNode18.Text = "Node5";
+      treeNode1.Name = "Node1";
+      treeNode1.Text = "Node1";
+      treeNode2.Name = "Node2";
+      treeNode2.Text = "Node2";
+      treeNode3.Name = "Node3";
+      treeNode3.Text = "Node3";
+      treeNode4.Name = "Node4";
+      treeNode4.Text = "Node4";
+      treeNode5.Name = "Node0";
+      treeNode5.Text = "Node0";
+      treeNode6.Name = "Node6";
+      treeNode6.Text = "Node6";
+      treeNode7.Name = "Node7";
+      treeNode7.Text = "Node7";
+      treeNode8.Name = "Node8";
+      treeNode8.Text = "Node8";
+      treeNode9.Name = "Node5";
+      treeNode9.Text = "Node5";
       this.treeView1.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode14,
-            treeNode18});
+            treeNode5,
+            treeNode9});
       this.treeView1.ShowLines = false;
-      this.treeView1.Size = new System.Drawing.Size(219, 577);
+      this.treeView1.Size = new System.Drawing.Size(227, 598);
       this.treeView1.TabIndex = 1;
-      // 
-      // comboBox1
-      // 
-      this.comboBox1.Dock = System.Windows.Forms.DockStyle.Top;
-      this.comboBox1.FormattingEnabled = true;
-      this.comboBox1.Location = new System.Drawing.Point(0, 0);
-      this.comboBox1.Name = "comboBox1";
-      this.comboBox1.Size = new System.Drawing.Size(219, 21);
-      this.comboBox1.TabIndex = 2;
       // 
       // scEdit
       // 
       this.scEdit.AutoComplete.IsCaseSensitive = false;
       this.scEdit.AutoComplete.ListString = "";
       this.scEdit.AutoComplete.MaxHeight = 10;
+      this.scEdit.BorderStyle = System.Windows.Forms.BorderStyle.None;
       this.scEdit.Caret.CurrentLineBackgroundAlpha = 50;
       this.scEdit.Caret.CurrentLineBackgroundColor = System.Drawing.Color.GreenYellow;
       this.scEdit.Caret.HighlightCurrentLine = true;
@@ -192,7 +180,7 @@
       this.scEdit.LineWrapping.Mode = ScintillaNET.LineWrappingMode.Word;
       this.scEdit.Location = new System.Drawing.Point(0, 0);
       this.scEdit.Name = "scEdit";
-      this.scEdit.Size = new System.Drawing.Size(791, 598);
+      this.scEdit.Size = new System.Drawing.Size(783, 646);
       this.scEdit.Styles.BraceBad.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.BraceLight.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.CallTip.FontName = "Segoe UI\0\0\0\0\0\0\0\0\0\0\0\0";
@@ -204,44 +192,6 @@
       this.scEdit.Styles.LineNumber.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.Max.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.TabIndex = 0;
-      // 
-      // menuStrip1
-      // 
-      this.menuStrip1.Dock = System.Windows.Forms.DockStyle.None;
-      this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
-      this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-      this.menuStrip1.Name = "menuStrip1";
-      this.menuStrip1.Size = new System.Drawing.Size(1014, 24);
-      this.menuStrip1.TabIndex = 0;
-      this.menuStrip1.Text = "menuStrip1";
-      // 
-      // fileToolStripMenuItem
-      // 
-      this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openToolStripMenuItem,
-            this.toolStripMenuItem1,
-            this.exitToolStripMenuItem});
-      this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-      this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
-      this.fileToolStripMenuItem.Text = "File";
-      // 
-      // openToolStripMenuItem
-      // 
-      this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-      this.openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-      this.openToolStripMenuItem.Text = "Open";
-      // 
-      // toolStripMenuItem1
-      // 
-      this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-      this.toolStripMenuItem1.Size = new System.Drawing.Size(149, 6);
-      // 
-      // exitToolStripMenuItem
-      // 
-      this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-      this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-      this.exitToolStripMenuItem.Text = "Exit";
       // 
       // notifyIcon1
       // 
@@ -279,31 +229,14 @@
       this.exitToolStripMenuItem1.Text = "Exit";
       this.exitToolStripMenuItem1.Click += new System.EventHandler(this.exitToolStripMenuItem1_Click);
       // 
-      // statusText
-      // 
-      this.statusText.Name = "statusText";
-      this.statusText.Size = new System.Drawing.Size(868, 19);
-      this.statusText.Spring = true;
-      this.statusText.Text = "statusText";
-      this.statusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-      // 
-      // statusText2
-      // 
-      this.statusText2.AutoSize = false;
-      this.statusText2.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
-      this.statusText2.Name = "statusText2";
-      this.statusText2.Size = new System.Drawing.Size(100, 19);
-      this.statusText2.Text = "statusText2";
-      // 
       // Form1
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.ClientSize = new System.Drawing.Size(1014, 646);
-      this.Controls.Add(this.toolStripContainer1);
+      this.Controls.Add(this.splitContainer1);
       this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
       this.KeyPreview = true;
-      this.MainMenuStrip = this.menuStrip1;
       this.Name = "Form1";
       this.Text = "SynNotes";
       this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
@@ -311,22 +244,14 @@
       this.Load += new System.EventHandler(this.Form1_Load);
       this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
       this.Resize += new System.EventHandler(this.Form1_Resize);
-      this.toolStripContainer1.BottomToolStripPanel.ResumeLayout(false);
-      this.toolStripContainer1.BottomToolStripPanel.PerformLayout();
-      this.toolStripContainer1.ContentPanel.ResumeLayout(false);
-      this.toolStripContainer1.TopToolStripPanel.ResumeLayout(false);
-      this.toolStripContainer1.TopToolStripPanel.PerformLayout();
-      this.toolStripContainer1.ResumeLayout(false);
-      this.toolStripContainer1.PerformLayout();
-      this.statusBar.ResumeLayout(false);
-      this.statusBar.PerformLayout();
       this.splitContainer1.Panel1.ResumeLayout(false);
+      this.splitContainer1.Panel1.PerformLayout();
       this.splitContainer1.Panel2.ResumeLayout(false);
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
       this.splitContainer1.ResumeLayout(false);
+      this.statusBar.ResumeLayout(false);
+      this.statusBar.PerformLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).EndInit();
-      this.menuStrip1.ResumeLayout(false);
-      this.menuStrip1.PerformLayout();
       this.contextMenuTray.ResumeLayout(false);
       this.ResumeLayout(false);
 
@@ -334,24 +259,17 @@
 
         #endregion
 
-        private System.Windows.Forms.ToolStripContainer toolStripContainer1;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.TreeView treeView1;
-        private System.Windows.Forms.MenuStrip menuStrip1;
-        private System.Windows.Forms.ComboBox comboBox1;
-        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
-        private System.Windows.Forms.StatusStrip statusBar;
         private ScintillaNET.Scintilla scEdit;
         private System.Windows.Forms.ContextMenuStrip contextMenuTray;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem1;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem1;
+        private System.Windows.Forms.ComboBox cbSearch;
+        private System.Windows.Forms.StatusStrip statusBar;
         private System.Windows.Forms.ToolStripStatusLabel statusText;
-        private System.Windows.Forms.ToolStripStatusLabel statusText2;
     }
 }
 

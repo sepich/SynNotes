@@ -77,7 +77,7 @@ namespace SynNotes {
         this.BringToFront();
       }
       //Search hotkey
-      if (e.id == 2) this.comboBox1.Focus();
+      if (e.id == 2) this.cbSearch.Focus();
       //statusText.Text = e.Modifier.ToString().Replace(", ", "+") + "+" + e.Key.ToString();
     }
 
@@ -130,6 +130,10 @@ namespace SynNotes {
 
     private void Form1_KeyDown(object sender, KeyEventArgs e) {
       if (e.KeyCode == Keys.Escape && e.Modifiers == Keys.None) this.WindowState = FormWindowState.Minimized;
+    }
+
+    private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
+      this.Close();
     }
 
   }
