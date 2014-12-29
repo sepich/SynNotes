@@ -29,28 +29,14 @@
         private void InitializeComponent()
         {
       this.components = new System.ComponentModel.Container();
-      System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("Node1");
-      System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("Node2");
-      System.Windows.Forms.TreeNode treeNode3 = new System.Windows.Forms.TreeNode("Node3");
-      System.Windows.Forms.TreeNode treeNode4 = new System.Windows.Forms.TreeNode("Node4");
-      System.Windows.Forms.TreeNode treeNode5 = new System.Windows.Forms.TreeNode("Node0", new System.Windows.Forms.TreeNode[] {
-            treeNode1,
-            treeNode2,
-            treeNode3,
-            treeNode4});
-      System.Windows.Forms.TreeNode treeNode6 = new System.Windows.Forms.TreeNode("Node6");
-      System.Windows.Forms.TreeNode treeNode7 = new System.Windows.Forms.TreeNode("Node7");
-      System.Windows.Forms.TreeNode treeNode8 = new System.Windows.Forms.TreeNode("Node8");
-      System.Windows.Forms.TreeNode treeNode9 = new System.Windows.Forms.TreeNode("Node5", new System.Windows.Forms.TreeNode[] {
-            treeNode6,
-            treeNode7,
-            treeNode8});
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
       this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+      this.tree = new BrightIdeasSoftware.TreeListView();
+      this.olvColumn1 = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+      this.olvColumn2 = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.statusBar = new System.Windows.Forms.StatusStrip();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
       this.cbSearch = new System.Windows.Forms.ComboBox();
-      this.treeView1 = new System.Windows.Forms.TreeView();
       this.scEdit = new ScintillaNET.Scintilla();
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
       this.contextMenuTray = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -61,6 +47,7 @@
       this.splitContainer1.Panel1.SuspendLayout();
       this.splitContainer1.Panel2.SuspendLayout();
       this.splitContainer1.SuspendLayout();
+      ((System.ComponentModel.ISupportInitialize)(this.tree)).BeginInit();
       this.statusBar.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).BeginInit();
       this.contextMenuTray.SuspendLayout();
@@ -76,9 +63,9 @@
       // 
       // splitContainer1.Panel1
       // 
+      this.splitContainer1.Panel1.Controls.Add(this.tree);
       this.splitContainer1.Panel1.Controls.Add(this.statusBar);
       this.splitContainer1.Panel1.Controls.Add(this.cbSearch);
-      this.splitContainer1.Panel1.Controls.Add(this.treeView1);
       this.splitContainer1.Panel1.RightToLeft = System.Windows.Forms.RightToLeft.No;
       // 
       // splitContainer1.Panel2
@@ -88,6 +75,39 @@
       this.splitContainer1.Size = new System.Drawing.Size(1014, 646);
       this.splitContainer1.SplitterDistance = 227;
       this.splitContainer1.TabIndex = 0;
+      // 
+      // tree
+      // 
+      this.tree.AllColumns.Add(this.olvColumn1);
+      this.tree.AllColumns.Add(this.olvColumn2);
+      this.tree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+      this.tree.BackColor = System.Drawing.SystemColors.Control;
+      this.tree.BorderStyle = System.Windows.Forms.BorderStyle.None;
+      this.tree.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.olvColumn1,
+            this.olvColumn2});
+      this.tree.FullRowSelect = true;
+      this.tree.Location = new System.Drawing.Point(0, 30);
+      this.tree.Margin = new System.Windows.Forms.Padding(0);
+      this.tree.Name = "tree";
+      this.tree.OwnerDraw = true;
+      this.tree.ShowGroups = false;
+      this.tree.Size = new System.Drawing.Size(227, 594);
+      this.tree.TabIndex = 4;
+      this.tree.UseCompatibleStateImageBehavior = false;
+      this.tree.View = System.Windows.Forms.View.Details;
+      this.tree.VirtualMode = true;
+      // 
+      // olvColumn1
+      // 
+      this.olvColumn1.Text = "Note";
+      this.olvColumn1.Width = 166;
+      // 
+      // olvColumn2
+      // 
+      this.olvColumn2.Text = "Changed";
       // 
       // statusBar
       // 
@@ -112,52 +132,16 @@
       this.cbSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-      this.cbSearch.BackColor = System.Drawing.SystemColors.Control;
+      this.cbSearch.BackColor = System.Drawing.SystemColors.Window;
       this.cbSearch.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
       this.cbSearch.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
       this.cbSearch.IntegralHeight = false;
       this.cbSearch.ItemHeight = 18;
       this.cbSearch.Location = new System.Drawing.Point(0, 0);
-      this.cbSearch.Margin = new System.Windows.Forms.Padding(0);
+      this.cbSearch.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
       this.cbSearch.Name = "cbSearch";
       this.cbSearch.Size = new System.Drawing.Size(227, 26);
       this.cbSearch.TabIndex = 2;
-      // 
-      // treeView1
-      // 
-      this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-      this.treeView1.BackColor = System.Drawing.SystemColors.Control;
-      this.treeView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-      this.treeView1.Indent = 19;
-      this.treeView1.Location = new System.Drawing.Point(0, 26);
-      this.treeView1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
-      this.treeView1.Name = "treeView1";
-      treeNode1.Name = "Node1";
-      treeNode1.Text = "Node1";
-      treeNode2.Name = "Node2";
-      treeNode2.Text = "Node2";
-      treeNode3.Name = "Node3";
-      treeNode3.Text = "Node3";
-      treeNode4.Name = "Node4";
-      treeNode4.Text = "Node4";
-      treeNode5.Name = "Node0";
-      treeNode5.Text = "Node0";
-      treeNode6.Name = "Node6";
-      treeNode6.Text = "Node6";
-      treeNode7.Name = "Node7";
-      treeNode7.Text = "Node7";
-      treeNode8.Name = "Node8";
-      treeNode8.Text = "Node8";
-      treeNode9.Name = "Node5";
-      treeNode9.Text = "Node5";
-      this.treeView1.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode5,
-            treeNode9});
-      this.treeView1.ShowLines = false;
-      this.treeView1.Size = new System.Drawing.Size(227, 598);
-      this.treeView1.TabIndex = 1;
       // 
       // scEdit
       // 
@@ -249,6 +233,7 @@
       this.splitContainer1.Panel2.ResumeLayout(false);
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
       this.splitContainer1.ResumeLayout(false);
+      ((System.ComponentModel.ISupportInitialize)(this.tree)).EndInit();
       this.statusBar.ResumeLayout(false);
       this.statusBar.PerformLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).EndInit();
@@ -260,7 +245,6 @@
         #endregion
 
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.TreeView treeView1;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private ScintillaNET.Scintilla scEdit;
         private System.Windows.Forms.ContextMenuStrip contextMenuTray;
@@ -270,6 +254,9 @@
         private System.Windows.Forms.ComboBox cbSearch;
         private System.Windows.Forms.StatusStrip statusBar;
         private System.Windows.Forms.ToolStripStatusLabel statusText;
+        private BrightIdeasSoftware.TreeListView tree;
+        private BrightIdeasSoftware.OLVColumn olvColumn1;
+        private BrightIdeasSoftware.OLVColumn olvColumn2;
     }
 }
 
