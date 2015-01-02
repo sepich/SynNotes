@@ -68,7 +68,9 @@ namespace SynNotes {
       // hotkeys
       hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(hook_KeyPressed);
       setHotkey(1, ini.GetValue("Keys", "HotkeyShow", ""));
-      setHotkey(2, ini.GetValue("Keys", "HotkeySearch", "Win+`"));      
+      string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
+      setHotkey(2, s);
+      cbSearch.AccessibleDescription = "Search Notes (" + s + ")";
       //check db
       if (File.Exists(dbfile)) sqlConnect(dbfile);
       else if (File.Exists(userdir + dbfile)) sqlConnect(userdir + dbfile);
@@ -233,6 +235,24 @@ namespace SynNotes {
 
     private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
       this.Close();
+    }
+
+    private void cbSearch_Enter(object sender, EventArgs e) {
+      //placeholder text hide
+      if (cbSearch.Tag == "hint") {
+        cbSearch.Tag = null;
+        cbSearch.ForeColor = SystemColors.WindowText;
+        cbSearch.Text = "";
+      }
+    }
+
+    private void cbSearch_Leave(object sender, EventArgs e) {
+      //placeholder text show
+      if (cbSearch.Tag == null && cbSearch.Text.Length==0) {
+        cbSearch.Tag = "hint";
+        cbSearch.ForeColor = Color.LightGray;
+        cbSearch.Text = cbSearch.AccessibleDescription;
+      }
     }
 
   }

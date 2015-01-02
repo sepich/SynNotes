@@ -135,6 +135,7 @@
       this.cbSearch.BackColor = System.Drawing.SystemColors.Window;
       this.cbSearch.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
       this.cbSearch.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+      this.cbSearch.ForeColor = System.Drawing.Color.LightGray;
       this.cbSearch.IntegralHeight = false;
       this.cbSearch.ItemHeight = 18;
       this.cbSearch.Location = new System.Drawing.Point(0, 0);
@@ -142,6 +143,10 @@
       this.cbSearch.Name = "cbSearch";
       this.cbSearch.Size = new System.Drawing.Size(227, 26);
       this.cbSearch.TabIndex = 2;
+      this.cbSearch.Tag = "hint";
+      this.cbSearch.Text = "Search Notes";
+      this.cbSearch.Enter += new System.EventHandler(this.cbSearch_Enter);
+      this.cbSearch.Leave += new System.EventHandler(this.cbSearch_Leave);
       // 
       // scEdit
       // 
