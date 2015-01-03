@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Data.SQLite;
+using BrightIdeasSoftware;
 
 namespace SynNotes {
   
@@ -22,6 +23,7 @@ namespace SynNotes {
     string userdir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SynNotes\\";
     KeyHook hook = new KeyHook();
     SQLiteConnection sql;
+    List<TagItem> roots;
 
     // WinAPI
     [DllImport("user32.dll")] private static extern int ShowWindow(IntPtr hWnd, uint Msg);
@@ -79,6 +81,8 @@ namespace SynNotes {
         if(sql==null) sqlConnect(userdir + dbfile);
         sqlCreate();
       }
+      //init tree
+      initTree();
     }
 
     //create db schema
@@ -105,17 +109,17 @@ namespace SynNotes {
             cmd.CommandText = "CREATE TABLE notes(" +
               "id INTEGER PRIMARY KEY NOT NULL," + //my id
               "key TEXT," +        //simplenote id
-              "deleted BOOLEAN," + //in trash or not
+              "deleted BOOLEAN NOT NULL DEFAULT 0," + //in trash or not
               "modifydate REAL," + //unixtime of last edit
               "createdate REAL," + //unixtime of creation
               "syncnum INTEGER," + //track note changes
               "version INTEGER," + //track note content changes
               "systemtags TEXT," + //array of not-parsed tags
-              "pinned BOOLEAN," +  //displayed before others
-              "unread BOOLEAN," +  //modified shared note
-              "tags TEXT," +       //array of strings
+              "pinned BOOLEAN NOT NULL DEFAULT 0," +  //displayed before others
+              "unread BOOLEAN NOT NULL DEFAULT 0," +  //modified shared note
               "title TEXT," +      //copy of first line of text
               "content TEXT," +    //note content, including the first line
+              "lexer TEXT," +      //lexer to use
               "topline INTEGER)";  //top visible line
             cmd.ExecuteNonQuery();
             //full-text search
@@ -125,6 +129,19 @@ namespace SynNotes {
               "content," +           //lower(notes.content) with first line for search by content
               "matchinfo=fts3," +    //reduce size footprint
               "tokenize=unicode61)"; //remove diacritics"
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "CREATE TRIGGER notes_bu BEFORE UPDATE ON notes BEGIN"+
+              "  DELETE FROM fts WHERE docid=old.id;"+
+              "END;"+
+              "CREATE TRIGGER notes_bd BEFORE DELETE ON notes BEGIN"+
+              "  DELETE FROM fts WHERE docid=old.id;"+
+              "END;"+
+              "CREATE TRIGGER notes_au AFTER UPDATE ON notes BEGIN"+
+              "  INSERT INTO fts(docid, title, content) VALUES(new.id, new.title, new.content);"+
+              "END;"+
+              "CREATE TRIGGER notes_ai AFTER INSERT ON notes BEGIN"+
+              "  INSERT INTO fts(docid, title, content) VALUES(new.id, new.title, new.content);" +
+              "END;";
             cmd.ExecuteNonQuery();
             //many-to-many notes-to-tags
             cmd.CommandText = "CREATE TABLE nt("+
@@ -237,23 +254,183 @@ namespace SynNotes {
       this.Close();
     }
 
-    private void cbSearch_Enter(object sender, EventArgs e) {
-      //placeholder text hide
-      if (cbSearch.Tag == "hint") {
+    //placeholder text hide
+    private void cbSearch_Enter(object sender, EventArgs e) {      
+      if (cbSearch.Tag.ToString() == "hint") {
         cbSearch.Tag = null;
         cbSearch.ForeColor = SystemColors.WindowText;
         cbSearch.Text = "";
       }
     }
 
-    private void cbSearch_Leave(object sender, EventArgs e) {
-      //placeholder text show
+    //placeholder text show
+    private void cbSearch_Leave(object sender, EventArgs e) {      
       if (cbSearch.Tag == null && cbSearch.Text.Length==0) {
         cbSearch.Tag = "hint";
-        cbSearch.ForeColor = Color.LightGray;
+        cbSearch.ForeColor = SystemColors.GrayText;
         cbSearch.Text = cbSearch.AccessibleDescription;
       }
     }
 
+    //init tree with root items from db
+    private void initTree() {
+      //All as system
+      var s = "SELECT 0 as id, 'All' AS name, count(id) AS num FROM notes WHERE deleted=0";
+      roots = getTags(s, true);
+      //read all tags info
+      s = "SELECT t.id, t.name, COUNT(c.note) AS num FROM tags t LEFT JOIN nt c ON t.id=c.tag GROUP BY t.name ORDER BY t.`index`";
+      roots.AddRange(getTags(s));
+      //Deleted as system
+      s = "SELECT 0 as id, 'Deleted' AS name, count(id) AS num FROM notes WHERE deleted=1";
+      roots.AddRange(getTags(s, true));
+
+      //getters
+      tree.Roots = roots;
+      cDate.AspectGetter = delegate(object x) {
+        if (x is TagItem) return ((TagItem)x).count;
+        else return ((NoteItem)x).modifyDateS;
+      };
+      tree.CanExpandGetter = delegate(object x) {
+        return (x is TagItem && ((TagItem)x).count > 0);
+      };
+      tree.ChildrenGetter = delegate(object x) { return getNotes(x); };
+      
+      //renderer
+      //this.tree.TreeColumnRenderer.LinePen = new Pen(Color.Transparent);
+    }
+
+    //get sql query [id, name, num], return list of tag tree nodes
+    private List<TagItem> getTags(string query, bool sys=false) {
+      List<TagItem> res = new List<TagItem>();
+      TagItem node;
+      using (SQLiteCommand cmd = new SQLiteCommand(query, sql)) {
+        using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
+          while (rdr.Read()) {
+            node = new TagItem();
+            node.id = Convert.ToInt32(rdr["id"]);
+            node.name = rdr["name"].ToString();
+            node.count = Convert.ToInt32(rdr["num"]);
+            node.isSystem = sys;
+            res.Add(node);
+          }
+        }
+      }
+      return res;
+    }
+
+    //get notes when tag is expanded
+    private List<NoteItem> getNotes(object x) {
+      TagItem tag = (TagItem)x;
+      if (tag.notes.Count > 0) tag.notes.Clear();
+      NoteItem node;
+      string s;
+      if (tag.isSystem) {
+        if (tag.name == "All") s = "SELECT id, title, modifydate FROM notes WHERE deleted=0";  // All
+        else s = "SELECT id, title, modifydate FROM notes WHERE deleted=1";                    // Deleted
+      }
+      else s = "SELECT n.id, n.title, n.modifydate"+                                           // per-tag
+        " FROM notes n LEFT JOIN nt c ON c.note=n.id" +
+        " WHERE n.deleted=0 AND c.tag=" + tag.id.ToString() + 
+        " ORDER BY pinned DESC, title ASC";
+      using (SQLiteCommand cmd = new SQLiteCommand(s, sql)) {
+        using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
+          while (rdr.Read()) {
+            node = new NoteItem();
+            node.id = rdr.GetInt32(0);
+            node.name = rdr.GetString(1);
+            node.modifyDate = rdr.GetFloat(2);
+            tag.notes.Add(node);
+          }
+        }
+      }
+      return tag.notes;
+    }
+
+    //add new note
+    private void btnAdd_ButtonClick(object sender, EventArgs e) {
+      // get parent tag if something selected
+      TagItem tag=null;
+      if (tree.SelectedObject!=null) {
+        if (tree.SelectedObject is TagItem) tag = (TagItem)tree.SelectedObject;
+        else tag = (TagItem)tree.GetParent(tree.SelectedObject);
+        if (tag.isSystem && tag.name == "Deleted") tag = roots[0]; //don't create new deleted notes
+      }
+      else {
+        tag = roots[0];
+      }
+      //add new note to db
+      var ut = (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds.ToString().Replace(',','.');
+      using (SQLiteTransaction tr = sql.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+          cmd.CommandText = "INSERT INTO notes(modifydate, createdate, title, content) "+
+            "VALUES("+ut+", "+ut+", 'New Note', 'New Note')";
+          cmd.ExecuteNonQuery();
+        }
+        tr.Commit();
+      }
+      tag.count += 1;
+      tree.RefreshObject(tag);
+      tree.Expand(tag);
+      tree.Reveal(tag.notes.Find(x => x.id == sql.LastInsertRowId), true);
+    }
+
+    private void tree_SelectionChanged(object sender, EventArgs e) {
+      if (scEdit.Modified && scEdit.Tag != null) saveNote();
+      if (tree.SelectedItem != null && tree.SelectedObject is NoteItem) loadNote();
+    }
+
+    //load note for selected item
+    private void loadNote() {
+      NoteItem note = (NoteItem)tree.SelectedObject;
+      using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+        cmd.CommandText = "SELECT content, lexer, topline FROM notes WHERE id=" + note.id;
+        using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
+          while (rdr.Read()) {
+            scEdit.Text = rdr.GetString(0);
+            scEdit.ConfigurationManager.Language = rdr.IsDBNull(1) ? "Bash" : rdr.GetString(1);
+            //TODO set top line
+          }
+        }
+      }
+      //checked when saving
+      scEdit.Modified = false;
+      scEdit.Tag = note;
+      //TODO set window title
+      this.Text = getTitle();
+    }
+
+    //save opened note
+    private void saveNote() {
+      NoteItem note = (NoteItem)scEdit.Tag;
+      var ut = (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+      var title = getTitle();
+      //save to db
+      using (SQLiteTransaction tr = sql.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+          cmd.CommandText = "UPDATE notes SET modifydate=?, title=?, content=? WHERE id=?";
+          cmd.Parameters.AddWithValue(null, ut);
+          cmd.Parameters.AddWithValue(null, title);
+          cmd.Parameters.AddWithValue(null, scEdit.Text);
+          cmd.Parameters.AddWithValue(null, note.id);
+          cmd.ExecuteNonQuery();
+        }
+        tr.Commit();
+      }
+      //refresh tree
+      scEdit.Modified = false;
+      note.name = title;
+      tree.RefreshObject(note);
+    }
+
+    //get title from active scintilla text
+    private string getTitle() {
+      string title;
+      if (scEdit.Text.Length == 0) return "(blank)";
+      var len = scEdit.Text.Length > 100 ? 100 : scEdit.Text.Length;
+      title = scEdit.Text.Substring(0, len).Trim();
+      len = title.IndexOfAny(new char[] { '\n', '\r' });
+      return (len < 0) ? title.Substring(0, len) : title + "...";
+    }
+   
   }
 }
