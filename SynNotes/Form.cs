@@ -83,6 +83,8 @@ namespace SynNotes {
       }
       //init tree
       initTree();
+      //init tagBox
+      tagBox.Tag = new List<string>();
     }
 
     //create db schema
@@ -217,6 +219,8 @@ namespace SynNotes {
         ini.SetValue("Form", "Height", this.Height.ToString());
       }
       ini.SetValue("Form", "WindowState", this.WindowState.ToString());
+      //autosave
+      if (scEdit.Modified && scEdit.Tag != null) saveNote();
       //close db connection
       if (sql != null) sql.Dispose();
     }
@@ -376,11 +380,11 @@ namespace SynNotes {
 
     private void tree_SelectionChanged(object sender, EventArgs e) {
       if (scEdit.Modified && scEdit.Tag != null) saveNote();
-      if (tree.SelectedItem != null && tree.SelectedObject is NoteItem) loadNote();
+      if (tree.SelectedItem != null && tree.SelectedObject is NoteItem) viewNote();
     }
 
     //load note for selected item
-    private void loadNote() {
+    private void viewNote() {
       NoteItem note = (NoteItem)tree.SelectedObject;
       using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
         cmd.CommandText = "SELECT content, lexer, topline FROM notes WHERE id=" + note.id;
@@ -395,8 +399,19 @@ namespace SynNotes {
       //checked when saving
       scEdit.Modified = false;
       scEdit.Tag = note;
-      //TODO set window title
+      // window title and tags
       this.Text = getTitle();
+      List<string> tags = (List<string>)tagBox.Tag;
+      tags.Clear();
+      using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+        cmd.CommandText = "SELECT t.name FROM tags t LEFT JOIN nt c ON t.id=c.tag WHERE c.note=" + note.id;
+        using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
+          while (rdr.Read()) {
+            tags.Add(rdr.GetString(0));
+          }
+        }
+      }
+      parseTags(true);
     }
 
     //save opened note
@@ -404,7 +419,7 @@ namespace SynNotes {
       NoteItem note = (NoteItem)scEdit.Tag;
       var ut = (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
       var title = getTitle();
-      //save to db
+      //save text
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
           cmd.CommandText = "UPDATE notes SET modifydate=?, title=?, content=? WHERE id=?";
@@ -416,6 +431,28 @@ namespace SynNotes {
         }
         tr.Commit();
       }
+      //save tags
+      using (SQLiteTransaction tr = sql.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+          cmd.CommandText = "DELETE FROM nt WHERE note=?";
+          cmd.Parameters.AddWithValue(null, note.id);
+          cmd.ExecuteNonQuery();
+
+          cmd.CommandText = "INSERT INTO nt(note,tag) VALUES(?,?)";
+          cmd.Parameters.AddWithValue(null, note.id);
+          SQLiteParameter t = new SQLiteParameter();
+          cmd.Parameters.Add(t);
+          TagItem tmp;
+          foreach (var tag in (List<string>)tagBox.Tag) {
+            tmp = roots.Find(x => x.name == tag);
+            if (tmp == null || tmp.id == 0) continue;
+            t.Value = tmp.id;
+            cmd.ExecuteNonQuery();
+          }
+        }
+        tr.Commit();
+      }      
+
       //refresh tree
       scEdit.Modified = false;
       note.name = title;
@@ -426,11 +463,106 @@ namespace SynNotes {
     private string getTitle() {
       string title;
       if (scEdit.Text.Length == 0) return "(blank)";
-      var len = scEdit.Text.Length > 100 ? 100 : scEdit.Text.Length;
-      title = scEdit.Text.Substring(0, len).Trim();
-      len = title.IndexOfAny(new char[] { '\n', '\r' });
-      return (len < 0) ? title.Substring(0, len) : title + "...";
+      var len1 = scEdit.Text.Length > 100 ? 100 : scEdit.Text.Length;
+      title = scEdit.Text.Substring(0, len1).Trim();
+      var len2 = title.IndexOfAny(new char[] { '\n', '\r' });
+      if(len2 > 0) return title.Substring(0, len2);
+      else if(len1<100) return title;
+      else return title + "...";
     }
-   
+
+    #region tag box
+
+    private void tagBox_Enter(object sender, EventArgs e) {
+      fillTagBoxAC();
+    }
+
+    //read tag list to fill autocomplete
+    private void fillTagBoxAC() {
+      if (roots.Count > 0) {
+        List<string> tags = (List<string>)tagBox.Tag;
+        tagBox.AutoCompleteCustomSource.Clear();
+        foreach (var tag in roots) {
+          //TODO if (tag.isSystem) continue;
+          if (tags.Contains(tag.name, StringComparer.OrdinalIgnoreCase)) continue;
+          tagBox.AutoCompleteCustomSource.Add(tag.name);
+        }
+      }
+    }
+
+    private void tagBox_TextChanged(object sender, EventArgs e) {
+      char[] delims = {' ',',',';'};
+      if (tagBox.Text.Length>0 && Array.IndexOf(delims, tagBox.Text[tagBox.Text.Length - 1]) > 0) parseTags();
+    }
+
+    private void tagBox_KeyDown(object sender, KeyEventArgs e) {
+      switch (e.KeyCode) {
+        case Keys.Escape:
+          cbSearch.Focus();
+          break;
+        case Keys.Back:
+          if (tagBox.SelectionStart == 0) {
+            List<string> tags = (List<string>)tagBox.Tag;
+            if (tags.Count > 0) {
+              tags.RemoveAt(tags.Count - 1);
+              scEdit.Modified = true; // so changes in tags would be saved
+              parseTags(true);
+            }
+          }
+          break;
+        case Keys.Enter:
+        case Keys.Tab:
+        case Keys.Space:
+          parseTags();
+          break;
+      }
+    }
+
+    //parse textbox for tags
+    private void parseTags(bool repaint=false) {
+      List<string> tags = (List<string>)tagBox.Tag;
+      string[] list;
+      // repaint is called when it's need to recreate tags box view from list
+      if (repaint) {
+        list = tags.ToArray();
+        foreach (Control l in splitContainer1.Panel2.Controls) 
+          if (l.Tag == "tag") {
+            splitContainer1.Panel2.Controls.Remove(l);
+            l.Dispose();
+        }
+        tagBox.Left = 37;
+      }
+      //else parse text input
+      else {
+        list = tagBox.Text.Split(new char[] { ' ', ',', ';' });
+        scEdit.Modified = true; // so changes in tags would be saved
+      }
+
+      foreach (var tag in list) {
+        if (tag.Length == 0) continue;
+        if (!repaint) {
+          if (tags.Contains(tag, StringComparer.OrdinalIgnoreCase)) continue;
+          tags.Add(tag);
+        }
+
+        // create label element
+        Label l = new Label();
+        l.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        l.Location = tagBox.Location;
+        l.Font = tagBox.Font;
+        l.BackColor = Color.Gainsboro;
+        l.Tag="tag"; // mark for deletion
+        l.AutoSize = true;
+        splitContainer1.Panel2.Controls.Add(l);        
+        l.Text = tag;
+        tagBox.Left += l.Width + 5;
+        l.BringToFront();
+      }
+      tagBox.Text = "";
+      fillTagBoxAC(); //refill autocomplete except for parsed tags
+    }
+
+    #endregion tag box
+
   }
 }
