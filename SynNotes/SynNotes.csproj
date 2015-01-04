@@ -82,6 +82,9 @@
       <DependentUpon>Form.cs</DependentUpon>
     </Compile>
     <Compile Include="KeyHook.cs" />
+    <Compile Include="Note.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TreeItem.cs" />

@@ -39,6 +39,8 @@
       this.btnAdd = new System.Windows.Forms.ToolStripSplitButton();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
       this.cbSearch = new System.Windows.Forms.ComboBox();
+      this.tagBox = new System.Windows.Forms.TextBox();
+      this.label1 = new System.Windows.Forms.Label();
       this.scEdit = new ScintillaNET.Scintilla();
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
       this.contextMenuTray = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -46,8 +48,6 @@
       this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
       this.exitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
       this.imageList1 = new System.Windows.Forms.ImageList(this.components);
-      this.tagBox = new System.Windows.Forms.TextBox();
-      this.label1 = new System.Windows.Forms.Label();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
       this.splitContainer1.Panel1.SuspendLayout();
       this.splitContainer1.Panel2.SuspendLayout();
@@ -116,6 +116,7 @@
       this.tree.Location = new System.Drawing.Point(0, 30);
       this.tree.Margin = new System.Windows.Forms.Padding(0);
       this.tree.Name = "tree";
+      this.tree.OwnerDraw = true;
       this.tree.ShowGroups = false;
       this.tree.Size = new System.Drawing.Size(227, 594);
       this.tree.TabIndex = 4;
@@ -126,7 +127,7 @@
       // 
       // cName
       // 
-      this.cName.AspectName = "name";
+      this.cName.AspectName = "Name";
       this.cName.FillsFreeSpace = true;
       this.cName.Text = "Name";
       // 
@@ -192,6 +193,36 @@
       this.cbSearch.Text = "Search Notes";
       this.cbSearch.Enter += new System.EventHandler(this.cbSearch_Enter);
       this.cbSearch.Leave += new System.EventHandler(this.cbSearch_Leave);
+      // 
+      // tagBox
+      // 
+      this.tagBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+      this.tagBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+      this.tagBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+      this.tagBox.BackColor = System.Drawing.SystemColors.ScrollBar;
+      this.tagBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
+      this.tagBox.Location = new System.Drawing.Point(37, 630);
+      this.tagBox.Margin = new System.Windows.Forms.Padding(0);
+      this.tagBox.Name = "tagBox";
+      this.tagBox.Size = new System.Drawing.Size(746, 13);
+      this.tagBox.TabIndex = 1;
+      this.tagBox.TextChanged += new System.EventHandler(this.tagBox_TextChanged);
+      this.tagBox.Enter += new System.EventHandler(this.tagBox_Enter);
+      this.tagBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tagBox_KeyDown);
+      // 
+      // label1
+      // 
+      this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+      this.label1.BackColor = System.Drawing.SystemColors.Window;
+      this.label1.Location = new System.Drawing.Point(0, 624);
+      this.label1.Margin = new System.Windows.Forms.Padding(0);
+      this.label1.Name = "label1";
+      this.label1.Size = new System.Drawing.Size(783, 22);
+      this.label1.TabIndex = 2;
+      this.label1.Text = "Tags:";
+      this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
       // 
       // scEdit
       // 
@@ -273,36 +304,6 @@
       this.imageList1.Images.SetKeyName(0, "add.png");
       this.imageList1.Images.SetKeyName(1, "search.png");
       this.imageList1.Images.SetKeyName(2, "settings.png");
-      // 
-      // tagBox
-      // 
-      this.tagBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-      this.tagBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
-      this.tagBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
-      this.tagBox.BackColor = System.Drawing.SystemColors.ScrollBar;
-      this.tagBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
-      this.tagBox.Location = new System.Drawing.Point(37, 630);
-      this.tagBox.Margin = new System.Windows.Forms.Padding(0);
-      this.tagBox.Name = "tagBox";
-      this.tagBox.Size = new System.Drawing.Size(746, 13);
-      this.tagBox.TabIndex = 1;
-      this.tagBox.TextChanged += new System.EventHandler(this.tagBox_TextChanged);
-      this.tagBox.Enter += new System.EventHandler(this.tagBox_Enter);
-      this.tagBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tagBox_KeyDown);
-      // 
-      // label1
-      // 
-      this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-      this.label1.BackColor = System.Drawing.SystemColors.Window;
-      this.label1.Location = new System.Drawing.Point(0, 624);
-      this.label1.Margin = new System.Windows.Forms.Padding(0);
-      this.label1.Name = "label1";
-      this.label1.Size = new System.Drawing.Size(783, 22);
-      this.label1.TabIndex = 2;
-      this.label1.Text = "Tags:";
-      this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
       // 
       // Form1
       // 

@@ -58,8 +58,7 @@ namespace SynNotes {
     public KeyHook() {
       // register the event of the inner native window.
       _window.KeyPressed += delegate(object sender, KeyPressedEventArgs args) {
-        if (KeyPressed != null)
-          KeyPressed(this, args);
+        if (KeyPressed != null) KeyPressed(this, args);
       };
     }
 
@@ -70,6 +69,31 @@ namespace SynNotes {
     /// <param name="key">The key itself that is associated with the hot key.</param>
     public bool RegisterHotKey(int id, ModifierKey modifier, uint key) {
       return RegisterHotKey(_window.Handle, id, (uint)modifier, key);
+    }
+
+    /// <summary>
+    /// register hotkey for given string
+    /// </summary>
+    public void SetHotkey(int id, string keys) {
+      if (keys.Length > 0) {
+        try {
+          var a = keys.Split('+');
+          //get keycode
+          uint k;
+          if (a.Last()[0] == '`') k = (uint)Keys.Oemtilde.GetHashCode();
+          else k = (uint)a.Last()[0];
+          //get modifiers
+          var m = new ModifierKey();
+          for (var i = 0; i < a.Length - 1; i++) {
+            m = m | (ModifierKey)Enum.Parse(typeof(ModifierKey), a[i].Trim());
+          }
+          //set key hook
+          if (!RegisterHotKey(id, m, k)) MessageBox.Show("Error registering HotKey: " + keys);
+        }
+        catch {
+          MessageBox.Show("Cannot parse '" + keys + "' as keys sequence");
+        }
+      }
     }
 
     /// <summary>
