@@ -35,6 +35,8 @@
       this.tree = new BrightIdeasSoftware.TreeListView();
       this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.cDate = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+      this.cSort = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+      this.treeMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.statusBar = new System.Windows.Forms.StatusStrip();
       this.btnAdd = new System.Windows.Forms.ToolStripSplitButton();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
@@ -103,41 +105,79 @@
       // 
       this.tree.AllColumns.Add(this.cName);
       this.tree.AllColumns.Add(this.cDate);
+      this.tree.AllColumns.Add(this.cSort);
+      this.tree.AlternateRowBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
       this.tree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.tree.BackColor = System.Drawing.SystemColors.Control;
       this.tree.BorderStyle = System.Windows.Forms.BorderStyle.None;
+      this.tree.CellEditActivation = BrightIdeasSoftware.ObjectListView.CellEditActivateMode.SingleClick;
       this.tree.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.cName,
             this.cDate});
+      this.tree.ContextMenuStrip = this.treeMenu;
       this.tree.FullRowSelect = true;
+      this.tree.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
       this.tree.HideSelection = false;
+      this.tree.IsSearchOnSortColumn = false;
       this.tree.Location = new System.Drawing.Point(0, 30);
       this.tree.Margin = new System.Windows.Forms.Padding(0);
       this.tree.Name = "tree";
       this.tree.OwnerDraw = true;
       this.tree.ShowGroups = false;
+      this.tree.ShowHeaderInAllViews = false;
       this.tree.Size = new System.Drawing.Size(227, 594);
       this.tree.TabIndex = 4;
+      this.tree.UseAlternatingBackColors = true;
       this.tree.UseCompatibleStateImageBehavior = false;
       this.tree.View = System.Windows.Forms.View.Details;
       this.tree.VirtualMode = true;
+      this.tree.CellEditFinishing += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditFinishing);
+      this.tree.CellEditStarting += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditStarting);
+      this.tree.CellEditValidating += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditValidating);
+      this.tree.CellRightClick += new System.EventHandler<BrightIdeasSoftware.CellRightClickEventArgs>(this.tree_CellRightClick);
       this.tree.SelectionChanged += new System.EventHandler(this.tree_SelectionChanged);
+      this.tree.ItemActivate += new System.EventHandler(this.tree_ItemActivate);
+      this.tree.MouseClick += new System.Windows.Forms.MouseEventHandler(this.tree_MouseClick);
       // 
       // cName
       // 
       this.cName.AspectName = "Name";
+      this.cName.AutoCompleteEditor = false;
+      this.cName.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
       this.cName.FillsFreeSpace = true;
       this.cName.Text = "Name";
       // 
       // cDate
       // 
       this.cDate.AspectName = "";
+      this.cDate.AutoCompleteEditor = false;
+      this.cDate.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
       this.cDate.HeaderTextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+      this.cDate.IsEditable = false;
       this.cDate.Text = "Date";
       this.cDate.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+      this.cDate.UseFiltering = false;
       this.cDate.Width = 30;
+      // 
+      // cSort
+      // 
+      this.cSort.AspectName = "";
+      this.cSort.AutoCompleteEditor = false;
+      this.cSort.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
+      this.cSort.DisplayIndex = 2;
+      this.cSort.IsEditable = false;
+      this.cSort.IsVisible = false;
+      this.cSort.Searchable = false;
+      this.cSort.Text = "Sort";
+      this.cSort.UseFiltering = false;
+      this.cSort.Width = 30;
+      // 
+      // treeMenu
+      // 
+      this.treeMenu.Name = "treeMenu";
+      this.treeMenu.Size = new System.Drawing.Size(61, 4);
       // 
       // statusBar
       // 
@@ -200,7 +240,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
       this.tagBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
       this.tagBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
-      this.tagBox.BackColor = System.Drawing.SystemColors.ScrollBar;
+      this.tagBox.BackColor = System.Drawing.SystemColors.Window;
       this.tagBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
       this.tagBox.Location = new System.Drawing.Point(37, 630);
       this.tagBox.Margin = new System.Windows.Forms.Padding(0);
@@ -356,6 +396,8 @@
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox tagBox;
+        private BrightIdeasSoftware.OLVColumn cSort;
+        private System.Windows.Forms.ContextMenuStrip treeMenu;
     }
 }
 

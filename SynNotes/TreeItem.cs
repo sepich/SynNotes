@@ -15,6 +15,8 @@ namespace SynNotes {
     public bool System { get; set; }    // sys tags Deleted and All have this set
     public int Count { get; set; }      // count of notes
     public List<NoteItem> Notes { get; set; } // childs list
+    public int Index { get; set; }      // order in list
+    public bool Expanded { get; set; }  // should it be expanded on start
 
     public TagItem() {                  // init list
       Notes = new List<NoteItem>();

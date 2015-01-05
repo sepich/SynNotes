@@ -9,6 +9,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Data.SQLite;
 using BrightIdeasSoftware;
+using Microsoft.VisualBasic;
 
 namespace SynNotes {
   
@@ -19,6 +20,8 @@ namespace SynNotes {
     const string conffile = "settings.ini";
     const string dbfile = "notes.db";
     const string dbver = "1";
+    const string DELETED = "Deleted";
+    const string ALL = "All";
     string userdir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SynNotes\\";
     KeyHook hook = new KeyHook();
     Note note;
@@ -83,6 +86,7 @@ namespace SynNotes {
               "name TEXT," +
               "`index` INTEGER," + //order in the list
               "version INTEGER," + //track tag content changes
+              "expanded BOOLEAN NOT NULL DEFAULT 0," + //should it be expanded on start 
               "share TEXT)";       //array of emails
             cmd.ExecuteNonQuery();
             //notes
@@ -202,10 +206,27 @@ namespace SynNotes {
         ini.SetValue("Form", "Height", this.Height.ToString());
       }
       ini.SetValue("Form", "WindowState", this.WindowState.ToString());
-      //autosave
-      if (scEdit.Modified) note.Save();
-      //close db connection
-      if (sql != null) sql.Dispose();
+      //autosave      
+      if (sql != null) {
+        if (scEdit.Modified) note.Save();
+        using (SQLiteTransaction tr = sql.BeginTransaction()) {
+          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+            cmd.CommandText = "UPDATE tags SET expanded=0";
+            cmd.ExecuteNonQuery();
+            foreach (var item in tree.ExpandedObjects) {
+              if (!(item is TagItem)) continue;
+              var tag = (TagItem)item;
+              cmd.CommandText = "UPDATE tags SET expanded=1 WHERE id=" + tag.Id;
+              cmd.ExecuteNonQuery();
+            }
+            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('lastNote'," + note.Item.Id + ")";
+            cmd.ExecuteNonQuery();
+          }
+          tr.Commit();
+        }
+        //close db connection
+        sql.Dispose();
+      }
     }
 
     private void notifyIcon1_Click(object sender, EventArgs e) {
@@ -239,6 +260,7 @@ namespace SynNotes {
         else if (cbSearch.Focused && cbSearch.Text.Length > 0) cbSearch.Text = "";
         else this.WindowState = FormWindowState.Minimized;
       }
+      if (e.KeyCode == Keys.Delete && tree.Focused) delClick(null, null);
     }
 
     private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
@@ -266,26 +288,64 @@ namespace SynNotes {
     //init tree with root items from db
     private void initTree() {
       //All as system
-      var s = "SELECT 0 as id, 'All' AS name, count(id) AS num FROM notes WHERE deleted=0";
+      var s = "SELECT 0 as id, '"+ALL+"' AS name, count(id) AS num, -1 AS `index`, 0 AS expanded FROM notes WHERE deleted=0";
       roots = getTags(s, true);
-      //read all tags info
-      s = "SELECT t.id, t.name, COUNT(c.note) AS num FROM tags t LEFT JOIN nt c ON t.id=c.tag GROUP BY t.name ORDER BY t.`index`";
-      roots.AddRange(getTags(s));
       //Deleted as system
-      s = "SELECT 0 as id, 'Deleted' AS name, count(id) AS num FROM notes WHERE deleted=1";
+      s = "SELECT 0 as id, '" + DELETED + "' AS name, count(id) AS num, " + (int.MaxValue).ToString() + " AS `index`, 0 AS expanded FROM notes WHERE deleted=1";
       roots.AddRange(getTags(s, true));
+      //read all tags info
+      s = "SELECT t.id, t.name, COUNT(c.note) AS num, `index`, expanded FROM tags t LEFT JOIN nt c ON t.id=c.tag GROUP BY t.name ORDER BY t.`index`";
+      roots.AddRange(getTags(s));
 
       //getters
       tree.Roots = roots;
-      cDate.AspectGetter = delegate(object x) {
-        if (x is TagItem) return ((TagItem)x).Count;
-        else return ((NoteItem)x).DateShort;
-      };
       tree.CanExpandGetter = delegate(object x) {
         return (x is TagItem && ((TagItem)x).Count > 0);
       };
       tree.ChildrenGetter = delegate(object x) { return getNotes(x); };
-      
+      cDate.AspectGetter = delegate(object x) {
+        if (x is TagItem) return ((TagItem)x).Count;
+        else return ((NoteItem)x).DateShort;
+      };
+      cSort.AspectGetter = delegate(object x) {
+        if (x is TagItem) return ((TagItem)x).Index;
+        else return ((NoteItem)x).Name;
+      };
+      //restore view
+      tree.Sort(cSort, SortOrder.Ascending);
+      foreach (var tag in roots) {
+        if (tag.Expanded) tree.Expand(tag);
+      }
+
+      //search last opened note
+      using (SQLiteCommand cmd = new SQLiteCommand("SELECT value FROM config WHERE name='lastNote'", sql)) {
+        var res = cmd.ExecuteScalar();
+        var id = Convert.ToInt32(res);
+        if (res == null) btnAdd_ButtonClick(null, null); //first run - create new note and select it
+        else {
+          //check expanded tags for note
+          NoteItem sel = null;
+          foreach (var tag in roots) {
+            var tmp = tag.Notes.Find(x => x.Id == id);
+            if (tmp != null) {
+              sel = tmp;
+              break;
+            }
+          }
+          //check in All
+          if (sel == null) {
+            tree.Expand(roots[0]);
+            sel = roots[0].Notes.Find(x => x.Id == id);
+          }
+          //check in Deleted
+          if (sel == null) {
+            tree.Expand(roots[1]);
+            sel = roots[1].Notes.Find(x => x.Id == id);
+          }
+          tree.SelectedObject = sel;
+        }
+      }
+
       //renderer
       //this.tree.TreeColumnRenderer.LinePen = new Pen(Color.Transparent);
     }
@@ -293,8 +353,8 @@ namespace SynNotes {
     /// <summary>
     /// return list of tag tree nodes for sql query
     /// </summary>
-    /// <param name="query">query [id, name, num]</param>
-    /// <param name="sys">not a user tag (e.g All, Deleted)</param>
+    /// <param name="query">query [id, name, num, index]</param>
+    /// <param name="sys">set not a user tag (e.g All, Deleted)</param>
     private List<TagItem> getTags(string query, bool sys=false) {
       List<TagItem> res = new List<TagItem>();
       TagItem node;
@@ -305,6 +365,8 @@ namespace SynNotes {
             node.Id = Convert.ToInt32(rdr["id"]);
             node.Name = rdr["name"].ToString();
             node.Count = Convert.ToInt32(rdr["num"]);
+            node.Index = Convert.ToInt32(rdr["index"]);
+            node.Expanded = Convert.ToBoolean(rdr["expanded"]);
             node.System = sys;
             res.Add(node);
           }
@@ -322,10 +384,10 @@ namespace SynNotes {
       NoteItem node;
       string s;
       if (tag.System) {
-        if (tag.Name == "All") s = "SELECT id, title, modifydate FROM notes WHERE deleted=0";  // All
-        else s = "SELECT id, title, modifydate FROM notes WHERE deleted=1";                    // Deleted
+        if (tag.Name == ALL) s = "SELECT id, title, modifydate FROM notes WHERE deleted=0";  // All
+        else s = "SELECT id, title, modifydate FROM notes WHERE deleted=1";                  // Deleted
       }
-      else s = "SELECT n.id, n.title, n.modifydate"+                                           // per-tag
+      else s = "SELECT n.id, n.title, n.modifydate"+                                         // per-tag
         " FROM notes n LEFT JOIN nt c ON c.note=n.id" +
         " WHERE n.deleted=0 AND c.tag=" + tag.Id.ToString() + 
         " ORDER BY pinned DESC, title ASC";
@@ -346,11 +408,11 @@ namespace SynNotes {
     //add new note
     private void btnAdd_ButtonClick(object sender, EventArgs e) {
       // get parent tag if something selected
-      TagItem tag=null;
+      TagItem tag;
       if (tree.SelectedObject!=null) {
         if (tree.SelectedObject is TagItem) tag = (TagItem)tree.SelectedObject;
         else tag = (TagItem)tree.GetParent(tree.SelectedObject);
-        if (tag.System && tag.Name == "Deleted") tag = roots[0]; //don't create new deleted notes
+        if (tag.System && tag.Name == DELETED) tag = roots[0]; //don't create new deleted notes
       }
       else {
         tag = roots[0]; //All
@@ -362,6 +424,10 @@ namespace SynNotes {
           cmd.CommandText = "INSERT INTO notes(modifydate, createdate, title, content) "+
             "VALUES("+ut+", "+ut+", 'New Note', 'New Note')";
           cmd.ExecuteNonQuery();
+          if (!tag.System) {
+            cmd.CommandText = "INSERT INTO nt(note,tag) VALUES(" + sql.LastInsertRowId.ToString() + "," + tag.Id + ")";
+            cmd.ExecuteNonQuery();
+          }
         }
         tr.Commit();
       }
@@ -370,6 +436,7 @@ namespace SynNotes {
       tree.RefreshObject(tag);
       tree.Expand(tag);
       tree.Reveal(tag.Notes.Find(x => x.Id == sql.LastInsertRowId), true);
+      scEdit.Focus();
     }
 
     private void tree_SelectionChanged(object sender, EventArgs e) {
@@ -389,14 +456,7 @@ namespace SynNotes {
     private void tagBox_KeyDown(object sender, KeyEventArgs e) {
       switch (e.KeyCode) {
         case Keys.Back:
-          if (tagBox.SelectionStart == 0) {
-            List<string> tags = (List<string>)tagBox.Tag;
-            if (tags.Count > 0) {
-              tags.RemoveAt(tags.Count - 1);
-              scEdit.Modified = true; // so changes in tags would be saved
-              note.ParseTags(true);
-            }
-          }
+          if (tagBox.SelectionStart == 0) note.UnassignLastTag();
           break;
         case Keys.Enter:
         case Keys.Tab:
@@ -406,10 +466,161 @@ namespace SynNotes {
       }
     }
 
-    
+    // fill tree context menu with items valid for row
+    private void tree_CellRightClick(object sender, CellRightClickEventArgs e) {
+      treeMenu.Items.Clear();
+      //for tags
+      if (e.Model is TagItem) {
+        var tag = (TagItem)e.Model;
+        if (tag.System && tag.Name == DELETED && tree.SelectedObjects.Count == 1) {
+          var purge = treeMenu.Items.Add("Purge Deleted");
+          purge.Click += purgeTagClick;
+        }
+        else {
+          var newnote = treeMenu.Items.Add("New Note");
+          newnote.Click += btnAdd_ButtonClick;
+        }
+        if (!tag.System) {
+          if (tree.SelectedObjects.Count == 1) {
+            var ren = treeMenu.Items.Add("Rename");
+            ren.Click += renTagClick;
+          }
+
+          var del = treeMenu.Items.Add("Delete");
+          del.Click += delClick;
+        }
+      }
+      //for notes
+      else {
+        var newnote = treeMenu.Items.Add("New Note");
+        newnote.Click += btnAdd_ButtonClick;
+
+        var del = treeMenu.Items.Add("Delete");
+        del.Click += delClick;
+      }
+    }
+
+    //purge deleted notes
+    private void purgeTagClick(object sender, EventArgs e) {
+      var tag = roots.Find(x => x.System && x.Name == DELETED);
+      if (tag != null) {
+        tree.Expand(tag);
+        tree.SelectedObjects = tag.Notes;
+        delClick(null, null);
+      }
+    }
+
+    //rename tag
+    private void renTagClick(object sender, EventArgs e) {
+      tree.EditModel(tree.SelectedObject);
+    }
+
+    //delete selected items
+    private void delClick(object sender, EventArgs e) {
+      var n = tree.SelectedObjects.Count;
+      if(n>1 && MessageBox.Show("Delete " + n.ToString() + " objects?", "Delete multiple objects?", 
+        MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1) == System.Windows.Forms.DialogResult.No) return;
+
+      using (SQLiteTransaction tr = sql.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+          foreach (var item in tree.SelectedObjects) {
+            // delete tag
+            if (item is TagItem) {
+              var tag = (TagItem)item;
+              if (tag.System) continue; //can't del system folder
+              if (n>1 || MessageBox.Show("Delete the tag: " + tag.Name + "?\n(This will not delete it's Notes, just unassign this Tag from them)",
+                "Delete Tag?", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1)
+                == System.Windows.Forms.DialogResult.Yes) {
+                cmd.CommandText = "DELETE FROM tags WHERE id=" + tag.Id;
+                cmd.ExecuteNonQuery();
+                note.UnassignTag(tag.Name, null);
+                tree.RemoveObject(tag);
+                roots.Remove(tag);
+              }
+            }
+            //delete note
+            else {
+              var i = (NoteItem)item;
+              var tag = (TagItem)tree.GetParent(i);
+              //purge it
+              if (tag.System && tag.Name == DELETED) {
+                if (n == 1 && MessageBox.Show("Purge the note: " + i.Name + "?\n(This will purge the Note, no undelete is possible)", "Purge Note?",
+                  MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) == System.Windows.Forms.DialogResult.No) return;
+                cmd.CommandText = "DELETE FROM notes WHERE id=" + i.Id;
+                cmd.ExecuteNonQuery();
+              }
+              //move to deleted
+              else {
+                if (n == 1 && MessageBox.Show("Delete the note: " + i.Name + "?\n(This will move the Note to Deleted items folder)", "Delete Note?",
+                  MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) == System.Windows.Forms.DialogResult.No) return;
+                cmd.CommandText = "UPDATE notes SET deleted=1 WHERE id=" + i.Id;
+                cmd.ExecuteNonQuery();
+                var del = roots.Find(x => x.System && x.Name == DELETED);
+                del.Count += 1;
+                tree.RefreshObject(del);
+              }
+              tag.Count -= 1;
+              tree.RefreshObject(tag);
+            }
+          }
+        }
+        tr.Commit();
+      }
+      if (n > 1 && tree.SelectedObjects.Count > 0) tree.SelectedObject = tree.SelectedObjects[0]; //reset the selection
+    }
+
+    // expand tag by key / mouse click
+    private void tree_ItemActivate(object sender, EventArgs e) {
+      if (tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
+    }
+    private void tree_MouseClick(object sender, MouseEventArgs e) {
+      if (e.Button == System.Windows.Forms.MouseButtons.Left && e.Clicks == 1 && tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
+    }
+
+    // edit only valid for tags
+    private void tree_CellEditStarting(object sender, CellEditEventArgs e) {
+      if (e.RowObject is NoteItem) e.Cancel = true;
+    }
+
+    // basic checks
+    private void tree_CellEditValidating(object sender, CellEditEventArgs e) {
+      if (e.Cancel) return;
+      var delims = new char[] { ' ', ',', ';' };
+      var val = ((TextBox)e.Control).Text.Trim(delims);
+      if (val == e.Value.ToString()) return;
+      if (val.IndexOfAny(delims) > 0) {
+        MessageBox.Show("Tag name contains invalid characters: ' ,;'", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        e.Cancel = true;
+        return;
+      }
+      if (roots.Exists(x => !x.System && x != e.RowObject && x.Name.ToLower() == val.ToLower())) {
+        MessageBox.Show("Tag with name '" + val + "' already exist", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        e.Cancel = true;
+        return;
+      }
+    }
+
+    //rename tag
+    private void tree_CellEditFinishing(object sender, CellEditEventArgs e) {
+      if (e.Cancel) return;
+      var tag = ((TagItem)e.RowObject);
+      var delims = new char[] { ' ', ',', ';' };
+      var val = e.NewValue.ToString().Trim(delims);
+      using (SQLiteTransaction tr = sql.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+          cmd.CommandText = "UPDATE tags SET name=? WHERE id=?";
+          cmd.Parameters.AddWithValue(null, val);
+          cmd.Parameters.AddWithValue(null, tag.Id);
+          cmd.ExecuteNonQuery();
+        }
+        tr.Commit();
+      }
+      note.RenameTag(tag.Name, val);
+      tag.Name = val;
+      tree.RefreshObject(tag);
+    }
 
 
 
   }
-
 }
