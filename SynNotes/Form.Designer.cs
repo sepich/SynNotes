@@ -117,6 +117,7 @@
             this.cName,
             this.cDate});
       this.tree.ContextMenuStrip = this.treeMenu;
+      this.tree.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
       this.tree.FullRowSelect = true;
       this.tree.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
       this.tree.HideSelection = false;
@@ -129,8 +130,11 @@
       this.tree.ShowHeaderInAllViews = false;
       this.tree.Size = new System.Drawing.Size(227, 594);
       this.tree.TabIndex = 4;
+      this.tree.UnfocusedHighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
+      this.tree.UnfocusedHighlightForegroundColor = System.Drawing.Color.White;
       this.tree.UseAlternatingBackColors = true;
       this.tree.UseCompatibleStateImageBehavior = false;
+      this.tree.UseOverlays = false;
       this.tree.View = System.Windows.Forms.View.Details;
       this.tree.VirtualMode = true;
       this.tree.CellEditFinishing += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditFinishing);
@@ -177,7 +181,8 @@
       // treeMenu
       // 
       this.treeMenu.Name = "treeMenu";
-      this.treeMenu.Size = new System.Drawing.Size(61, 4);
+      this.treeMenu.ShowImageMargin = false;
+      this.treeMenu.Size = new System.Drawing.Size(36, 4);
       // 
       // statusBar
       // 

@@ -260,7 +260,8 @@ namespace SynNotes {
         else if (cbSearch.Focused && cbSearch.Text.Length > 0) cbSearch.Text = "";
         else this.WindowState = FormWindowState.Minimized;
       }
-      if (e.KeyCode == Keys.Delete && tree.Focused) delClick(null, null);
+      else if (e.KeyCode == Keys.Delete && tree.Focused) delClick(null, null);
+      else if (e.KeyCode == Keys.F7 && e.Modifiers == Keys.None) btnAdd_ButtonClick(null, null);
     }
 
     private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
@@ -347,7 +348,23 @@ namespace SynNotes {
       }
 
       //renderer
-      //this.tree.TreeColumnRenderer.LinePen = new Pen(Color.Transparent);
+      tree.TreeColumnRenderer.LinePen = new Pen(Color.Transparent);
+      //cName.RendererDelegate = delegate(EventArgs e, Graphics g, Rectangle r, Object rowObject) {
+      //  var i = (DrawListViewSubItemEventArgs)e;
+      //  using(SolidBrush b = new SolidBrush(i.Item.BackColor)){
+      //    g.FillRectangle(b, r);
+      //  }
+      //  StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap);
+      //  fmt.LineAlignment = StringAlignment.Center;
+      //  fmt.Trimming = StringTrimming.EllipsisCharacter;
+      //  fmt.Alignment = StringAlignment.Near;
+      //  if (rowObject is TagItem) {
+      //    var t = new Font(i.Item.Font, FontStyle.Bold);
+      //    g.DrawString(((TagItem)rowObject).Name, t, Brushes.Black, r, fmt);
+      //  }
+      //  else g.DrawString(((NoteItem)rowObject).Name, i.Item.Font, Brushes.Black, r, fmt);
+      //  return true;
+      //};
     }
 
     /// <summary>
@@ -477,25 +494,25 @@ namespace SynNotes {
           purge.Click += purgeTagClick;
         }
         else {
-          var newnote = treeMenu.Items.Add("New Note");
+          var newnote = treeMenu.Items.Add("New Note (F7)");
           newnote.Click += btnAdd_ButtonClick;
         }
         if (!tag.System) {
           if (tree.SelectedObjects.Count == 1) {
-            var ren = treeMenu.Items.Add("Rename");
+            var ren = treeMenu.Items.Add("Rename (F2)");
             ren.Click += renTagClick;
           }
 
-          var del = treeMenu.Items.Add("Delete");
+          var del = treeMenu.Items.Add("Delete (Del)");
           del.Click += delClick;
         }
       }
       //for notes
       else {
-        var newnote = treeMenu.Items.Add("New Note");
+        var newnote = treeMenu.Items.Add("New Note (F7)");
         newnote.Click += btnAdd_ButtonClick;
 
-        var del = treeMenu.Items.Add("Delete");
+        var del = treeMenu.Items.Add("Delete (Del)");
         del.Click += delClick;
       }
     }
