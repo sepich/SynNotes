@@ -134,6 +134,7 @@
       this.tree.UnfocusedHighlightForegroundColor = System.Drawing.Color.White;
       this.tree.UseAlternatingBackColors = true;
       this.tree.UseCompatibleStateImageBehavior = false;
+      this.tree.UseNotifyPropertyChanged = true;
       this.tree.UseOverlays = false;
       this.tree.View = System.Windows.Forms.View.Details;
       this.tree.VirtualMode = true;

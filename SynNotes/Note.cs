@@ -81,10 +81,10 @@ namespace SynNotes {
         //refresh tree
         f.scEdit.Modified = false;
         Item.Name = title;
-        f.tree.RefreshObject(f.roots[0]); //All
-        foreach (var tag in Tags) {       //Each other tag  
-          f.tree.RefreshObject(f.roots.Find(x => !x.System && x.Name==tag));
-        }
+        //f.tree.RefreshObject(f.roots[0]); //All
+        //foreach (var tag in Tags) {       //Each other tag  
+        //  f.tree.RefreshObject(f.roots.Find(x => !x.System && x.Name==tag));
+        //}
       }
 
       /// <summary>

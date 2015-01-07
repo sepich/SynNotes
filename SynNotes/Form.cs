@@ -9,7 +9,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Data.SQLite;
 using BrightIdeasSoftware;
-using Microsoft.VisualBasic;
 
 namespace SynNotes {
   

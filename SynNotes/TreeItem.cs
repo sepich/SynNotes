@@ -1,11 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.ComponentModel;
 
 namespace SynNotes {
-  class TreeItem {
+  class TreeItem : INotifyPropertyChanged {
     public long Id { get; set; }        // sqlite item id
-    public string Name { get; set; }    // label
+    public string Name {                // label
+      get { return name; }
+      set {
+        if (name == value) return;
+        name = value;
+        this.OnPropertyChanged("Name");
+      } 
+    }
+    private string name;
+
+    #region Implementation of INotifyPropertyChanged
+    public event PropertyChangedEventHandler PropertyChanged;
+    private void OnPropertyChanged(string propertyName) {
+      if (this.PropertyChanged != null) this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+    }
+    #endregion  
   }
 
   /// <summary>
