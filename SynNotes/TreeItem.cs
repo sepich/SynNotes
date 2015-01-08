@@ -18,7 +18,7 @@ namespace SynNotes {
 
     #region Implementation of INotifyPropertyChanged
     public event PropertyChangedEventHandler PropertyChanged;
-    private void OnPropertyChanged(string propertyName) {
+    internal void OnPropertyChanged(string propertyName) {
       if (this.PropertyChanged != null) this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
     }
     #endregion  
@@ -28,14 +28,25 @@ namespace SynNotes {
   /// model for tree roots
   /// </summary> 
   class TagItem : TreeItem {
-    public bool System { get; set; }    // sys tags Deleted and All have this set
-    public int Count { get; set; }      // count of notes
-    public List<NoteItem> Notes { get; set; } // childs list
-    public int Index { get; set; }      // order in list
-    public bool Expanded { get; set; }  // should it be expanded on start
+    public TagItem(List<NoteItem> NotesList) { // init list
+      notes = NotesList;
+    }
 
-    public TagItem() {                  // init list
-      Notes = new List<NoteItem>();
+    private List<NoteItem> notes;
+    public bool System { get; set; }    // sys tags Deleted and All have this set
+    public bool Expanded { get; set; }  // should it be expanded on start
+    public int Index { get; set; }      // order in list
+    public List<NoteItem> Notes {       // notes of this tag
+      get {
+        if (!this.System) return notes.FindAll(x => !x.Deleted && x.Tags.Contains(this));
+        else {
+          if (base.Name == Glob.ALL) return notes.FindAll(x => !x.Deleted);
+          else return notes.FindAll(x => x.Deleted);
+        }
+      }
+    }
+    public int Count {                  // count of notes
+      get { return Notes.Count; }
     }
   }
 
@@ -43,12 +54,27 @@ namespace SynNotes {
   /// model for tree leafes
   /// </summary>
   class NoteItem : TreeItem {
-    public float ModifyDate { get; set; } // unixtime of last modify
-    public string DateShort {             // short string of last modify
+    public NoteItem() {                     // init list
+      Tags = new List<TagItem>();
+      Deleted = false;
+    }
+
+    public List<TagItem> Tags { get; set; } // assigned tags objects
+    public float ModifyDate {               // unixtime of last modify
+      get { return modifyDate; }
+      set {
+        if (modifyDate == value) return;
+        modifyDate = value;
+        base.OnPropertyChanged("DateShort");
+      }
+    }
+    private float modifyDate;
+    public string DateShort {               // short string of last modify
       get {
          return ModifyDate.ToString();
       }
     }
+    public bool Deleted { get; set; }       // is deleted
   }
 
 }

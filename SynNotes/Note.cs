@@ -15,11 +15,9 @@ namespace SynNotes {
     class Note {
       private Form1 f;                       // main form 
       public NoteItem Item { get; set; }     // note id
-      private List<string> Tags { get; set; }// note tag names list
       private List<Label> Labels;            // tag labels displayed
 
       public Note(Form1 form) {
-        Tags = new List<string>();
         Labels = new List<Label>();
         f = form;
       }
@@ -28,7 +26,7 @@ namespace SynNotes {
       /// show note for selected item
       /// </summary>
       public void ShowSelected() {
-        if (f.tree.SelectedItem != null && f.tree.SelectedObject is NoteItem) Item = (NoteItem)f.tree.SelectedObject;
+        if (f.tree.SelectedItem != null && f.tree.SelectedObject is NoteItem && (NoteItem)f.tree.SelectedObject != Item) Item = (NoteItem)f.tree.SelectedObject;
         else return;
 
         using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
@@ -43,17 +41,6 @@ namespace SynNotes {
         }
         f.scEdit.Modified = false;
         f.Text = GetTitle();
-
-        //load tags
-        Tags.Clear();
-        using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
-          cmd.CommandText = "SELECT t.name FROM tags t LEFT JOIN nt c ON t.id=c.tag WHERE c.note=" + Item.Id;
-          using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
-            while (rdr.Read()) {
-              Tags.Add(rdr.GetString(0));
-            }
-          }
-        }
         drawTags();
       }
 
@@ -62,14 +49,14 @@ namespace SynNotes {
       /// </summary>
       public void Save() {
         if (Item == null) return;
-        var ut = (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-        var title = GetTitle();
+        Item.ModifyDate = (float)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        Item.Name = GetTitle();
         //save text
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
             cmd.CommandText = "UPDATE notes SET modifydate=?, title=?, content=? WHERE id=?";
-            cmd.Parameters.AddWithValue(null, ut);
-            cmd.Parameters.AddWithValue(null, title);
+            cmd.Parameters.AddWithValue(null, Item.ModifyDate);
+            cmd.Parameters.AddWithValue(null, Item.Name);
             cmd.Parameters.AddWithValue(null, f.scEdit.Text);
             cmd.Parameters.AddWithValue(null, Item.Id);
             cmd.ExecuteNonQuery();
@@ -77,14 +64,7 @@ namespace SynNotes {
           }
           tr.Commit();
         }
-
-        //refresh tree
         f.scEdit.Modified = false;
-        Item.Name = title;
-        //f.tree.RefreshObject(f.roots[0]); //All
-        //foreach (var tag in Tags) {       //Each other tag  
-        //  f.tree.RefreshObject(f.roots.Find(x => !x.System && x.Name==tag));
-        //}
       }
 
       /// <summary>
@@ -101,15 +81,12 @@ namespace SynNotes {
       }
 
       #region tag box
-
       /// <summary>
       /// rename displayed tag, if exist
       /// </summary>
-      public void RenameTag(string oldvalue, string newvalue) {
-        if (Tags.Remove(oldvalue)) {
-          Tags.Add(newvalue);
-          drawTags();
-        }
+      public void RenameLabel(string oldvalue) {
+        var l = Labels.Find(x => x.Text == oldvalue);
+        if (l != null) drawTags();
       }
 
       /// <summary>
@@ -117,16 +94,17 @@ namespace SynNotes {
       /// </summary>
       private void drawTags() {
         //cleanup
-        if (Labels.Count > 0) 
+        if (Labels.Count > 0) {
           foreach (Label l in Labels) {
             f.splitContainer1.Panel2.Controls.Remove(l);
             l.Dispose();
           }
+          Labels.Clear();
+        }
         f.tagBox.Left = 37;
-        f.tagBox.Text = "";
 
         // create labels
-        foreach (var tag in Tags) drawTag(tag);
+        Item.Tags.ForEach(x => drawTag(x.Name));
       }
 
       /// <summary>
@@ -165,14 +143,15 @@ namespace SynNotes {
       /// </summary>
       private void tagClick(object sender, EventArgs e) {
         var l = (Label)sender;
-        UnassignTag(l.Text, l);
-        FillAutocomplete();
+        var t = Item.Tags.Find(x => x.Name == l.Text);
+        UnassignTag(t);
+        RemoveLabel(l);
       }
 
       /// <summary>
       /// parse textbox for tags to list
       /// </summary>
-      public void ParseTags(bool repaint = false) {
+      public void ParseTags() {
         TagItem tagItem;
         var s = f.tagBox.Text;
         f.tagBox.Text = "";
@@ -180,28 +159,28 @@ namespace SynNotes {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
             foreach (var tag in s.Split(new char[] { ' ', ',', ';' })) {
               if (tag == "") continue;
-              if (Tags.Contains(tag, StringComparer.CurrentCultureIgnoreCase)) continue;   //skip already assigned
-              tagItem = f.roots.Find(x => !x.System && x.Name.ToLower() == tag.ToLower()); //search if exist
+              if (Item.Tags.Exists(x => x.Name.ToLower() == tag.ToLower())) continue;     //skip already assigned
+              tagItem = f.tags.Find(x => !x.System && x.Name.ToLower() == tag.ToLower()); //search if exist
               if (tagItem==null) {
                 //create tag in db if it is new
                 cmd.Parameters.Clear();
                 cmd.CommandText = "INSERT INTO tags(name,`index`) VALUES(?,?)";                
                 cmd.Parameters.AddWithValue(null, tag);
-                cmd.Parameters.AddWithValue(null, f.roots.Count - 1);
+                cmd.Parameters.AddWithValue(null, f.tags.Count - 1);
                 cmd.ExecuteNonQuery();
                 //refresh tree
-                tagItem = new TagItem();
+                tagItem = new TagItem(f.notes);
                 tagItem.Name = tag;
                 tagItem.Id = f.sql.LastInsertRowId;
-                tagItem.Index = f.roots.Count - 1;
+                tagItem.Index = f.tags.Count - 1;
                 f.tree.AddObject(tagItem);
-                f.roots.Insert(f.roots.Count - 1, tagItem);
+                f.tree.SelectedObject = Item;
+                f.tags.Add(tagItem);
               }
-              cmd.CommandText = "INSERT INTO nt(note,tag) VALUES(" + Item.Id.ToString() + "," + tagItem.Id.ToString() + ")";
+              cmd.CommandText = "INSERT INTO nt(note,tag) VALUES(" + Item.Id + "," + tagItem.Id + ")";
               cmd.ExecuteNonQuery();
-              tagItem.Count += 1;
-              f.tree.RefreshObject(tagItem);
-              Tags.Add(tagItem.Name);
+              Item.Tags.Add(tagItem);
+              f.tree.RefreshObject(tagItem);              
               drawTag(tagItem.Name);
             }
           } 
@@ -215,11 +194,9 @@ namespace SynNotes {
       /// </summary>
       public void FillAutocomplete() {
         f.tagBox.AutoCompleteCustomSource.Clear();
-        if (f.roots.Count > 0) {          
-          foreach (var tag in f.roots) {
-            if (tag.System) continue; //skip system tags
-            if (Tags.Contains(tag.Name, StringComparer.CurrentCultureIgnoreCase)) continue; //skip already used tags
-            f.tagBox.AutoCompleteCustomSource.Add(tag.Name);
+        if (f.tags.Count > 0) {
+          foreach(var x in f.tags){
+            if (!x.System && !Item.Tags.Contains(x)) f.tagBox.AutoCompleteCustomSource.Add(x.Name);
           }
         }
       }
@@ -228,43 +205,45 @@ namespace SynNotes {
       /// unassign Note from last assigned tag
       /// </summary>
       public void UnassignLastTag() {
-        if (Tags.Count > 0) {
-          var s = Tags[Tags.Count - 1];
+        if (Item.Tags.Count > 0) {
           var l = Labels[Labels.Count - 1];
-          UnassignTag(s, l);
-          FillAutocomplete();
+          f.tagBox.Left = l.Left;
+          UnassignTag(Item.Tags[Item.Tags.Count - 1]);
+          RemoveLabel(l, null, false); // don't redraw all labels, just move textbox left edge back
         }
+      }
+
+      /// <summary>
+      /// remove label if exist, optionally find label by tag
+      /// </summary>
+      public void RemoveLabel(Label label, TagItem tag=null, bool redraw = true) {
+        if (label == null) label = Labels.Find(x => x.Text == tag.Name);
+        if (label == null) return;
+        f.splitContainer1.Panel2.Controls.Remove(label);
+        label.Dispose();
+        Labels.Remove(label);
+        if(redraw) drawTags(); //not used in del last label
       }
 
       /// <summary>
       /// Unassign provided tag if it assigned
       /// </summary>
       /// <param name="label">use null for autosearch</param>
-      public void UnassignTag(string tag, Label label) {
-        Tags.Remove(tag);
-        var tagItem = f.roots.Find(x => !x.System && x.Name == tag);
-        if (label == null) label = Labels.Find(x => x.Text == tag);
-        if (label == null) return;
-        //remove tag label        
-        f.tagBox.Left = label.Left;
-        f.splitContainer1.Panel2.Controls.Remove(label);
-        label.Dispose();
-        Labels.Remove(label);
+      public void UnassignTag(TagItem tag) {
+        if (tag == null) return;
+        Item.Tags.Remove(tag);
         //save to db
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
-            cmd.CommandText = "DELETE FROM nt WHERE note=? AND tag=?";
-            cmd.Parameters.AddWithValue(null, Item.Id);
-            cmd.Parameters.AddWithValue(null, tagItem.Id);
+            cmd.CommandText = "DELETE FROM nt WHERE note="+Item.Id+" AND tag="+tag.Id;
             cmd.ExecuteNonQuery();
           }
           tr.Commit();
         }
         //update tree
-        tagItem.Count -= 1;
-        f.tree.RefreshObject(tagItem);
+        f.tree.RefreshObject(tag);
+        FillAutocomplete();
       }
-
       #endregion tag box
 
 

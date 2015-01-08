@@ -322,24 +322,24 @@
             this.toolStripMenuItem2,
             this.exitToolStripMenuItem1});
       this.contextMenuTray.Name = "contextMenuTray";
-      this.contextMenuTray.Size = new System.Drawing.Size(104, 54);
+      this.contextMenuTray.Size = new System.Drawing.Size(153, 76);
       // 
       // openToolStripMenuItem1
       // 
       this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
-      this.openToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
+      this.openToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
       this.openToolStripMenuItem1.Text = "Show";
-      this.openToolStripMenuItem1.Click += new System.EventHandler(this.openToolStripMenuItem1_Click);
+      this.openToolStripMenuItem1.Click += new System.EventHandler(this.showToolStripMenuItem1_Click);
       // 
       // toolStripMenuItem2
       // 
       this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-      this.toolStripMenuItem2.Size = new System.Drawing.Size(100, 6);
+      this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
       // 
       // exitToolStripMenuItem1
       // 
       this.exitToolStripMenuItem1.Name = "exitToolStripMenuItem1";
-      this.exitToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
+      this.exitToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
       this.exitToolStripMenuItem1.Text = "Exit";
       this.exitToolStripMenuItem1.Click += new System.EventHandler(this.exitToolStripMenuItem1_Click);
       // 
