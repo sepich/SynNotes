@@ -86,21 +86,23 @@ namespace SynNotes {
       //autosave      
       if (sql != null) {
         if (scEdit.Modified) note.Save();
-        using (SQLiteTransaction tr = sql.BeginTransaction()) {
-          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
-            cmd.CommandText = "UPDATE tags SET expanded=0";
-            cmd.ExecuteNonQuery();
-            foreach (var item in tree.ExpandedObjects) {
-              var tag = item as TagItem;
-              if (tag != null) {
-                cmd.CommandText = "UPDATE tags SET expanded=1 WHERE id=" + tag.Id;
-                cmd.ExecuteNonQuery();
+        if (note.Item != null) {
+          using (SQLiteTransaction tr = sql.BeginTransaction()) {
+            using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+              cmd.CommandText = "UPDATE tags SET expanded=0";
+              cmd.ExecuteNonQuery();
+              foreach (var item in tree.ExpandedObjects) {
+                var tag = item as TagItem;
+                if (tag != null) {
+                  cmd.CommandText = "UPDATE tags SET expanded=1 WHERE id=" + tag.Id;
+                  cmd.ExecuteNonQuery();
+                }
               }
+              cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('lastNote'," + note.Item.Id + ")";
+              cmd.ExecuteNonQuery();
             }
-            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('lastNote'," + note.Item.Id + ")";
-            cmd.ExecuteNonQuery();
+            tr.Commit();
           }
-          tr.Commit();
         }
         //close db connection
         sql.Dispose();
@@ -278,6 +280,7 @@ namespace SynNotes {
         cDate.IsVisible = true;
         tree.RebuildColumns();
         tree.RowHeight = -1;
+        tree.EmptyListMsg = "";
 
         //getters
         tree.Roots = null;
@@ -321,6 +324,7 @@ namespace SynNotes {
         tree.RowHeight = 40;
         tree.CanExpandGetter = null;
         tree.ChildrenGetter = null;
+        tree.EmptyListMsg = "0 results found";
       }
       //search
       if (!query.Contains("*")) { //search by prefixes by default
@@ -373,7 +377,7 @@ namespace SynNotes {
 
       cDate.AspectGetter = delegate(object x) {
         var tag = x as TagItem;
-        if (x != null) return tag.Count;
+        if (tag != null) return tag.Count;
         else return ((NoteItem)x).DateShort;
       };
       cSort.AspectGetter = delegate(object x) {  //hidden column used for sorting
