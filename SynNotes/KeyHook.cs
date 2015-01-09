@@ -30,7 +30,7 @@ namespace SynNotes {
         if (m.Msg == WM_HOTKEY) {
           // get the keys.
           Keys key = (Keys)(((int)m.LParam >> 16) & 0xFFFF);
-          ModifierKey modifier = (ModifierKey)((int)m.LParam & 0xFFFF);
+          ModifierKeys modifier = (ModifierKeys)((int)m.LParam & 0xFFFF);
           int id = m.WParam.ToInt32();
 
           // invoke the event to notify the parent.
@@ -64,7 +64,7 @@ namespace SynNotes {
     /// </summary>
     /// <param name="modifier">The modifiers that are associated with the hot key.</param>
     /// <param name="key">The key itself that is associated with the hot key.</param>
-    public bool RegisterHotKey(int id, ModifierKey modifier, uint key) {
+    public bool RegisterHotKey(int id, ModifierKeys modifier, uint key) {
       return NativeMethods.RegisterHotKey(_window.Handle, id, (uint)modifier, key);
     }
 
@@ -80,9 +80,9 @@ namespace SynNotes {
           if (a.Last()[0] == '`') k = (uint)Keys.Oemtilde.GetHashCode();
           else k = (uint)a.Last()[0];
           //get modifiers
-          var m = new ModifierKey();
+          var m = new ModifierKeys();
           for (var i = 0; i < a.Length - 1; i++) {
-            m = m | (ModifierKey)Enum.Parse(typeof(ModifierKey), a[i].Trim());
+            m = m | (ModifierKeys)Enum.Parse(typeof(ModifierKeys), a[i].Trim());
           }
           //set key hook
           if (!RegisterHotKey(id, m, k)) MessageBox.Show("Error registering HotKey: " + keys);
@@ -112,17 +112,17 @@ namespace SynNotes {
   /// Event Args for the event that is fired after the hot key has been pressed.
   /// </summary>
   public class KeyPressedEventArgs : EventArgs {
-    private ModifierKey _modifier;
+    private ModifierKeys _modifier;
     private Keys _key;
     private int _id;
 
-    internal KeyPressedEventArgs(ModifierKey modifier, Keys key, int id) {
+    internal KeyPressedEventArgs(ModifierKeys modifier, Keys key, int id) {
       _modifier = modifier;
       _key = key;
       _id = id;
     }
 
-    public ModifierKey Modifier {
+    public ModifierKeys Modifier {
       get { return _modifier; }
     }
 
@@ -139,7 +139,7 @@ namespace SynNotes {
   /// The enumeration of possible modifiers.
   /// </summary>
   [Flags]
-  public enum ModifierKey : uint {
+  public enum ModifierKeys : byte {
     Alt = 1,
     Ctrl = 2,
     Shift = 4,

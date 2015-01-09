@@ -68,12 +68,12 @@ class IniFile {
   }
 
   public string[] GetSections() {
-    return ini.Keys.Where(t => t != "").ToArray();
+    return ini.Keys.Where(x => !String.IsNullOrEmpty(x)).ToArray();
   }
 
   public void SetValue(string section, string key, string value) {
     if (!ini.ContainsKey(section)) {
-      Dictionary<string, string> currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+      Dictionary<string, string> currentSection = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
       ini.Add(section, currentSection);
     }
     ini[section][key] = value;
@@ -83,7 +83,7 @@ class IniFile {
     string strToSave = "";
 
     foreach (string section in ini.Keys) {
-      if (section == "" && ini[section].Keys.Count == 0) continue;
+      if (String.IsNullOrEmpty(section) && ini[section].Keys.Count == 0) continue;
       strToSave += ("[" + section + "]\r\n");
 
       foreach (string key  in ini[section].Keys) {

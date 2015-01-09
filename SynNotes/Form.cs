@@ -31,7 +31,6 @@ namespace SynNotes {
 
     public Form1() {InitializeComponent();}
 
-    //before form drawn
     private void Form1_Load(object sender, EventArgs e) {
       // read settings from ini
       if (File.Exists(userdir + conffile)) ini = new IniFile(userdir + conffile);
@@ -62,6 +61,50 @@ namespace SynNotes {
       //init tree
       initTree();
       note = new Note(this);
+    }
+
+    private void Form1_FormClosed(object sender, FormClosedEventArgs e) {
+      //save ini settings file
+      try{
+        ini.SaveSettings(conffile);
+      }
+      catch{
+        if (!Directory.Exists(userdir)) Directory.CreateDirectory(userdir);
+        ini.SaveSettings(userdir + conffile);
+      }
+    }
+
+    private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
+      // store form settings for saving
+      if (this.WindowState == FormWindowState.Normal) {
+        ini.SetValue("Form", "Top", this.Top.ToString());
+        ini.SetValue("Form", "Left", this.Left.ToString());
+        ini.SetValue("Form", "Width", this.Width.ToString());
+        ini.SetValue("Form", "Height", this.Height.ToString());
+      }
+      ini.SetValue("Form", "WindowState", this.WindowState.ToString());
+      //autosave      
+      if (sql != null) {
+        if (scEdit.Modified) note.Save();
+        using (SQLiteTransaction tr = sql.BeginTransaction()) {
+          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+            cmd.CommandText = "UPDATE tags SET expanded=0";
+            cmd.ExecuteNonQuery();
+            foreach (var item in tree.ExpandedObjects) {
+              var tag = item as TagItem;
+              if (tag != null) {
+                cmd.CommandText = "UPDATE tags SET expanded=1 WHERE id=" + tag.Id;
+                cmd.ExecuteNonQuery();
+              }
+            }
+            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('lastNote'," + note.Item.Id + ")";
+            cmd.ExecuteNonQuery();
+          }
+          tr.Commit();
+        }
+        //close db connection
+        sql.Dispose();
+      }
     }
 
     /// <summary>
@@ -169,49 +212,6 @@ namespace SynNotes {
       }
     }
 
-    private void Form1_FormClosed(object sender, FormClosedEventArgs e) {
-      //save ini settings file
-      try{
-        ini.SaveSettings(conffile);
-      }
-      catch{
-        if (!Directory.Exists(userdir)) Directory.CreateDirectory(userdir);
-        ini.SaveSettings(userdir + conffile);
-      }
-    }
-
-    private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
-      // store form settings for saving
-      if (this.WindowState == FormWindowState.Normal) {
-        ini.SetValue("Form", "Top", this.Top.ToString());
-        ini.SetValue("Form", "Left", this.Left.ToString());
-        ini.SetValue("Form", "Width", this.Width.ToString());
-        ini.SetValue("Form", "Height", this.Height.ToString());
-      }
-      ini.SetValue("Form", "WindowState", this.WindowState.ToString());
-      //autosave      
-      if (sql != null) {
-        if (scEdit.Modified) note.Save();
-        using (SQLiteTransaction tr = sql.BeginTransaction()) {
-          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
-            cmd.CommandText = "UPDATE tags SET expanded=0";
-            cmd.ExecuteNonQuery();
-            foreach (var item in tree.ExpandedObjects) {
-              if (item is TagItem) {
-                cmd.CommandText = "UPDATE tags SET expanded=1 WHERE id=" + ((TagItem)item).Id;
-                cmd.ExecuteNonQuery();
-              }
-            }
-            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('lastNote'," + note.Item.Id + ")";
-            cmd.ExecuteNonQuery();
-          }
-          tr.Commit();
-        }
-        //close db connection
-        sql.Dispose();
-      }
-    }
-
     /// <summary>
     /// called for registered hotkeys
     /// </summary>
@@ -282,8 +282,8 @@ namespace SynNotes {
         //getters
         tree.Roots = null;
         tree.CanExpandGetter = delegate(object x) {  // should be a little faster than use x.Count (=notes.FindAll)
-          if (x is TagItem) {
-            var tag = (TagItem)x;
+          var tag = x as TagItem;
+          if (tag != null) {
             if (!tag.System) return notes.Exists(n => !n.Deleted && n.Tags.Contains(tag));
             else {
               if (tag == tagAll) return notes.Exists(n => !n.Deleted);
@@ -296,8 +296,8 @@ namespace SynNotes {
           return ((TagItem)x).Notes;
         };
         tree.ParentGetter = delegate(object x) {
-          if (x is NoteItem) {
-            var n = (NoteItem)x;
+          var n = x as NoteItem;
+          if (n != null) {
             if (n.Tags.Count > 0) return n.Tags[0];
             else return tagAll;
           }
@@ -372,11 +372,13 @@ namespace SynNotes {
       treeAsTags();
 
       cDate.AspectGetter = delegate(object x) {
-        if (x is TagItem) return ((TagItem)x).Count;
+        var tag = x as TagItem;
+        if (x != null) return tag.Count;
         else return ((NoteItem)x).DateShort;
       };
       cSort.AspectGetter = delegate(object x) {  //hidden column used for sorting
-        if (x is TagItem) return ((TagItem)x).Index;
+        var tag = x as TagItem;
+        if (tag != null) return tag.Index;
         else return ((NoteItem)x).Name;
       };
       tree.Sort(cSort, SortOrder.Ascending);     //sort by this hidden column
@@ -625,9 +627,9 @@ namespace SynNotes {
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
           foreach (var item in tree.SelectedObjects) {
+            var tag = (TagItem)item;
             // delete tag
-            if (item is TagItem) {
-              var tag = (TagItem)item;
+            if (tag != null) {
               if (tag.System) continue; //can't del system folder
               if (n > 1 || MessageBox.Show("Delete the tag: " + tag.Name + "?\n(This will not delete it's Notes, just unassign this Tag from them)",
                 "Delete Tag?", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1)
@@ -643,7 +645,7 @@ namespace SynNotes {
             //delete note
             else {
               var i = (NoteItem)item;
-              var tag = (TagItem)tree.GetParent(i);
+              tag = (TagItem)tree.GetParent(i);
               //purge it
               if (tag == tagDeleted) {
                 if (n == 1 && MessageBox.Show("Purge the note: " + i.Name + "?\n(This will purge the Note, no undelete is possible)", "Purge Note?",
@@ -760,12 +762,12 @@ namespace SynNotes {
     internal const uint SW_RESTORE = 0x09;
     [DllImport("user32.dll")]
     internal static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
-    [DllImport("user32.dll")]
-    internal static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+    //[DllImport("user32.dll")]
+    //internal static extern bool UnregisterHotKey(IntPtr hWnd, int id);
   }
 
   // globals
-  public class Glob {
+  public static class Glob {
     public const string ALL = "All";
     public const string DELETED = "Deleted";
   }

@@ -157,7 +157,7 @@ namespace SynNotes {
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
             foreach (var tag in s.Split(new char[] { ' ', ',', ';' })) {
-              if (tag == "") continue;
+              if (String.IsNullOrEmpty(tag)) continue;
               if (Item.Tags.Exists(x => x.Name.ToLower() == tag.ToLower())) continue;     //skip already assigned
               tagItem = f.tags.Find(x => !x.System && x.Name.ToLower() == tag.ToLower()); //search if exist
               if (tagItem==null) {
