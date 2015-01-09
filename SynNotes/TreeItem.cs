@@ -75,6 +75,7 @@ namespace SynNotes {
       }
     }
     public bool Deleted { get; set; }       // is deleted
+    public string Snippet { get; set; }     // search match preview
   }
 
 }

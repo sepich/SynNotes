@@ -60,7 +60,6 @@ namespace SynNotes {
             cmd.Parameters.AddWithValue(null, f.scEdit.Text);
             cmd.Parameters.AddWithValue(null, Item.Id);
             cmd.ExecuteNonQuery();
-            //TODO update fts
           }
           tr.Commit();
         }

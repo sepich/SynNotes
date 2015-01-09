@@ -114,9 +114,9 @@
       this.tree.BorderStyle = System.Windows.Forms.BorderStyle.None;
       this.tree.CellEditActivation = BrightIdeasSoftware.ObjectListView.CellEditActivateMode.SingleClick;
       this.tree.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.cName,
-            this.cDate});
+            this.cName});
       this.tree.ContextMenuStrip = this.treeMenu;
+      this.tree.EmptyListMsg = "0 results found";
       this.tree.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
       this.tree.FullRowSelect = true;
       this.tree.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
@@ -159,8 +159,10 @@
       this.cDate.AspectName = "";
       this.cDate.AutoCompleteEditor = false;
       this.cDate.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
+      this.cDate.DisplayIndex = 1;
       this.cDate.HeaderTextAlign = System.Windows.Forms.HorizontalAlignment.Right;
       this.cDate.IsEditable = false;
+      this.cDate.IsVisible = false;
       this.cDate.Text = "Date";
       this.cDate.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
       this.cDate.UseFiltering = false;
@@ -237,7 +239,9 @@
       this.cbSearch.TabIndex = 2;
       this.cbSearch.Tag = "hint";
       this.cbSearch.Text = "Search Notes";
+      this.cbSearch.TextChanged += new System.EventHandler(this.cbSearch_TextChanged);
       this.cbSearch.Enter += new System.EventHandler(this.cbSearch_Enter);
+      this.cbSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbSearch_KeyDown);
       this.cbSearch.Leave += new System.EventHandler(this.cbSearch_Leave);
       // 
       // tagBox
@@ -322,24 +326,24 @@
             this.toolStripMenuItem2,
             this.exitToolStripMenuItem1});
       this.contextMenuTray.Name = "contextMenuTray";
-      this.contextMenuTray.Size = new System.Drawing.Size(153, 76);
+      this.contextMenuTray.Size = new System.Drawing.Size(104, 54);
       // 
       // openToolStripMenuItem1
       // 
       this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
-      this.openToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+      this.openToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
       this.openToolStripMenuItem1.Text = "Show";
       this.openToolStripMenuItem1.Click += new System.EventHandler(this.showToolStripMenuItem1_Click);
       // 
       // toolStripMenuItem2
       // 
       this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-      this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
+      this.toolStripMenuItem2.Size = new System.Drawing.Size(100, 6);
       // 
       // exitToolStripMenuItem1
       // 
       this.exitToolStripMenuItem1.Name = "exitToolStripMenuItem1";
-      this.exitToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+      this.exitToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
       this.exitToolStripMenuItem1.Text = "Exit";
       this.exitToolStripMenuItem1.Click += new System.EventHandler(this.exitToolStripMenuItem1_Click);
       // 
