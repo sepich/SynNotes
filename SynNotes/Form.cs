@@ -720,10 +720,23 @@ namespace SynNotes {
       var i = tree.SelectedIndex;
       switch (e.KeyCode) {
         case Keys.Down:
-          if (i < found.Count - 1) tree.SelectedIndex = i + 1;
+          if (i < tree.Items.Count - 1) tree.SelectedIndex = i + 1;
+          tree.FocusedItem = tree.SelectedItem;
           break;
         case Keys.Up:
-          if (i >0) tree.SelectedIndex = i - 1;
+          if (i > 0) tree.SelectedIndex = i - 1;
+          tree.FocusedItem = tree.SelectedItem;
+          break;
+        case Keys.Right:
+          if (cDate.IsVisible && cbSearch.Text.Length==0) tree.Expand(tree.SelectedObject);
+          break;
+        case Keys.Left:
+          if (cDate.IsVisible && cbSearch.Text.Length == 0) {
+            var node = tree.GetParent(tree.SelectedObject);
+            if (node == null) tree.Collapse(tree.SelectedObject);
+            else tree.SelectedObject = node;
+            tree.FocusedItem = tree.SelectedItem;
+          }
           break;
       }
     }
