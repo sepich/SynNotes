@@ -15,7 +15,8 @@
         {
             if (disposing && (components != null))
             {
-                components.Dispose();
+              hook.Dispose();
+              components.Dispose();
             }
             base.Dispose(disposing);
         }

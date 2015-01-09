@@ -29,10 +29,6 @@ namespace SynNotes {
     TagItem tagDeleted;            // pointer to DELETED tag
     TagItem tagAll;                // pointer to ALL tag
 
-    // WinAPI
-    [DllImport("user32.dll")] private static extern int ShowWindow(IntPtr hWnd, uint Msg);
-    private const uint SW_RESTORE = 0x09;
-
     public Form1() {InitializeComponent();}
 
     //before form drawn
@@ -221,7 +217,7 @@ namespace SynNotes {
     /// </summary>
     private void HotkeyPressed(object sender, KeyPressedEventArgs e) {
       // Show hotkey  
-      if (this.WindowState == FormWindowState.Minimized) ShowWindow(this.Handle, SW_RESTORE);
+      if (this.WindowState == FormWindowState.Minimized) NativeMethods.ShowWindow(this.Handle, NativeMethods.SW_RESTORE);
       else {
         this.Activate();
         this.BringToFront();
@@ -244,7 +240,7 @@ namespace SynNotes {
     #region notify icon
     private void notifyIcon1_Click(object sender, EventArgs e) {
       MouseEventArgs me = (MouseEventArgs)e;
-      if (me.Button == MouseButtons.Left) ShowWindow(this.Handle, SW_RESTORE);
+      if (me.Button == MouseButtons.Left) NativeMethods.ShowWindow(this.Handle, NativeMethods.SW_RESTORE);
     }
 
     private void Form1_Resize(object sender, EventArgs e) {
@@ -264,7 +260,7 @@ namespace SynNotes {
     }
 
     private void showToolStripMenuItem1_Click(object sender, EventArgs e) {
-      ShowWindow(this.Handle, SW_RESTORE);
+      NativeMethods.ShowWindow(this.Handle, NativeMethods.SW_RESTORE);
     }
 
     private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
@@ -272,7 +268,7 @@ namespace SynNotes {
     }
     #endregion notify icon
 
-    #region tree
+    #region tree 
     /// <summary>
     /// switch tree to tags view
     /// </summary>
@@ -458,6 +454,123 @@ namespace SynNotes {
     }
     #endregion tree
 
+    #region tree events
+    // change note in right pane
+    private void tree_SelectionChanged(object sender, EventArgs e) {
+      if (scEdit.Modified) note.Save();
+      note.ShowSelected();
+    }
+
+    // expand tag by key / mouse click
+    private void tree_ItemActivate(object sender, EventArgs e) {
+      if (tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
+    }
+    private void tree_MouseClick(object sender, MouseEventArgs e) {
+      if (e.Button == System.Windows.Forms.MouseButtons.Left && e.Clicks == 1 && tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
+    }
+
+    // edit only valid for tags
+    private void tree_CellEditStarting(object sender, CellEditEventArgs e) {
+      if (e.RowObject is NoteItem) e.Cancel = true;
+    }
+
+    // basic checks
+    private void tree_CellEditValidating(object sender, CellEditEventArgs e) {
+      if (e.Cancel) return;
+      var delims = new char[] { ' ', ',', ';' };
+      var val = ((TextBox)e.Control).Text.Trim(delims);
+      if (val == e.Value.ToString()) return;
+      if (val.IndexOfAny(delims) > 0) {
+        MessageBox.Show("Tag name contains invalid characters: ' ,;'", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        e.Cancel = true;
+        return;
+      }
+      if (tags.Exists(x => !x.System && x != e.RowObject && x.Name.ToLower() == val.ToLower())) {
+        MessageBox.Show("Tag with name '" + val + "' already exist", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        e.Cancel = true;
+        return;
+      }
+    }
+
+    //rename tag
+    private void tree_CellEditFinishing(object sender, CellEditEventArgs e) {
+      if (e.Cancel) return;
+      var tag = ((TagItem)e.RowObject);
+      var delims = new char[] { ' ', ',', ';' };
+      var oldval = tag.Name;
+      tag.Name = e.NewValue.ToString().Trim(delims);
+      using (SQLiteTransaction tr = sql.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+          cmd.CommandText = "UPDATE tags SET name=? WHERE id=?";
+          cmd.Parameters.AddWithValue(null, tag.Name);
+          cmd.Parameters.AddWithValue(null, tag.Id);
+          cmd.ExecuteNonQuery();
+        }
+        tr.Commit();
+      }
+      note.RenameLabel(oldval); //rename tagBox label if exist
+    }
+    #endregion tree events
+
+    #region tree context menu
+    // fill tree context menu with items valid for row
+    private void tree_CellRightClick(object sender, CellRightClickEventArgs e) {
+      treeMenu.Items.Clear();
+      //for tags
+      if (e.Model is TagItem) {
+        var tag = (TagItem)e.Model;
+        if (tag == tagDeleted && tree.SelectedObjects.Count == 1) {
+          var purge = treeMenu.Items.Add("Purge Deleted");
+          purge.Click += purgeTagClick;
+        }
+        else {
+          var newnote = treeMenu.Items.Add("New Note (F7)");
+          newnote.Click += btnAdd_ButtonClick;
+        }
+        if (!tag.System) {
+          if (tree.SelectedObjects.Count == 1) {
+            var ren = treeMenu.Items.Add("Rename (F2)");
+            ren.Click += renTagClick;
+          }
+
+          var del = treeMenu.Items.Add("Delete (Del)");
+          del.Click += delClick;
+        }
+      }
+      //for notes
+      else {
+        var newnote = treeMenu.Items.Add("New Note (F7)");
+        newnote.Click += btnAdd_ButtonClick;
+
+        var del = treeMenu.Items.Add("Delete (Del)");
+        del.Click += delClick;
+      }
+    }
+
+    //purge deleted notes
+    private void purgeTagClick(object sender, EventArgs e) {
+      if (tagDeleted.Count > 0) {
+        tree.Expand(tagDeleted);
+        tree.SelectedObjects = tagDeleted.Notes;
+        deleteSelected();
+      }
+    }
+
+    //rename tag
+    private void renTagClick(object sender, EventArgs e) {
+      tree.EditModel(tree.SelectedObject);
+    }
+
+    //delete selected items
+    private void delClick(object sender, EventArgs e) {
+      deleteSelected();
+    }
+    #endregion tree context menu
+
+    #region tree drag'n'drop
+
+    #endregion tree drag'n'drop
+
     private void btnAdd_ButtonClick(object sender, EventArgs e) {
       createNote();
     }
@@ -499,11 +612,6 @@ namespace SynNotes {
       tree.Expand(tag);
       tree.Reveal(node, true);
       scEdit.Focus();
-    }
-
-    private void tree_SelectionChanged(object sender, EventArgs e) {
-      if (scEdit.Modified) note.Save();
-      note.ShowSelected();
     }
 
     /// <summary>
@@ -586,109 +694,6 @@ namespace SynNotes {
     }
     #endregion tag box
 
-    // fill tree context menu with items valid for row
-    private void tree_CellRightClick(object sender, CellRightClickEventArgs e) {
-      treeMenu.Items.Clear();
-      //for tags
-      if (e.Model is TagItem) {
-        var tag = (TagItem)e.Model;
-        if (tag == tagDeleted && tree.SelectedObjects.Count == 1) {
-          var purge = treeMenu.Items.Add("Purge Deleted");
-          purge.Click += purgeTagClick;
-        }
-        else {
-          var newnote = treeMenu.Items.Add("New Note (F7)");
-          newnote.Click += btnAdd_ButtonClick;
-        }
-        if (!tag.System) {
-          if (tree.SelectedObjects.Count == 1) {
-            var ren = treeMenu.Items.Add("Rename (F2)");
-            ren.Click += renTagClick;
-          }
-
-          var del = treeMenu.Items.Add("Delete (Del)");
-          del.Click += delClick;
-        }
-      }
-      //for notes
-      else {
-        var newnote = treeMenu.Items.Add("New Note (F7)");
-        newnote.Click += btnAdd_ButtonClick;
-
-        var del = treeMenu.Items.Add("Delete (Del)");
-        del.Click += delClick;
-      }
-    }
-
-    //purge deleted notes
-    private void purgeTagClick(object sender, EventArgs e) {
-      if (tagDeleted.Count>0) {
-        tree.Expand(tagDeleted);
-        tree.SelectedObjects = tagDeleted.Notes;
-        deleteSelected();
-      }
-    }
-
-    //rename tag
-    private void renTagClick(object sender, EventArgs e) {
-      tree.EditModel(tree.SelectedObject);
-    }
-
-    //delete selected items
-    private void delClick(object sender, EventArgs e) {
-      deleteSelected();
-    }
-
-    // expand tag by key / mouse click
-    private void tree_ItemActivate(object sender, EventArgs e) {
-      if (tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
-    }
-    private void tree_MouseClick(object sender, MouseEventArgs e) {
-      if (e.Button == System.Windows.Forms.MouseButtons.Left && e.Clicks == 1 && tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
-    }
-
-    // edit only valid for tags
-    private void tree_CellEditStarting(object sender, CellEditEventArgs e) {
-      if (e.RowObject is NoteItem) e.Cancel = true;
-    }
-
-    // basic checks
-    private void tree_CellEditValidating(object sender, CellEditEventArgs e) {
-      if (e.Cancel) return;
-      var delims = new char[] { ' ', ',', ';' };
-      var val = ((TextBox)e.Control).Text.Trim(delims);
-      if (val == e.Value.ToString()) return;
-      if (val.IndexOfAny(delims) > 0) {
-        MessageBox.Show("Tag name contains invalid characters: ' ,;'", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        e.Cancel = true;
-        return;
-      }
-      if (tags.Exists(x => !x.System && x != e.RowObject && x.Name.ToLower() == val.ToLower())) {
-        MessageBox.Show("Tag with name '" + val + "' already exist", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        e.Cancel = true;
-        return;
-      }
-    }
-
-    //rename tag
-    private void tree_CellEditFinishing(object sender, CellEditEventArgs e) {
-      if (e.Cancel) return;
-      var tag = ((TagItem)e.RowObject);
-      var delims = new char[] { ' ', ',', ';' };
-      var oldval = tag.Name;
-      tag.Name = e.NewValue.ToString().Trim(delims);
-      using (SQLiteTransaction tr = sql.BeginTransaction()) {
-        using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
-          cmd.CommandText = "UPDATE tags SET name=? WHERE id=?";
-          cmd.Parameters.AddWithValue(null, tag.Name);
-          cmd.Parameters.AddWithValue(null, tag.Id);
-          cmd.ExecuteNonQuery();
-        }
-        tr.Commit();
-      }
-      note.RenameLabel(oldval); //rename tagBox label if exist
-    }
-
     #region search bar
     //placeholder text hide
     private void cbSearch_Enter(object sender, EventArgs e) {
@@ -747,6 +752,18 @@ namespace SynNotes {
 
 
   }
+
+  // WinAPI
+  internal static class NativeMethods {    
+    [DllImport("user32.dll")]
+    internal static extern int ShowWindow(IntPtr hWnd, uint Msg);
+    internal const uint SW_RESTORE = 0x09;
+    [DllImport("user32.dll")]
+    internal static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+    [DllImport("user32.dll")]
+    internal static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+  }
+
   // globals
   public class Glob {
     public const string ALL = "All";

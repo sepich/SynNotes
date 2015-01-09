@@ -8,9 +8,6 @@ using System.Windows.Forms;
 namespace SynNotes {
 
   public sealed class KeyHook : IDisposable {
-    [DllImport("user32.dll")] private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
-    [DllImport("user32.dll")] private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
-
     /// <summary>
     /// Represents the window that is used internally to get the messages.
     /// </summary>
@@ -19,7 +16,7 @@ namespace SynNotes {
 
       public Window() {
         // create the handle for the window.
-        this.CreateHandle(new CreateParams());
+        base.CreateHandle(new CreateParams());
       }
 
       /// <summary>
@@ -68,7 +65,7 @@ namespace SynNotes {
     /// <param name="modifier">The modifiers that are associated with the hot key.</param>
     /// <param name="key">The key itself that is associated with the hot key.</param>
     public bool RegisterHotKey(int id, ModifierKey modifier, uint key) {
-      return RegisterHotKey(_window.Handle, id, (uint)modifier, key);
+      return NativeMethods.RegisterHotKey(_window.Handle, id, (uint)modifier, key);
     }
 
     /// <summary>
