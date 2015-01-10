@@ -91,7 +91,7 @@ namespace SynNotes {
       /// <summary>
       /// (re)draw tags from string list
       /// </summary>
-      private void drawTags() {
+      public void drawTags() {
         //cleanup
         if (Labels.Count > 0) {
           foreach (Label l in Labels) {

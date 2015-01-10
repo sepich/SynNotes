@@ -38,6 +38,7 @@
       this.cDate = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.cSort = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.treeMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+      this.imageList1 = new System.Windows.Forms.ImageList(this.components);
       this.statusBar = new System.Windows.Forms.StatusStrip();
       this.btnAdd = new System.Windows.Forms.ToolStripSplitButton();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
@@ -50,7 +51,6 @@
       this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
       this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
       this.exitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-      this.imageList1 = new System.Windows.Forms.ImageList(this.components);
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
       this.splitContainer1.Panel1.SuspendLayout();
       this.splitContainer1.Panel2.SuspendLayout();
@@ -130,6 +130,7 @@
       this.tree.ShowGroups = false;
       this.tree.ShowHeaderInAllViews = false;
       this.tree.Size = new System.Drawing.Size(227, 594);
+      this.tree.SmallImageList = this.imageList1;
       this.tree.TabIndex = 4;
       this.tree.UnfocusedHighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
       this.tree.UnfocusedHighlightForegroundColor = System.Drawing.Color.White;
@@ -143,8 +144,11 @@
       this.tree.CellEditStarting += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditStarting);
       this.tree.CellEditValidating += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditValidating);
       this.tree.CellRightClick += new System.EventHandler<BrightIdeasSoftware.CellRightClickEventArgs>(this.tree_CellRightClick);
+      this.tree.ModelCanDrop += new System.EventHandler<BrightIdeasSoftware.ModelDropEventArgs>(this.tree_ModelCanDrop);
+      this.tree.ModelDropped += new System.EventHandler<BrightIdeasSoftware.ModelDropEventArgs>(this.tree_ModelDropped);
       this.tree.SelectionChanged += new System.EventHandler(this.tree_SelectionChanged);
       this.tree.ItemActivate += new System.EventHandler(this.tree_ItemActivate);
+      this.tree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.tree_ItemDrag);
       this.tree.MouseClick += new System.Windows.Forms.MouseEventHandler(this.tree_MouseClick);
       // 
       // cName
@@ -187,6 +191,14 @@
       this.treeMenu.Name = "treeMenu";
       this.treeMenu.ShowImageMargin = false;
       this.treeMenu.Size = new System.Drawing.Size(36, 4);
+      // 
+      // imageList1
+      // 
+      this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
+      this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
+      this.imageList1.Images.SetKeyName(0, "add.png");
+      this.imageList1.Images.SetKeyName(1, "search.png");
+      this.imageList1.Images.SetKeyName(2, "settings.png");
       // 
       // statusBar
       // 
@@ -347,14 +359,6 @@
       this.exitToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
       this.exitToolStripMenuItem1.Text = "Exit";
       this.exitToolStripMenuItem1.Click += new System.EventHandler(this.exitToolStripMenuItem1_Click);
-      // 
-      // imageList1
-      // 
-      this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
-      this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-      this.imageList1.Images.SetKeyName(0, "add.png");
-      this.imageList1.Images.SetKeyName(1, "search.png");
-      this.imageList1.Images.SetKeyName(2, "settings.png");
       // 
       // Form1
       // 
