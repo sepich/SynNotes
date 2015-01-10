@@ -15,6 +15,7 @@ namespace SynNotes {
       } 
     }
     private string name;
+    public string Lexer { get; set; }  // lexer name
 
     #region Implementation of INotifyPropertyChanged
     public event PropertyChangedEventHandler PropertyChanged;
@@ -40,7 +41,7 @@ namespace SynNotes {
       get {
         if (!this.System) return notes.FindAll(x => !x.Deleted && x.Tags.Contains(this));
         else {
-          if (base.Name == Glob.ALL) return notes.FindAll(x => !x.Deleted);
+          if (base.Name == Glob.All) return notes.FindAll(x => !x.Deleted);
           else return notes.FindAll(x => x.Deleted);
         }
       }

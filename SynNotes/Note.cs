@@ -34,7 +34,21 @@ namespace SynNotes {
           using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
             while (rdr.Read()) {
               f.scEdit.Text = rdr.GetString(0);
-              f.scEdit.ConfigurationManager.Language = rdr.IsDBNull(1) ? "Bash" : rdr.GetString(1);
+              if (rdr.IsDBNull(1)) { //use tag's lexer
+                var lex = "Bash";
+                foreach (var tag in Item.Tags) if (!String.IsNullOrEmpty(tag.Lexer)) {
+                  lex = tag.Lexer;
+                  break;
+                }
+                f.scEdit.ConfigurationManager.Language = lex;
+                f.btnLexer.Text = "^" + lex;
+                Item.Lexer = null;
+              }
+              else {
+                f.scEdit.ConfigurationManager.Language = rdr.GetString(1);
+                f.btnLexer.Text = rdr.GetString(1);
+                Item.Lexer = rdr.GetString(1);
+              }
               //TODO set top line
             }
           }

@@ -43,11 +43,13 @@
       this.btnAdd = new System.Windows.Forms.ToolStripSplitButton();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
       this.cbSearch = new System.Windows.Forms.ComboBox();
+      this.btnLexer = new System.Windows.Forms.Label();
       this.tagBox = new System.Windows.Forms.TextBox();
       this.label1 = new System.Windows.Forms.Label();
       this.scEdit = new ScintillaNET.Scintilla();
+      this.lexerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
-      this.contextMenuTray = new System.Windows.Forms.ContextMenuStrip(this.components);
+      this.trayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
       this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
       this.exitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -59,7 +61,7 @@
       ((System.ComponentModel.ISupportInitialize)(this.tree)).BeginInit();
       this.statusBar.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).BeginInit();
-      this.contextMenuTray.SuspendLayout();
+      this.trayMenu.SuspendLayout();
       this.SuspendLayout();
       // 
       // splitContainer1
@@ -80,6 +82,7 @@
       // 
       // splitContainer1.Panel2
       // 
+      this.splitContainer1.Panel2.Controls.Add(this.btnLexer);
       this.splitContainer1.Panel2.Controls.Add(this.tagBox);
       this.splitContainer1.Panel2.Controls.Add(this.label1);
       this.splitContainer1.Panel2.Controls.Add(this.scEdit);
@@ -257,6 +260,21 @@
       this.cbSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbSearch_KeyDown);
       this.cbSearch.Leave += new System.EventHandler(this.cbSearch_Leave);
       // 
+      // btnLexer
+      // 
+      this.btnLexer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+      this.btnLexer.BackColor = System.Drawing.SystemColors.Window;
+      this.btnLexer.Cursor = System.Windows.Forms.Cursors.Hand;
+      this.btnLexer.Location = new System.Drawing.Point(683, 623);
+      this.btnLexer.Margin = new System.Windows.Forms.Padding(0);
+      this.btnLexer.Name = "btnLexer";
+      this.btnLexer.Size = new System.Drawing.Size(100, 24);
+      this.btnLexer.TabIndex = 0;
+      this.btnLexer.Text = "Lexer";
+      this.btnLexer.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+      this.btnLexer.UseMnemonic = false;
+      this.btnLexer.MouseClick += new System.Windows.Forms.MouseEventHandler(this.btnLexer_Click);
+      // 
       // tagBox
       // 
       this.tagBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
@@ -268,7 +286,7 @@
       this.tagBox.Location = new System.Drawing.Point(37, 630);
       this.tagBox.Margin = new System.Windows.Forms.Padding(0);
       this.tagBox.Name = "tagBox";
-      this.tagBox.Size = new System.Drawing.Size(746, 13);
+      this.tagBox.Size = new System.Drawing.Size(646, 13);
       this.tagBox.TabIndex = 1;
       this.tagBox.TextChanged += new System.EventHandler(this.tagBox_TextChanged);
       this.tagBox.Enter += new System.EventHandler(this.tagBox_Enter);
@@ -282,7 +300,7 @@
       this.label1.Location = new System.Drawing.Point(0, 624);
       this.label1.Margin = new System.Windows.Forms.Padding(0);
       this.label1.Name = "label1";
-      this.label1.Size = new System.Drawing.Size(783, 22);
+      this.label1.Size = new System.Drawing.Size(683, 22);
       this.label1.TabIndex = 2;
       this.label1.Text = "Tags:";
       this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -324,22 +342,30 @@
       this.scEdit.Styles.Max.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.TabIndex = 0;
       // 
+      // lexerMenu
+      // 
+      this.lexerMenu.Name = "lexerMenu";
+      this.lexerMenu.ShowCheckMargin = true;
+      this.lexerMenu.ShowImageMargin = false;
+      this.lexerMenu.Size = new System.Drawing.Size(61, 4);
+      this.lexerMenu.Opening += new System.ComponentModel.CancelEventHandler(this.lexerMenu_Opening);
+      // 
       // notifyIcon1
       // 
-      this.notifyIcon1.ContextMenuStrip = this.contextMenuTray;
+      this.notifyIcon1.ContextMenuStrip = this.trayMenu;
       this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
       this.notifyIcon1.Text = "SynNotes";
       this.notifyIcon1.Visible = true;
       this.notifyIcon1.Click += new System.EventHandler(this.notifyIcon1_Click);
       // 
-      // contextMenuTray
+      // trayMenu
       // 
-      this.contextMenuTray.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+      this.trayMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openToolStripMenuItem1,
             this.toolStripMenuItem2,
             this.exitToolStripMenuItem1});
-      this.contextMenuTray.Name = "contextMenuTray";
-      this.contextMenuTray.Size = new System.Drawing.Size(104, 54);
+      this.trayMenu.Name = "contextMenuTray";
+      this.trayMenu.Size = new System.Drawing.Size(104, 54);
       // 
       // openToolStripMenuItem1
       // 
@@ -386,7 +412,7 @@
       this.statusBar.ResumeLayout(false);
       this.statusBar.PerformLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).EndInit();
-      this.contextMenuTray.ResumeLayout(false);
+      this.trayMenu.ResumeLayout(false);
       this.ResumeLayout(false);
 
         }
@@ -396,7 +422,7 @@
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private ScintillaNET.Scintilla scEdit;
-        private System.Windows.Forms.ContextMenuStrip contextMenuTray;
+        private System.Windows.Forms.ContextMenuStrip trayMenu;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem1;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem1;
@@ -413,6 +439,8 @@
         private System.Windows.Forms.TextBox tagBox;
         private BrightIdeasSoftware.OLVColumn cSort;
         private System.Windows.Forms.ContextMenuStrip treeMenu;
+        private System.Windows.Forms.Label btnLexer;
+        private System.Windows.Forms.ContextMenuStrip lexerMenu;
     }
 }
 

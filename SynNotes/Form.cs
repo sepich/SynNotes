@@ -131,7 +131,8 @@ namespace SynNotes {
               "name TEXT," +
               "`index` INTEGER," + //order in the list
               "version INTEGER," + //track tag content changes
-              "expanded BOOLEAN NOT NULL DEFAULT 0," + //should it be expanded on start 
+              "expanded BOOLEAN NOT NULL DEFAULT 0," + //should it be expanded on start
+              "lexer TEXT," +      //lexer to use
               "share TEXT)";       //array of emails
             cmd.ExecuteNonQuery();
             //notes
@@ -356,7 +357,7 @@ namespace SynNotes {
     private void initTree() {
       //read tags from db
       var node = new TagItem(notes);
-      using (SQLiteCommand cmd = new SQLiteCommand("SELECT id, name, `index`, expanded FROM tags ORDER BY `index`", sql)) {
+      using (SQLiteCommand cmd = new SQLiteCommand("SELECT id, name, `index`, expanded, lexer FROM tags ORDER BY `index`", sql)) {
         using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
           while (rdr.Read()) {
             node = new TagItem(notes);
@@ -364,19 +365,20 @@ namespace SynNotes {
             node.Name = rdr.GetString(1);
             node.Index = rdr.GetInt32(2);
             node.Expanded = rdr.GetBoolean(3);
+            if (!rdr.IsDBNull(4)) node.Lexer = rdr.GetString(4);
             tags.Add(node);
           }
         }
       }
       //All
       tagAll = new TagItem(notes);
-      tagAll.Name = Glob.ALL;
+      tagAll.Name = Glob.All;
       tagAll.System = true;
       tagAll.Index = int.MaxValue - 1;
       tags.Add(tagAll);
       //Deleted
       tagDeleted = new TagItem(notes);
-      tagDeleted.Name = Glob.DELETED;
+      tagDeleted.Name = Glob.Deleted;
       tagDeleted.System = true;
       tagDeleted.Index = int.MaxValue;
       tags.Add(tagDeleted);
@@ -437,12 +439,12 @@ namespace SynNotes {
     private void readNotes(List<NoteItem> result, string query=""){
       string s;
       if (query.Length > 0)
-        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, snippet(fts)" +
+        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, snippet(fts)" +
         " FROM fts s LEFT JOIN notes n ON s.docid=n.id LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
         " WHERE NOT n.deleted AND s.content MATCH ?"+
         " ORDER BY t.`index`";
       else
-        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag" +                                        
+        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer" +                                        
         " FROM notes n LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
         " ORDER BY n.id, t.`index`";
       NoteItem node = new NoteItem();
@@ -462,7 +464,8 @@ namespace SynNotes {
               node.Deleted = rdr.GetBoolean(3);
               node.Tags = new List<TagItem>();              
               if (!rdr.IsDBNull(4)) node.Tags.Add(tags.Find(x => x.Id == rdr.GetInt32(4)));
-              if (rdr.FieldCount > 5) node.Snippet = rdr.GetString(5);
+              if (!rdr.IsDBNull(5)) node.Lexer = rdr.GetString(5);
+              if (query.Length > 0) node.Snippet = rdr.GetString(6);
               result.Add(node);
             }
             else node.Tags.Add(tags.Find(x => x.Id == rdr.GetInt32(4)));
@@ -537,40 +540,47 @@ namespace SynNotes {
       var tag = e.Model as TagItem;
       //for tags
       if (tag != null) {        
-        if (tag == tagDeleted && tree.SelectedObjects.Count == 1) {
-          var purge = treeMenu.Items.Add("Purge Deleted");
-          purge.Click += purgeTagClick;
-        }
-        else {
-          var newnote = treeMenu.Items.Add("New Note (F7)");
-          newnote.Click += btnAdd_ButtonClick;
-        }
+        if (tag == tagDeleted && tree.SelectedObjects.Count == 1) treeMenu.Items.Add("Purge Deleted", null, purgeTagClick);
+        else treeMenu.Items.Add("New Note (F7)", null, btnAdd_ButtonClick);
         if (!tag.System) {
+          if (tree.SelectedObjects.Count == 1) treeMenu.Items.Add("Rename (F2)", null, renTagClick);
+          treeMenu.Items.Add("Delete (Del)", null, delClick);
           if (tree.SelectedObjects.Count == 1) {
-            var ren = treeMenu.Items.Add("Rename (F2)");
-            ren.Click += renTagClick;
+            ToolStripMenuItem lex = (ToolStripMenuItem)treeMenu.Items.Add("Default Lexer");
+            foreach (var l in Glob.Lexers) {
+              var i = lex.DropDownItems.Add(l, null, lexTagClick);
+              if (tag.Lexer == l) ((ToolStripMenuItem)i).Checked = true;
+            }
           }
-
-          var del = treeMenu.Items.Add("Delete (Del)");
-          del.Click += delClick;
         }
       }
       //for notes
       else {
         var n = (NoteItem)e.Model;
         if (n.Deleted) {
-          var newnote = treeMenu.Items.Add("Restore");
-          newnote.Click += restoreClick;
-
-          var del = treeMenu.Items.Add("Purge (Del)");
-          del.Click += delClick;
+          treeMenu.Items.Add("Restore", null, restoreClick);
+          treeMenu.Items.Add("Purge (Del)", null, delClick);
         }
         else {
-          var newnote = treeMenu.Items.Add("New Note (F7)");
-          newnote.Click += btnAdd_ButtonClick;
+          treeMenu.Items.Add("New Note (F7)", null, btnAdd_ButtonClick);
+          treeMenu.Items.Add("Delete (Del)", null, delClick);
+        }
+      }
+    }
 
-          var del = treeMenu.Items.Add("Delete (Del)");
-          del.Click += delClick;
+    //set lexer for tag
+    private void lexTagClick(object sender, EventArgs e) {
+      var tag = tree.SelectedObject as TagItem;
+      if(tag != null){
+        var s = (ToolStripMenuItem)sender;
+        tag.Lexer = s.Text;
+        using (SQLiteTransaction tr = sql.BeginTransaction()) {
+          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+            cmd.CommandText = "UPDATE tags SET lexer=? WHERE id="+tag.Id;
+            cmd.Parameters.AddWithValue(null, s);
+            cmd.ExecuteNonQuery();
+          }
+          tr.Commit();
         }
       }
     }
@@ -614,6 +624,10 @@ namespace SynNotes {
       deleteSelected();
     }
 
+    private void btnAdd_ButtonClick(object sender, EventArgs e) {
+      createNote();
+    }
+
     /// <summary>
     /// creates new note under selected tag and make it active
     /// </summary>
@@ -630,7 +644,7 @@ namespace SynNotes {
       var node = new NoteItem();
       node.ModifyDate = (float)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
       node.Name = "New Note";
-      node.Tags.Add(tag);
+      if(!tag.System) node.Tags.Add(tag);
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
           cmd.CommandText = "INSERT INTO notes(modifydate, createdate, title, content) VALUES(@mdate, @mdate, @title, @title)";
@@ -749,7 +763,7 @@ namespace SynNotes {
         }
         if (!containNotes && e.DropTargetLocation != DropTargetLocation.Item && tag != tagDeleted ) e.Effect = DragDropEffects.Move; //can rearrange tags
         if (!containTags) {
-          if ((e.DragEventArgs.KeyState & 8) == 8) e.Effect = DragDropEffects.Link; //Ctrl pressed - add tag
+          if ((e.DragEventArgs.KeyState & 8) == 8) e.Effect = DragDropEffects.Copy; //Ctrl pressed - add tag
           else e.Effect = DragDropEffects.Move; //can drop notes to tags
         }
       }
@@ -844,11 +858,6 @@ namespace SynNotes {
 
     #endregion tree drag'n'drop
 
-    private void btnAdd_ButtonClick(object sender, EventArgs e) {
-      createNote();
-    }
-
-
     #region tag box
     private void tagBox_Enter(object sender, EventArgs e) {
       note.FillAutocomplete();
@@ -926,6 +935,53 @@ namespace SynNotes {
     }
     #endregion search bar
 
+    #region lexer menu
+    //fill menu
+    private void btnLexer_Click(object sender, MouseEventArgs e) {
+      lexerMenu.Items.Clear();
+      ToolStripItem i;
+      foreach (var l in Glob.Lexers) {
+        i = lexerMenu.Items.Add(l, null, lexClick);
+        if (l == note.Item.Lexer) ((ToolStripMenuItem)i).Checked = true;
+      }
+      lexerMenu.Items.Add("-");
+      i = lexerMenu.Items.Add(Glob.Inherit, null, lexClick);
+      if (String.IsNullOrEmpty(note.Item.Lexer)) ((ToolStripMenuItem)i).Checked = true;
+      lexerMenu.Show();
+    }
+
+    //positioning
+    private void lexerMenu_Opening(object sender, CancelEventArgs e) {
+      lexerMenu.Show(btnLexer.PointToScreen(new Point(btnLexer.Width, 0)), ToolStripDropDownDirection.AboveLeft);
+    }
+
+    // change lexer
+    private void lexClick(object sender, EventArgs e) {
+      var i = (ToolStripItem)sender;
+      var lex = i.Text;
+      using (SQLiteTransaction tr = sql.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+          cmd.CommandText = "UPDATE notes SET lexer=? WHERE id="+note.Item.Id;
+          if (i.Text == Glob.Inherit) {
+            foreach (var tag in note.Item.Tags) if (!String.IsNullOrEmpty(tag.Lexer)) {
+                lex = tag.Lexer;
+                break;
+            }
+            btnLexer.Text = "^" + lex;
+            cmd.Parameters.AddWithValue(null, null);
+          }
+          else {
+            btnLexer.Text = lex;
+            cmd.Parameters.AddWithValue(null, lex);
+          }
+          cmd.ExecuteNonQuery();
+        }
+        tr.Commit();
+      }
+      scEdit.ConfigurationManager.Language = lex;
+    }
+    #endregion lexer menu
+
 
 
 
@@ -951,7 +1007,9 @@ namespace SynNotes {
 
   // globals
   public static class Glob {
-    public const string ALL = "All";
-    public const string DELETED = "Deleted";
+    public const string All = "All";
+    public const string Deleted = "Deleted";
+    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Conf", "Cpp", "Css", "Diff", "Hypertext", "Latex", "Lua", "MsSql", "Pascal", "Perl", "PhpScript", "Properties", "Ps", "Python", "Ruby", "Sql", "Tcl", "VB", "VBScript", "XCode", "Xml", "Yaml", "Null" };
+    public const string Inherit = "Inherit";
   }
 }
