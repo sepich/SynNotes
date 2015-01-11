@@ -30,8 +30,11 @@
         private void InitializeComponent()
         {
       this.components = new System.ComponentModel.Container();
-      System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
       System.Windows.Forms.ContextMenuStrip trayMenu;
+      System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+      this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+      this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
+      this.exitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
       this.splitContainer1 = new System.Windows.Forms.SplitContainer();
       this.pictureBox1 = new System.Windows.Forms.PictureBox();
       this.tree = new BrightIdeasSoftware.TreeListView();
@@ -50,10 +53,8 @@
       this.scEdit = new ScintillaNET.Scintilla();
       this.lexerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
-      this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-      this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
-      this.exitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
       trayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+      trayMenu.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
       this.splitContainer1.Panel1.SuspendLayout();
       this.splitContainer1.Panel2.SuspendLayout();
@@ -62,8 +63,35 @@
       ((System.ComponentModel.ISupportInitialize)(this.tree)).BeginInit();
       this.statusBar.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).BeginInit();
-      trayMenu.SuspendLayout();
       this.SuspendLayout();
+      // 
+      // trayMenu
+      // 
+      trayMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openToolStripMenuItem1,
+            this.toolStripMenuItem2,
+            this.exitToolStripMenuItem1});
+      trayMenu.Name = "contextMenuTray";
+      trayMenu.Size = new System.Drawing.Size(104, 54);
+      // 
+      // openToolStripMenuItem1
+      // 
+      this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
+      this.openToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
+      this.openToolStripMenuItem1.Text = "Show";
+      this.openToolStripMenuItem1.Click += new System.EventHandler(this.showToolStripMenuItem1_Click);
+      // 
+      // toolStripMenuItem2
+      // 
+      this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+      this.toolStripMenuItem2.Size = new System.Drawing.Size(100, 6);
+      // 
+      // exitToolStripMenuItem1
+      // 
+      this.exitToolStripMenuItem1.Name = "exitToolStripMenuItem1";
+      this.exitToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
+      this.exitToolStripMenuItem1.Text = "Exit";
+      this.exitToolStripMenuItem1.Click += new System.EventHandler(this.exitToolStripMenuItem1_Click);
       // 
       // splitContainer1
       // 
@@ -321,7 +349,10 @@
       this.scEdit.Caret.CurrentLineBackgroundColor = System.Drawing.Color.GreenYellow;
       this.scEdit.Caret.HighlightCurrentLine = true;
       this.scEdit.Caret.Width = 2;
+      this.scEdit.ConfigurationManager.IsBuiltInEnabled = false;
+      this.scEdit.ConfigurationManager.IsUserEnabled = false;
       this.scEdit.ConfigurationManager.Language = "html";
+      this.scEdit.ConfigurationManager.UseXmlReader = false;
       this.scEdit.Folding.MarkerScheme = ScintillaNET.FoldMarkerScheme.Arrow;
       this.scEdit.Indentation.ShowGuides = true;
       this.scEdit.Indentation.SmartIndentType = ScintillaNET.SmartIndent.CPP;
@@ -331,6 +362,7 @@
       this.scEdit.LineWrapping.IndentMode = ScintillaNET.LineWrappingIndentMode.Indent;
       this.scEdit.LineWrapping.IndentSize = 1;
       this.scEdit.LineWrapping.Mode = ScintillaNET.LineWrappingMode.Word;
+      this.scEdit.LineWrapping.VisualFlags = ScintillaNET.LineWrappingVisualFlags.End;
       this.scEdit.Location = new System.Drawing.Point(0, 0);
       this.scEdit.Margin = new System.Windows.Forms.Padding(0);
       this.scEdit.Margins.Margin1.Width = 0;
@@ -348,6 +380,7 @@
       this.scEdit.Styles.LineNumber.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.Max.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.TabIndex = 3;
+      this.scEdit.SelectionChanged += new System.EventHandler(this.scEdit_SelectionChanged);
       // 
       // lexerMenu
       // 
@@ -365,34 +398,6 @@
       this.notifyIcon1.Visible = true;
       this.notifyIcon1.Click += new System.EventHandler(this.notifyIcon1_Click);
       // 
-      // trayMenu
-      // 
-      trayMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openToolStripMenuItem1,
-            this.toolStripMenuItem2,
-            this.exitToolStripMenuItem1});
-      trayMenu.Name = "contextMenuTray";
-      trayMenu.Size = new System.Drawing.Size(104, 54);
-      // 
-      // openToolStripMenuItem1
-      // 
-      this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
-      this.openToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
-      this.openToolStripMenuItem1.Text = "Show";
-      this.openToolStripMenuItem1.Click += new System.EventHandler(this.showToolStripMenuItem1_Click);
-      // 
-      // toolStripMenuItem2
-      // 
-      this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-      this.toolStripMenuItem2.Size = new System.Drawing.Size(100, 6);
-      // 
-      // exitToolStripMenuItem1
-      // 
-      this.exitToolStripMenuItem1.Name = "exitToolStripMenuItem1";
-      this.exitToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
-      this.exitToolStripMenuItem1.Text = "Exit";
-      this.exitToolStripMenuItem1.Click += new System.EventHandler(this.exitToolStripMenuItem1_Click);
-      // 
       // Form1
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -408,6 +413,7 @@
       this.Load += new System.EventHandler(this.Form1_Load);
       this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
       this.Resize += new System.EventHandler(this.Form1_Resize);
+      trayMenu.ResumeLayout(false);
       this.splitContainer1.Panel1.ResumeLayout(false);
       this.splitContainer1.Panel1.PerformLayout();
       this.splitContainer1.Panel2.ResumeLayout(false);
@@ -419,7 +425,6 @@
       this.statusBar.ResumeLayout(false);
       this.statusBar.PerformLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).EndInit();
-      trayMenu.ResumeLayout(false);
       this.ResumeLayout(false);
 
         }

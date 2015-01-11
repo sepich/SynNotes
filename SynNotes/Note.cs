@@ -27,6 +27,7 @@ namespace SynNotes {
       /// show note for selected item
       /// </summary>
       public void ShowSelected() {
+        if (Item != null && f.cbSearch.Text.Length==0) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //save previous note top line
         if (f.tree.SelectedItem != null && f.tree.SelectedObject is NoteItem && (NoteItem)f.tree.SelectedObject != Item) Item = (NoteItem)f.tree.SelectedObject;
         else return;
 
@@ -41,12 +42,12 @@ namespace SynNotes {
                   lex = tag.Lexer;
                   break;
                 }
-                f.scEdit.ConfigurationManager.Language = lex;
+                SetLanguage(lex);
                 f.btnLexer.Text = "^" + lex;
                 Item.Lexer = null;
               }
               else {
-                f.scEdit.ConfigurationManager.Language = rdr.GetString(1);
+                SetLanguage(rdr.GetString(1));
                 f.btnLexer.Text = rdr.GetString(1);
                 Item.Lexer = rdr.GetString(1);
               }              
@@ -58,6 +59,47 @@ namespace SynNotes {
         f.scEdit.Modified = false;
         f.Text = GetTitle();
         drawTags();
+        //highlight search term and scroll to it
+        if (f.cbSearch.Text.Length > 0) {
+          var top = f.scEdit.Lines.Count;
+          foreach (Range r in f.scEdit.FindReplace.FindAll(f.cbSearch.Text)) {
+            r.SetIndicator(0);
+            if (r.StartingLine.Number < top) top = r.StartingLine.Number;
+          }
+          f.scEdit.Lines.FirstVisibleIndex = top;
+        }
+      }
+
+      /// <summary>
+      /// set scintilla lexer and styles
+      /// </summary>
+      public void SetLanguage(string lang) {
+        foreach (var s in f.lexers["globals"]) {
+          if (s.id != 0) {
+            f.scEdit.Styles[s.id].ForeColor = s.fgcolor;
+            f.scEdit.Styles[s.id].BackColor = s.bgcolor;
+            if (!String.IsNullOrEmpty(s.fontname)) f.scEdit.Styles[s.id].FontName = s.fontname;
+            if (s.fontsize > 0) f.scEdit.Styles[s.id].Size = s.fontsize;
+            f.scEdit.Styles[s.id].Bold = s.bold;
+            f.scEdit.Styles[s.id].Italic = s.italic;
+            f.scEdit.Styles[s.id].Underline = s.underline;
+          }
+        }
+        f.scEdit.Styles.ClearAll();
+        f.scEdit.Lexing.LexerName = lang;
+        if (Glob.Lexers.Contains(lang) && f.lexers.ContainsKey(lang)) {
+          foreach (var s in f.lexers[lang]) {
+            if (s.id != 0) {
+              f.scEdit.Styles[s.id].ForeColor = s.fgcolor;
+              f.scEdit.Styles[s.id].BackColor = s.bgcolor;
+              if (!String.IsNullOrEmpty(s.fontname)) f.scEdit.Styles[s.id].FontName = s.fontname;
+              if (s.fontsize > 0) f.scEdit.Styles[s.id].Size = s.fontsize;
+              f.scEdit.Styles[s.id].Bold = s.bold;
+              f.scEdit.Styles[s.id].Italic = s.italic;
+              f.scEdit.Styles[s.id].Underline = s.underline;
+            }
+          }
+        }
       }
 
       /// <summary>

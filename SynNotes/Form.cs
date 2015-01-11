@@ -11,6 +11,9 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Data.SQLite;
 using BrightIdeasSoftware;
+using ScintillaNET;
+using ScintillaNET.Configuration;
+using System.Xml;
 
 namespace SynNotes {
 
@@ -30,6 +33,7 @@ namespace SynNotes {
     List<NoteItem> found = new List<NoteItem>(); // search results
     TagItem tagDeleted;            // pointer to DELETED tag
     TagItem tagAll;                // pointer to ALL tag
+    Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
 
     public Form1() {InitializeComponent();}
 
@@ -60,9 +64,10 @@ namespace SynNotes {
         if(sql==null) sqlConnect(userdir + dbfile);
         sqlCreate();
       }
-      //init tree
+      //inits
       initTree();
       note = new Note(this);
+      initScintilla();
     }
 
     private void Form1_FormClosed(object sender, FormClosedEventArgs e) {
@@ -478,7 +483,6 @@ namespace SynNotes {
     #region tree events
     // change note in right pane
     private void tree_SelectionChanged(object sender, EventArgs e) {
-      if (note.Item != null) note.Item.TopLine = scEdit.Lines.FirstVisibleIndex;
       if (scEdit.Modified) note.Save();
       note.ShowSelected();
     }
@@ -584,7 +588,10 @@ namespace SynNotes {
           tr.Commit();
         }
         //update opened note lexer if inherited
-        if (note.Item.Tags.Contains(tag) && String.IsNullOrEmpty(note.Item.Lexer)) scEdit.ConfigurationManager.Language = s.Text;
+        if (note.Item.Tags.Contains(tag) && String.IsNullOrEmpty(note.Item.Lexer)) {
+          note.SetLanguage(s.Text);
+          btnLexer.Text = "^" + s.Text;
+        }
       }
     }
 
@@ -983,10 +990,150 @@ namespace SynNotes {
         }
         tr.Commit();
       }
-      scEdit.ConfigurationManager.Language = lex;
+      note.SetLanguage(lex);
     }
     #endregion lexer menu
 
+    #region scintilla
+    private void initScintilla() {
+      //read theme file
+      var file = ini.GetValue("Scintilla", "Theme", "Visual Studio.xml");
+      readTheme(file);
+      //smart highlight
+      scEdit.Indicators[0].Style = IndicatorStyle.RoundBox;
+      scEdit.Indicators[0].Alpha = 128;
+      scEdit.Indicators[0].Color = lexers["globals"].Find(x => x.id==29).bgcolor;
+      //find mark
+      scEdit.Indicators[1].Style = IndicatorStyle.RoundBox;
+      scEdit.Indicators[1].Alpha = 128;
+      scEdit.Indicators[1].Color = lexers["globals"].Find(x => x.id == 31).bgcolor;
+      //selection
+      var s = lexers["globals"].Find(x => x.id == 0 && x.name == "Selected text colour");
+      if(s!=null){
+        scEdit.Selection.ForeColor = s.fgcolor;
+        scEdit.Selection.ForeColorUnfocused = s.fgcolor;
+        scEdit.Selection.BackColor = s.bgcolor;
+        scEdit.Selection.BackColorUnfocused = s.bgcolor;
+      }
+      //highlight line
+      s = lexers["globals"].Find(x => x.id == 0 && x.name == "Current line background colour");
+      if (s != null) {
+        scEdit.Caret.CurrentLineBackgroundColor = s.bgcolor;
+        scEdit.Caret.CurrentLineBackgroundAlpha = 50;
+      }
+      else scEdit.Caret.HighlightCurrentLine = false;
+    }
+
+    //fills lexers dic with styles
+    private void readTheme(string file) {
+      string _readTo = "";
+      var s = new XmlReaderSettings();
+      s.IgnoreComments = true;
+      s.IgnoreWhitespace = true;
+      try {
+        var reader = XmlReader.Create("themes\\" + file, s);
+        reader.ReadStartElement();
+        while (!reader.EOF) {
+          //read lang style
+          if (reader.Name.Equals("LexerStyles", StringComparison.OrdinalIgnoreCase) && !reader.IsEmptyElement) {
+            while (!(reader.NodeType == XmlNodeType.EndElement && reader.Name.Equals("LexerStyles", StringComparison.OrdinalIgnoreCase))) {
+              reader.Read();
+              if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("LexerType", StringComparison.OrdinalIgnoreCase) && reader.HasAttributes) {
+                _readTo = "";
+                while (reader.MoveToNextAttribute()) {
+                  if (reader.Name.Equals("name", StringComparison.OrdinalIgnoreCase)){
+                    if(Glob.Lexers.Contains(reader.Value, StringComparer.OrdinalIgnoreCase)) _readTo = reader.Value.ToLower();
+                    break;
+                  }
+                }
+                if (!String.IsNullOrEmpty(_readTo)) {
+                  while (!(reader.NodeType == XmlNodeType.EndElement && reader.Name.Equals("LexerType", StringComparison.OrdinalIgnoreCase))) {
+                    reader.Read();
+                    if (reader.Name.Equals("WordsStyle", StringComparison.OrdinalIgnoreCase) && reader.HasAttributes) ReadStyle(_readTo, reader);
+                  }
+                }
+                //else reader.Skip();                
+              }
+            }
+            reader.Read();
+          }
+          //read global styles
+          if (reader.Name.Equals("GlobalStyles", StringComparison.OrdinalIgnoreCase) && !reader.IsEmptyElement) {
+            while (!(reader.NodeType == XmlNodeType.EndElement && reader.Name.Equals("GlobalStyles", StringComparison.OrdinalIgnoreCase))) {
+              reader.Read();
+              if (reader.Name.Equals("WidgetStyle", StringComparison.OrdinalIgnoreCase) && reader.HasAttributes) {
+                ReadStyle("globals", reader);
+              }
+            }
+          }
+          reader.Skip();
+        }
+        reader.Close();
+      }
+      catch (Exception e) {
+        MessageBox.Show("Error reading theme file: 'themes\\" + file + "'\n" + e.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return;
+      }
+    }
+
+    //parse xml tag attributes to lexer style
+    private void ReadStyle(string LexerName, XmlReader reader) {
+      var sc = new scStyle();
+      if (reader.HasAttributes) {
+        while (reader.MoveToNextAttribute()) {
+          switch (reader.Name.ToLower()) {
+            case "name":
+              sc.name = reader.Value;
+              break;
+            case "styleid":
+              if (!String.IsNullOrEmpty(reader.Value)) sc.id = Int32.Parse(reader.Value);
+              break;
+            case "fgcolor":
+              sc.fgcolor = (Color)new ColorConverter().ConvertFromString("#"+reader.Value);
+              break;
+            case "bgcolor":
+              sc.bgcolor = (Color)new ColorConverter().ConvertFromString("#"+reader.Value);
+              break;
+            case "fontname":
+              sc.fontname = reader.Value;
+              break;
+            case "fontsize":
+              if (!String.IsNullOrEmpty(reader.Value)) sc.fontsize = Int32.Parse(reader.Value);
+              break;
+            case "fontstyle":
+              if (!String.IsNullOrEmpty(reader.Value)){
+                var i = Int32.Parse(reader.Value);
+                sc.bold = (i & 1) == 1;
+                sc.italic = (i & 2) == 2;
+                sc.underline = (i & 4) == 4;
+              }
+              break;
+          }
+        }
+        reader.MoveToElement();
+        if (!lexers.ContainsKey(LexerName)) lexers.Add(LexerName, new List<scStyle>());
+        lexers[LexerName].Add(sc);
+      }
+    }
+
+    private void scEdit_SelectionChanged(object sender, EventArgs e) {
+      string ss = scEdit.Selection.Text;
+      if (ss.Length > 3 && ss.IndexOfAny(new char[] { ' ', '(',')' }) == -1) {
+        scEdit.FindReplace.Flags = SearchFlags.Empty;
+        foreach (Range r in scEdit.FindReplace.FindAll(ss)) {
+          if (r.Start != scEdit.Selection.Start && r.Start != scEdit.Selection.End) {
+            r.SetIndicator(1);
+            scEdit.Tag = true;
+          }
+        }
+      }
+      else if (scEdit.Tag!=null && (bool)scEdit.Tag){
+        foreach (Range r in scEdit.Indicators[1].SearchAll())
+          r.ClearIndicator(1);
+        scEdit.Tag = false;
+      }
+    }
+    #endregion scintilla
 
 
 
@@ -995,8 +1142,18 @@ namespace SynNotes {
 
 
 
+  }
 
-
+  internal class scStyle {
+    public string name { get; set; }
+    public int id { get; set; }
+    public Color fgcolor { get; set; }
+    public Color bgcolor { get; set; }
+    public string fontname { get; set; }
+    public float fontsize { get; set; }
+    public bool bold { get; set; }
+    public bool italic { get; set; }
+    public bool underline { get; set; }
   }
 
   // WinAPI
@@ -1014,7 +1171,7 @@ namespace SynNotes {
   public static class Glob {
     public const string All = "All";
     public const string Deleted = "Deleted";
-    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Conf", "Cpp", "Css", "Diff", "html", "js", "Latex", "Lua", "MsSql", "Pascal", "Perl", "phpscript", "Properties", "Python", "Ruby", "Sql", "Tcl", "VB", "VBScript", "XCode", "xml", "Yaml", "Null" };
+    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Conf", "Cpp", "Css", "Diff", "Hypertext", "Lua", "Pascal", "Perl", "Powershell", "Python", "Ruby", "Sql", "Tcl", "VB", "VBScript", "Xml", "Yaml", "Null" };
     public const string Inherit = "Inherit";
   }
 }
