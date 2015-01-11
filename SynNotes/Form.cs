@@ -234,8 +234,8 @@ namespace SynNotes {
     // local keys
     private void Form1_KeyDown(object sender, KeyEventArgs e) {
       if (e.KeyCode == Keys.Escape && e.Modifiers == Keys.None) {
-        if (tagBox.Focused) cbSearch.Focus();
-        else if (cbSearch.Focused && cbSearch.Text.Length > 0) cbSearch.Text = "";
+        if (!cbSearch.Focused) cbSearch.Focus();
+        else if (cbSearch.Text.Length > 0) cbSearch.Text = "";
         else this.WindowState = FormWindowState.Minimized;
       }
       else if (e.KeyCode == Keys.Delete && tree.Focused) deleteSelected();
@@ -478,6 +478,7 @@ namespace SynNotes {
     #region tree events
     // change note in right pane
     private void tree_SelectionChanged(object sender, EventArgs e) {
+      if (note.Item != null) note.Item.TopLine = scEdit.Lines.FirstVisibleIndex;
       if (scEdit.Modified) note.Save();
       note.ShowSelected();
     }
@@ -582,6 +583,8 @@ namespace SynNotes {
           }
           tr.Commit();
         }
+        //update opened note lexer if inherited
+        if (note.Item.Tags.Contains(tag) && String.IsNullOrEmpty(note.Item.Lexer)) scEdit.ConfigurationManager.Language = s.Text;
       }
     }
 
@@ -969,10 +972,12 @@ namespace SynNotes {
             }
             btnLexer.Text = "^" + lex;
             cmd.Parameters.AddWithValue(null, null);
+            note.Item.Lexer = null;
           }
           else {
             btnLexer.Text = lex;
             cmd.Parameters.AddWithValue(null, lex);
+            note.Item.Lexer = lex;
           }
           cmd.ExecuteNonQuery();
         }
@@ -1009,7 +1014,7 @@ namespace SynNotes {
   public static class Glob {
     public const string All = "All";
     public const string Deleted = "Deleted";
-    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Conf", "Cpp", "Css", "Diff", "Hypertext", "Latex", "Lua", "MsSql", "Pascal", "Perl", "PhpScript", "Properties", "Ps", "Python", "Ruby", "Sql", "Tcl", "VB", "VBScript", "XCode", "Xml", "Yaml", "Null" };
+    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Conf", "Cpp", "Css", "Diff", "html", "js", "Latex", "Lua", "MsSql", "Pascal", "Perl", "phpscript", "Properties", "Python", "Ruby", "Sql", "Tcl", "VB", "VBScript", "XCode", "xml", "Yaml", "Null" };
     public const string Inherit = "Inherit";
   }
 }

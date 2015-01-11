@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Linq;
+using ScintillaNET;
 
 namespace SynNotes {
   public partial class Form1 : Form {
@@ -48,8 +49,9 @@ namespace SynNotes {
                 f.scEdit.ConfigurationManager.Language = rdr.GetString(1);
                 f.btnLexer.Text = rdr.GetString(1);
                 Item.Lexer = rdr.GetString(1);
-              }
-              //TODO set top line
+              }              
+              if (Item.TopLine == -1 && !rdr.IsDBNull(2) ) Item.TopLine = rdr.GetInt32(2);
+              f.scEdit.Lines.FirstVisibleIndex = Item.TopLine;
             }
           }
         }
@@ -64,14 +66,15 @@ namespace SynNotes {
       public void Save() {
         if (Item == null) return;
         Item.ModifyDate = (float)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-        Item.Name = GetTitle();
+        Item.Name = GetTitle();        
         //save text
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
-            cmd.CommandText = "UPDATE notes SET modifydate=?, title=?, content=? WHERE id=?";
+            cmd.CommandText = "UPDATE notes SET modifydate=?, title=?, content=?, topline=? WHERE id=?";
             cmd.Parameters.AddWithValue(null, Item.ModifyDate);
             cmd.Parameters.AddWithValue(null, Item.Name);
             cmd.Parameters.AddWithValue(null, f.scEdit.Text);
+            cmd.Parameters.AddWithValue(null, Item.TopLine);
             cmd.Parameters.AddWithValue(null, Item.Id);
             cmd.ExecuteNonQuery();
           }
@@ -254,6 +257,7 @@ namespace SynNotes {
           tr.Commit();
         }
         //update tree
+        f.tree.RefreshObject(f.tagAll);
         f.tree.RefreshObject(tag);
         FillAutocomplete();
       }

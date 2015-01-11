@@ -31,6 +31,7 @@
         {
       this.components = new System.ComponentModel.Container();
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+      System.Windows.Forms.ContextMenuStrip trayMenu;
       this.splitContainer1 = new System.Windows.Forms.SplitContainer();
       this.pictureBox1 = new System.Windows.Forms.PictureBox();
       this.tree = new BrightIdeasSoftware.TreeListView();
@@ -49,10 +50,10 @@
       this.scEdit = new ScintillaNET.Scintilla();
       this.lexerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
-      this.trayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
       this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
       this.exitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+      trayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
       this.splitContainer1.Panel1.SuspendLayout();
       this.splitContainer1.Panel2.SuspendLayout();
@@ -61,7 +62,7 @@
       ((System.ComponentModel.ISupportInitialize)(this.tree)).BeginInit();
       this.statusBar.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).BeginInit();
-      this.trayMenu.SuspendLayout();
+      trayMenu.SuspendLayout();
       this.SuspendLayout();
       // 
       // splitContainer1
@@ -90,6 +91,7 @@
       this.splitContainer1.Size = new System.Drawing.Size(1014, 646);
       this.splitContainer1.SplitterDistance = 227;
       this.splitContainer1.TabIndex = 0;
+      this.splitContainer1.TabStop = false;
       // 
       // pictureBox1
       // 
@@ -134,7 +136,7 @@
       this.tree.ShowHeaderInAllViews = false;
       this.tree.Size = new System.Drawing.Size(227, 594);
       this.tree.SmallImageList = this.imageList1;
-      this.tree.TabIndex = 4;
+      this.tree.TabIndex = 2;
       this.tree.UnfocusedHighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
       this.tree.UnfocusedHighlightForegroundColor = System.Drawing.Color.White;
       this.tree.UseAlternatingBackColors = true;
@@ -252,7 +254,7 @@
       this.cbSearch.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
       this.cbSearch.Name = "cbSearch";
       this.cbSearch.Size = new System.Drawing.Size(211, 26);
-      this.cbSearch.TabIndex = 2;
+      this.cbSearch.TabIndex = 1;
       this.cbSearch.Tag = "hint";
       this.cbSearch.Text = "Search Notes";
       this.cbSearch.TextChanged += new System.EventHandler(this.cbSearch_TextChanged);
@@ -288,6 +290,7 @@
       this.tagBox.Name = "tagBox";
       this.tagBox.Size = new System.Drawing.Size(646, 13);
       this.tagBox.TabIndex = 1;
+      this.tagBox.TabStop = false;
       this.tagBox.TextChanged += new System.EventHandler(this.tagBox_TextChanged);
       this.tagBox.Enter += new System.EventHandler(this.tagBox_Enter);
       this.tagBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tagBox_KeyDown);
@@ -324,10 +327,14 @@
       this.scEdit.Indentation.SmartIndentType = ScintillaNET.SmartIndent.CPP;
       this.scEdit.Indentation.TabWidth = 2;
       this.scEdit.Indentation.UseTabs = false;
+      this.scEdit.IsBraceMatching = true;
       this.scEdit.LineWrapping.IndentMode = ScintillaNET.LineWrappingIndentMode.Indent;
       this.scEdit.LineWrapping.IndentSize = 1;
       this.scEdit.LineWrapping.Mode = ScintillaNET.LineWrappingMode.Word;
       this.scEdit.Location = new System.Drawing.Point(0, 0);
+      this.scEdit.Margin = new System.Windows.Forms.Padding(0);
+      this.scEdit.Margins.Margin1.Width = 0;
+      this.scEdit.Margins.Margin2.Width = 16;
       this.scEdit.Name = "scEdit";
       this.scEdit.Size = new System.Drawing.Size(783, 624);
       this.scEdit.Styles.BraceBad.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
@@ -340,7 +347,7 @@
       this.scEdit.Styles.LastPredefined.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.LineNumber.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.Max.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.TabIndex = 0;
+      this.scEdit.TabIndex = 3;
       // 
       // lexerMenu
       // 
@@ -352,7 +359,7 @@
       // 
       // notifyIcon1
       // 
-      this.notifyIcon1.ContextMenuStrip = this.trayMenu;
+      this.notifyIcon1.ContextMenuStrip = trayMenu;
       this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
       this.notifyIcon1.Text = "SynNotes";
       this.notifyIcon1.Visible = true;
@@ -360,12 +367,12 @@
       // 
       // trayMenu
       // 
-      this.trayMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+      trayMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openToolStripMenuItem1,
             this.toolStripMenuItem2,
             this.exitToolStripMenuItem1});
-      this.trayMenu.Name = "contextMenuTray";
-      this.trayMenu.Size = new System.Drawing.Size(104, 54);
+      trayMenu.Name = "contextMenuTray";
+      trayMenu.Size = new System.Drawing.Size(104, 54);
       // 
       // openToolStripMenuItem1
       // 
@@ -412,7 +419,7 @@
       this.statusBar.ResumeLayout(false);
       this.statusBar.PerformLayout();
       ((System.ComponentModel.ISupportInitialize)(this.scEdit)).EndInit();
-      this.trayMenu.ResumeLayout(false);
+      trayMenu.ResumeLayout(false);
       this.ResumeLayout(false);
 
         }
@@ -422,7 +429,6 @@
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private ScintillaNET.Scintilla scEdit;
-        private System.Windows.Forms.ContextMenuStrip trayMenu;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem1;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem1;

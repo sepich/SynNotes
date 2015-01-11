@@ -58,6 +58,7 @@ namespace SynNotes {
     public NoteItem() {                     // init list
       Tags = new List<TagItem>();
       Deleted = false;
+      TopLine = -1;
     }
 
     public List<TagItem> Tags { get; set; } // assigned tags objects
@@ -77,6 +78,7 @@ namespace SynNotes {
     }
     public bool Deleted { get; set; }       // is deleted
     public string Snippet { get; set; }     // search match preview
+    public int TopLine { get; set; }        // to scroll text to the same place when it was
   }
 
 }
