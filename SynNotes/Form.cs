@@ -1114,7 +1114,12 @@ namespace SynNotes {
       }
     }
 
+    //smart select
     private void scEdit_SelectionChanged(object sender, EventArgs e) {
+      if (scEdit.Tag!=null && (bool)scEdit.Tag){
+        scEdit.GetRange().ClearIndicator(1);
+        scEdit.Tag = false;
+      }
       string ss = scEdit.Selection.Text;
       if (ss.Length > 3 && ss.IndexOfAny(new char[] { ' ', '(',')' }) == -1) {
         scEdit.FindReplace.Flags = SearchFlags.Empty;
@@ -1124,10 +1129,6 @@ namespace SynNotes {
             scEdit.Tag = true;
           }
         }
-      }
-      else if (scEdit.Tag!=null && (bool)scEdit.Tag){
-        scEdit.GetRange().ClearIndicator(1);
-        scEdit.Tag = false;
       }
     }
     #endregion scintilla
