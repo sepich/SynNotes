@@ -27,7 +27,7 @@ namespace SynNotes {
       /// show note for selected item
       /// </summary>
       public void ShowSelected() {
-        if (Item != null && f.cbSearch.Text.Length==0) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //save previous note top line
+        if (Item != null && f.cbSearch.ForeColor == SystemColors.GrayText) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //save previous note top line
         if (f.tree.SelectedItem != null && f.tree.SelectedObject is NoteItem && (NoteItem)f.tree.SelectedObject != Item) Item = (NoteItem)f.tree.SelectedObject;
         else return;
 
@@ -60,7 +60,7 @@ namespace SynNotes {
         f.Text = GetTitle();
         drawTags();
         //highlight search term and scroll to it
-        if (f.cbSearch.Text.Length > 0) {
+        if (f.cbSearch.ForeColor == SystemColors.WindowText && f.cbSearch.Text.Length > 0) {
           var top = f.scEdit.Lines.Count;
           foreach (Range r in f.scEdit.FindReplace.FindAll(f.cbSearch.Text)) {
             r.SetIndicator(0);
@@ -299,6 +299,7 @@ namespace SynNotes {
           tr.Commit();
         }
         //update tree
+        if (Item.Tags.Count == 0) f.tree.SelectObject(f.tagAll, true); //set focus to All when Note lost last tag
         f.tree.RefreshObject(f.tagAll);
         f.tree.RefreshObject(tag);
         FillAutocomplete();

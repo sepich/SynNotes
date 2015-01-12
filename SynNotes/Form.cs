@@ -895,16 +895,14 @@ namespace SynNotes {
     #region search bar
     //placeholder text hide
     private void cbSearch_Enter(object sender, EventArgs e) {
-      if (cbSearch.Tag != null && cbSearch.Tag.ToString() == "hint") {
+      if (cbSearch.ForeColor == SystemColors.GrayText) {
         cbSearch.Text = "";
-        cbSearch.Tag = null;
         cbSearch.ForeColor = SystemColors.WindowText;
       }
     }
     //placeholder text show
     private void cbSearch_Leave(object sender, EventArgs e) {
-      if (cbSearch.Tag == null && cbSearch.Text.Length == 0) {
-        cbSearch.Tag = "hint";
+      if (cbSearch.ForeColor == SystemColors.WindowText && cbSearch.Text.Length == 0) {
         cbSearch.ForeColor = SystemColors.GrayText;
         cbSearch.Text = cbSearch.AccessibleDescription;
       }
@@ -912,7 +910,7 @@ namespace SynNotes {
 
     //incremental search
     private void cbSearch_TextChanged(object sender, EventArgs e) {
-      if (cbSearch.Tag == null) {
+      if (cbSearch.ForeColor == SystemColors.WindowText) {
         if (cbSearch.Text.Length > 0) treeAsList(cbSearch.Text); // call for each change for incremental search
         else treeAsTags(); // switch to tags view
       }
@@ -1128,8 +1126,7 @@ namespace SynNotes {
         }
       }
       else if (scEdit.Tag!=null && (bool)scEdit.Tag){
-        foreach (Range r in scEdit.Indicators[1].SearchAll())
-          r.ClearIndicator(1);
+        scEdit.GetRange().ClearIndicator(1);
         scEdit.Tag = false;
       }
     }
@@ -1171,7 +1168,7 @@ namespace SynNotes {
   public static class Glob {
     public const string All = "All";
     public const string Deleted = "Deleted";
-    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Conf", "Cpp", "Css", "Diff", "Hypertext", "Lua", "Pascal", "Perl", "Powershell", "Python", "Ruby", "Sql", "Tcl", "VB", "VBScript", "Xml", "Yaml", "Null" };
+    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Cpp", "Css", "Diff", "Hypertext", "Lua", "Pascal", "Perl", "Powershell", "Props", "Python", "Ruby", "Sql", "Tcl", "VB", "VBScript", "Xml", "Yaml", "Null" };
     public const string Inherit = "Inherit";
   }
 }
