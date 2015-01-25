@@ -56,7 +56,7 @@ namespace SynNotes {
       hook.SetHotkey(1, ini.GetValue("Keys", "HotkeyShow", ""));
       string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
       hook.SetHotkey(2, s);
-      cbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
+      tbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
       //check db
       if (File.Exists(dbfile)) sqlConnect(dbfile);
       else if (File.Exists(userdir + dbfile)) sqlConnect(userdir + dbfile);
@@ -234,15 +234,15 @@ namespace SynNotes {
         this.BringToFront();
       }
       //Search hotkey
-      if (e.id == 2) this.cbSearch.Focus();
+      if (e.id == 2) this.tbSearch.Focus();
       //statusText.Text = e.Modifier.ToString().Replace(", ", "+") + "+" + e.Key.ToString();
     }
     // local keys
     private void Form1_KeyDown(object sender, KeyEventArgs e) {
       if (e.KeyCode == Keys.Escape && e.Modifiers == Keys.None) {
-        if (cbSearch.ForeColor == SystemColors.WindowText && cbSearch.Text.Length > 0) {
-          cbSearch.Text = "";
-          if (!cbSearch.Focused) cbSearch.Focus();
+        if (tbSearch.ForeColor == SystemColors.WindowText && tbSearch.Text.Length > 0) {
+          tbSearch.Text = "";
+          if (!tbSearch.Focused) tbSearch.Focus();
         }
         else this.WindowState = FormWindowState.Minimized;
       }
@@ -875,23 +875,23 @@ namespace SynNotes {
     #region search bar
     //placeholder text hide
     private void cbSearch_Enter(object sender, EventArgs e) {
-      if (cbSearch.ForeColor == SystemColors.GrayText) {
-        cbSearch.Text = "";
-        cbSearch.ForeColor = SystemColors.WindowText;
+      if (tbSearch.ForeColor == SystemColors.GrayText) {
+        tbSearch.Text = "";
+        tbSearch.ForeColor = SystemColors.WindowText;
       }
     }
     //placeholder text show
     private void cbSearch_Leave(object sender, EventArgs e) {
-      if (cbSearch.ForeColor == SystemColors.WindowText && cbSearch.Text.Length == 0) {
-        cbSearch.ForeColor = SystemColors.GrayText;
-        cbSearch.Text = cbSearch.AccessibleDescription;
+      if (tbSearch.ForeColor == SystemColors.WindowText && tbSearch.Text.Length == 0) {
+        tbSearch.ForeColor = SystemColors.GrayText;
+        tbSearch.Text = tbSearch.AccessibleDescription;
       }
     }
 
     //incremental search
     private void cbSearch_TextChanged(object sender, EventArgs e) {
-      if (cbSearch.ForeColor == SystemColors.WindowText) {
-        if (cbSearch.Text.Length > 0) treeAsList(cbSearch.Text); // call for each change for incremental search
+      if (tbSearch.ForeColor == SystemColors.WindowText) {
+        if (tbSearch.Text.Length > 0) treeAsList(tbSearch.Text); // call for each change for incremental search
         else treeAsTags(); // switch to tags view
       }
     }
@@ -909,10 +909,10 @@ namespace SynNotes {
           tree.FocusedItem = tree.SelectedItem;
           break;
         case Keys.Right:
-          if (tree.RowHeight < 0 && cbSearch.Text.Length == 0) tree.Expand(tree.SelectedObject);
+          if (tree.RowHeight < 0 && tbSearch.Text.Length == 0) tree.Expand(tree.SelectedObject);
           break;
         case Keys.Left:
-          if (tree.RowHeight < 0 && cbSearch.Text.Length == 0) {
+          if (tree.RowHeight < 0 && tbSearch.Text.Length == 0) {
             var node = tree.GetParent(tree.SelectedObject);
             if (node == null) tree.Collapse(tree.SelectedObject);
             else tree.SelectedObject = node;

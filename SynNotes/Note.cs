@@ -28,7 +28,7 @@ namespace SynNotes {
       /// show note for selected item
       /// </summary>
       public void ShowSelected() {
-        if (Item != null && f.cbSearch.ForeColor == SystemColors.GrayText) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //save previous note top line
+        if (Item != null && f.tbSearch.ForeColor == SystemColors.GrayText) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //save previous note top line
         if (f.tree.SelectedItem != null && f.tree.SelectedObject is NoteItem && (NoteItem)f.tree.SelectedObject != Item) Item = (NoteItem)f.tree.SelectedObject;
         else return;
 
@@ -61,9 +61,9 @@ namespace SynNotes {
         f.Text = GetTitle();
         drawTags();
         //highlight search term and scroll to it
-        if (f.cbSearch.ForeColor == SystemColors.WindowText && f.cbSearch.Text.Length > 0) {
+        if (f.tbSearch.ForeColor == SystemColors.WindowText && f.tbSearch.Text.Length > 0) {
           var top = f.scEdit.Lines.Count;
-          foreach (Range r in f.scEdit.FindReplace.FindAll(f.cbSearch.Text)) {
+          foreach (Range r in f.scEdit.FindReplace.FindAll(f.tbSearch.Text)) {
             r.SetIndicator(0);
             if (r.StartingLine.Number < top) top = r.StartingLine.Number;
           }

@@ -45,7 +45,7 @@
       this.statusBar = new System.Windows.Forms.StatusStrip();
       this.btnAdd = new System.Windows.Forms.ToolStripSplitButton();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
-      this.cbSearch = new System.Windows.Forms.ComboBox();
+      this.tbSearch = new System.Windows.Forms.TextBox();
       this.btnLexer = new System.Windows.Forms.Label();
       this.tagBox = new System.Windows.Forms.TextBox();
       this.label1 = new System.Windows.Forms.Label();
@@ -106,7 +106,7 @@
       this.splitContainer1.Panel1.Controls.Add(this.pictureBox1);
       this.splitContainer1.Panel1.Controls.Add(this.tree);
       this.splitContainer1.Panel1.Controls.Add(this.statusBar);
-      this.splitContainer1.Panel1.Controls.Add(this.cbSearch);
+      this.splitContainer1.Panel1.Controls.Add(this.tbSearch);
       this.splitContainer1.Panel1.RightToLeft = System.Windows.Forms.RightToLeft.No;
       // 
       // splitContainer1.Panel2
@@ -130,8 +130,8 @@
       this.pictureBox1.Location = new System.Drawing.Point(0, 0);
       this.pictureBox1.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
       this.pictureBox1.Name = "pictureBox1";
-      this.pictureBox1.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
-      this.pictureBox1.Size = new System.Drawing.Size(16, 26);
+      this.pictureBox1.Padding = new System.Windows.Forms.Padding(0, 1, 0, 0);
+      this.pictureBox1.Size = new System.Drawing.Size(16, 19);
       this.pictureBox1.TabIndex = 5;
       this.pictureBox1.TabStop = false;
       // 
@@ -158,13 +158,13 @@
       this.tree.HighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
       this.tree.HighlightForegroundColor = System.Drawing.SystemColors.HighlightText;
       this.tree.IsSearchOnSortColumn = false;
-      this.tree.Location = new System.Drawing.Point(0, 30);
+      this.tree.Location = new System.Drawing.Point(0, 23);
       this.tree.Margin = new System.Windows.Forms.Padding(0);
       this.tree.Name = "tree";
       this.tree.OwnerDraw = true;
       this.tree.ShowGroups = false;
       this.tree.ShowHeaderInAllViews = false;
-      this.tree.Size = new System.Drawing.Size(227, 594);
+      this.tree.Size = new System.Drawing.Size(227, 601);
       this.tree.SmallImageList = this.imageList1;
       this.tree.TabIndex = 3;
       this.tree.TabStop = false;
@@ -259,28 +259,27 @@
       this.statusText.Spring = true;
       this.statusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
       // 
-      // cbSearch
+      // tbSearch
       // 
-      this.cbSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+      this.tbSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-      this.cbSearch.BackColor = System.Drawing.SystemColors.Window;
-      this.cbSearch.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.cbSearch.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-      this.cbSearch.ForeColor = System.Drawing.SystemColors.GrayText;
-      this.cbSearch.IntegralHeight = false;
-      this.cbSearch.ItemHeight = 18;
-      this.cbSearch.Location = new System.Drawing.Point(16, 0);
-      this.cbSearch.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
-      this.cbSearch.Name = "cbSearch";
-      this.cbSearch.Size = new System.Drawing.Size(211, 26);
-      this.cbSearch.TabIndex = 1;
-      this.cbSearch.Tag = "hint";
-      this.cbSearch.Text = "Search Notes";
-      this.cbSearch.TextChanged += new System.EventHandler(this.cbSearch_TextChanged);
-      this.cbSearch.Enter += new System.EventHandler(this.cbSearch_Enter);
-      this.cbSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbSearch_KeyDown);
-      this.cbSearch.Leave += new System.EventHandler(this.cbSearch_Leave);
+      this.tbSearch.BackColor = System.Drawing.SystemColors.Window;
+      this.tbSearch.BorderStyle = System.Windows.Forms.BorderStyle.None;
+      this.tbSearch.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+      this.tbSearch.ForeColor = System.Drawing.SystemColors.GrayText;
+      this.tbSearch.Location = new System.Drawing.Point(16, 0);
+      this.tbSearch.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
+      this.tbSearch.MaxLength = 255;
+      this.tbSearch.Name = "tbSearch";
+      this.tbSearch.Size = new System.Drawing.Size(211, 19);
+      this.tbSearch.TabIndex = 1;
+      this.tbSearch.Tag = "";
+      this.tbSearch.Text = "Search Notes";
+      this.tbSearch.TextChanged += new System.EventHandler(this.cbSearch_TextChanged);
+      this.tbSearch.Enter += new System.EventHandler(this.cbSearch_Enter);
+      this.tbSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbSearch_KeyDown);
+      this.tbSearch.Leave += new System.EventHandler(this.cbSearch_Leave);
       // 
       // btnLexer
       // 
@@ -429,7 +428,7 @@
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem1;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem1;
-        private System.Windows.Forms.ComboBox cbSearch;
+        private System.Windows.Forms.TextBox tbSearch;
         private System.Windows.Forms.StatusStrip statusBar;
         private System.Windows.Forms.ToolStripStatusLabel statusText;
         private BrightIdeasSoftware.TreeListView tree;
