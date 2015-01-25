@@ -166,7 +166,8 @@
       this.tree.ShowHeaderInAllViews = false;
       this.tree.Size = new System.Drawing.Size(227, 594);
       this.tree.SmallImageList = this.imageList1;
-      this.tree.TabIndex = 2;
+      this.tree.TabIndex = 3;
+      this.tree.TabStop = false;
       this.tree.UnfocusedHighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
       this.tree.UnfocusedHighlightForegroundColor = System.Drawing.SystemColors.HighlightText;
       this.tree.UseAlternatingBackColors = true;
@@ -370,7 +371,7 @@
       this.scEdit.Styles.LastPredefined.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.LineNumber.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.Max.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.TabIndex = 3;
+      this.scEdit.TabIndex = 2;
       this.scEdit.SelectionChanged += new System.EventHandler(this.scEdit_SelectionChanged);
       // 
       // lexerMenu

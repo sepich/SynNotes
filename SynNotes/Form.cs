@@ -240,8 +240,10 @@ namespace SynNotes {
     // local keys
     private void Form1_KeyDown(object sender, KeyEventArgs e) {
       if (e.KeyCode == Keys.Escape && e.Modifiers == Keys.None) {
-        if (!cbSearch.Focused) cbSearch.Focus();
-        else if (cbSearch.Text.Length > 0) cbSearch.Text = "";
+        if (cbSearch.ForeColor == SystemColors.WindowText && cbSearch.Text.Length > 0) {
+          cbSearch.Text = "";
+          if (!cbSearch.Focused) cbSearch.Focus();
+        }
         else this.WindowState = FormWindowState.Minimized;
       }
       else if (e.KeyCode == Keys.Delete && tree.Focused) deleteSelected();
@@ -468,7 +470,7 @@ namespace SynNotes {
       if (tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
     }
     private void tree_MouseClick(object sender, MouseEventArgs e) {
-      if (e.Button == System.Windows.Forms.MouseButtons.Left && e.Clicks == 1 && tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
+      if (tree.RowHeight > 0 && e.Clicks == 1) scEdit.Focus();
     }
 
     // edit only valid for tags
