@@ -14,6 +14,7 @@ using BrightIdeasSoftware;
 using ScintillaNET;
 using ScintillaNET.Configuration;
 using System.Xml;
+using System.Drawing.Drawing2D;
 
 namespace SynNotes {
 
@@ -284,47 +285,44 @@ namespace SynNotes {
     /// </summary>
     private void treeAsTags() {
       //view
-      if (!cDate.IsVisible) {
-        cDate.IsVisible = true;
-        tree.RebuildColumns();
-        tree.RowHeight = -1;
-        tree.EmptyListMsg = "";
-        tree.IsSimpleDragSource = true;
-        tree.IsSimpleDropSink = true;
-        SimpleDropSink sink = (SimpleDropSink)tree.DropSink;
-        sink.CanDropOnSubItem = false;
-        sink.CanDropOnBackground = false;
-        sink.FeedbackColor = SystemColors.Highlight;
-        sink.Billboard.BackColor = SystemColors.Control;
+      tree.RowHeight = -1;
+      tree.EmptyListMsg = "";
+      tree.IsSimpleDragSource = true;
+      tree.IsSimpleDropSink = true;
+      SimpleDropSink sink = (SimpleDropSink)tree.DropSink;
+      sink.CanDropOnSubItem = false;
+      sink.CanDropOnBackground = false;
+      sink.FeedbackColor = SystemColors.Highlight;
+      sink.Billboard.BackColor = SystemColors.Control;
 
-        //getters
-        tree.Roots = null;
-        tree.CanExpandGetter = delegate(object x) {  // should be a little faster than use x.Count (=notes.FindAll)
-          var tag = x as TagItem;
-          if (tag != null) {
-            if (!tag.System) return notes.Exists(n => !n.Deleted && n.Tags.Contains(tag));
-            else {
-              if (tag == tagAll) return notes.Exists(n => !n.Deleted);
-              else return notes.Exists(n => n.Deleted);
-            }
+      //getters
+      tree.Roots = null;
+      tree.CanExpandGetter = delegate(object x) {  // should be a little faster than use x.Count (=notes.FindAll)
+        var tag = x as TagItem;
+        if (tag != null) {
+          if (!tag.System) return notes.Exists(n => !n.Deleted && n.Tags.Contains(tag));
+          else {
+            if (tag == tagAll) return notes.Exists(n => !n.Deleted);
+            else return notes.Exists(n => n.Deleted);
           }
-          return false;
-        };
-        tree.ChildrenGetter = delegate(object x) {
-          return ((TagItem)x).Notes;
-        };
-        tree.ParentGetter = delegate(object x) {
-          var n = x as NoteItem;
-          if (n != null) {
-            if (n.Tags.Count > 0) return n.Tags[0];
-            else return tagAll;
-          }
-          return null;
-        };
-        tree.Roots = tags;
-        //select current
-        if(note != null) tree.Reveal(notes.Find(x => x.Id == note.Item.Id), true);
-      }
+        }
+        return false;
+      };
+      tree.ChildrenGetter = delegate(object x) {
+        return ((TagItem)x).Notes;
+      };
+      tree.ParentGetter = delegate(object x) {
+        var n = x as NoteItem;
+        if (n != null) {
+          if (n.Tags.Count > 0) return n.Tags[0];
+          else return tagAll;
+        }
+        return null;
+      };
+      tree.Roots = tags;
+      cName.Renderer = new ListRenderer();
+      //select current
+      if(note != null) tree.Reveal(notes.Find(x => x.Id == note.Item.Id), true);
     }
 
     /// <summary>
@@ -333,10 +331,8 @@ namespace SynNotes {
     /// <param name="query">seacrh query</param>
     private void treeAsList(string query) {
       //view
-      if(cDate.IsVisible){
-        cDate.IsVisible = false;
-        tree.RebuildColumns();
-        tree.RowHeight = 40;
+      if (tree.RowHeight < 0) {      
+        tree.RowHeight = 64;
         tree.CanExpandGetter = null;
         tree.ChildrenGetter = null;
         tree.EmptyListMsg = "0 results found";
@@ -351,10 +347,11 @@ namespace SynNotes {
       found.Clear();
       readNotes(found, query);
       tree.Roots = found;
+      cName.Renderer = new ListRenderer();
       //select first result
       if (found.Count > 0) {
         if (tree.SelectedIndex == 0) note.ShowSelected();
-        else tree.SelectedObject = found[0];
+        else tree.Reveal(found[0], true);        
       }
     }
 
@@ -393,11 +390,6 @@ namespace SynNotes {
       // startup view is tags view
       treeAsTags();
 
-      cDate.AspectGetter = delegate(object x) {
-        var tag = x as TagItem;
-        if (tag != null) return tag.Count;
-        else return ((NoteItem)x).DateShort;
-      };
       cSort.AspectGetter = delegate(object x) {  //hidden column used for sorting
         var tag = x as TagItem;
         if (tag != null) return tag.Index;
@@ -418,25 +410,9 @@ namespace SynNotes {
       }
 
       //renderer
-      tree.TreeColumnRenderer.LinePen = new Pen(Color.Transparent);
-      //cName.RendererDelegate = delegate(EventArgs e, Graphics g, Rectangle r, Object rowObject) {
-      //  var i = (DrawListViewSubItemEventArgs)e;
-      //  using(SolidBrush b = new SolidBrush(i.Item.BackColor)){
-      //    g.FillRectangle(b, r);
-      //  }
-      //  StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap);
-      //  fmt.LineAlignment = StringAlignment.Center;
-      //  fmt.Trimming = StringTrimming.EllipsisCharacter;
-      //  fmt.Alignment = StringAlignment.Near;
-      //  if (rowObject is TagItem) {
-      //    var t = new Font(i.Item.Font, FontStyle.Bold);
-      //    g.DrawString(((TagItem)rowObject).Name, t, Brushes.Black, r, fmt);
-      //  }
-      //  else g.DrawString(((NoteItem)rowObject).Name, i.Item.Font, Brushes.Black, r, fmt);
-      //  return true;
-      //};
+      //tree.TreeColumnRenderer.LinePen = new Pen(Color.Transparent);
+      //cName.Renderer = new ListRenderer();
     }
-
 
     /// <summary>
     /// get notes from db with tags
@@ -444,7 +420,7 @@ namespace SynNotes {
     private void readNotes(List<NoteItem> result, string query=""){
       string s;
       if (query.Length > 0)
-        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, snippet(fts)" +
+        s = @"SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, snippet(fts, '<b>', '</b>', '...')" +
         " FROM fts s LEFT JOIN notes n ON s.docid=n.id LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
         " WHERE NOT n.deleted AND s.content MATCH ?"+
         " ORDER BY t.`index`";
@@ -747,7 +723,7 @@ namespace SynNotes {
       }
       //configure helper
       var sink = (SimpleDropSink)tree.DropSink;
-      if (!containNotes) { //tag can drop between only tags
+      if (!containNotes) { //tag can drop only between tags
         sink.CanDropBetween = true;
         sink.AcceptableLocations = DropTargetLocation.BetweenItems;
       }
@@ -791,6 +767,7 @@ namespace SynNotes {
         case DropTargetLocation.Item:
           moveNote(e.SourceModels, (TagItem)e.TargetModel, e.StandardDropActionFromKeys);
           e.RefreshObjects();
+          cName.Renderer = new ListRenderer();
           break;
       }
     }
@@ -846,7 +823,8 @@ namespace SynNotes {
       tags.ForEach(x => {
         if (!x.System) x.Index = i++;
       });
-      tree.Roots = tags;      
+      tree.Roots = tags;
+      cName.Renderer = new ListRenderer();
       tree.SelectedObjects = from;
       //save to db
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
@@ -929,10 +907,10 @@ namespace SynNotes {
           tree.FocusedItem = tree.SelectedItem;
           break;
         case Keys.Right:
-          if (cDate.IsVisible && cbSearch.Text.Length==0) tree.Expand(tree.SelectedObject);
+          if (tree.RowHeight < 0 && cbSearch.Text.Length == 0) tree.Expand(tree.SelectedObject);
           break;
         case Keys.Left:
-          if (cDate.IsVisible && cbSearch.Text.Length == 0) {
+          if (tree.RowHeight < 0 && cbSearch.Text.Length == 0) {
             var node = tree.GetParent(tree.SelectedObject);
             if (node == null) tree.Collapse(tree.SelectedObject);
             else tree.SelectedObject = node;
@@ -1141,6 +1119,167 @@ namespace SynNotes {
 
 
   }
+
+  #region tree owner draw
+  public class ListRenderer : BaseRenderer {
+    public override void Render(Graphics g, Rectangle r) {      
+      //get objects
+      TagItem tag = null;
+      NoteItem note = null;
+      bool isTag = false;
+      if (this.RowObject is TagItem) {
+        tag = (TagItem)this.RowObject;
+        isTag = true;
+      }
+      else note = (NoteItem)this.RowObject;
+      
+      this.DrawBackground(g, r);
+      if (isTag) drawTag(g, r, tag);
+      else if (this.ListView.RowHeight > 0) drawFound(g, r, note);
+      else drawNote(g, r, note);
+    }
+
+    //draw found result
+    private void drawFound(Graphics g, Rectangle r, NoteItem note) {
+      //note title
+      r.X += 3; //padding
+      r.Y += 3;
+      var ctag = this.GetForegroundColor();
+      var cnote = Color.FromArgb(100, 100, 100);
+      if (ctag == SystemColors.HighlightText) {
+        cnote = ControlPaint.Dark(ctag, 90);
+      }
+      else ctag = SystemColors.HotTrack;
+
+      var stringSize = g.MeasureString(note.DateShort, this.Font);
+      var offset = (int)stringSize.Height + 1;
+      var r2 = new Rectangle(r.X + 3, offset + 5, r.Width, r.Height - offset); //rect search result
+      using (StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap)) {
+        fmt.LineAlignment = StringAlignment.Near;
+        fmt.Trimming = StringTrimming.EllipsisCharacter;
+
+        //modify date        
+        using (SolidBrush b = new SolidBrush(Color.FromArgb(128, this.GetForegroundColor()))) {
+          fmt.Alignment = StringAlignment.Far;
+          g.DrawString(note.DateShort, this.Font, b, r, fmt);
+        }
+
+        //note title
+        fmt.Alignment = StringAlignment.Near;
+        r.Width -= (int)stringSize.Width - 1;        
+        using (var f = new Font(this.Font, FontStyle.Bold)) 
+        using (var b = new SolidBrush(ctag)) {
+          g.DrawString(this.GetText(), f, b, r, fmt);
+        }        
+      }
+
+      //search result to rtf
+      var s = note.Snippet.Replace("\n", " ").Replace("\r", " ");
+      while (s.Contains("  ")) s = s.Replace("  ", " "); 
+      s = s.Replace(@"\", @"\\")
+           .Replace("{", @"\{")
+           .Replace("}", @"\}")
+           .Replace(@"<b>", @"\b ")
+           .Replace(@"</b>", @"\b0 ");
+      g.DrawRtfText(@"{\rtf\b0 " + s + " }", r2, cnote, this.Font);
+    }
+
+    //draw tag with collapse/expand icon and badge
+    private void drawTag(Graphics g, Rectangle r, TagItem tag) {
+      //collapse icon of tag
+      ImageList il = this.ListView.SmallImageList;
+      TreeListView tree = (TreeListView)this.ListView;
+      TreeListView.Branch br = tree.TreeModel.GetBranch(this.RowObject);
+      if (br.IsExpanded) this.DrawImage(g, r, 2); //opened
+      else this.DrawImage(g, r, 3); //closed
+      r.X += 16;
+      r.Width -= 16;
+      
+      //system tag icon        
+      if (tag.System) {
+        if (tag.Name == Glob.All) this.DrawImage(g, r, 4);
+        else this.DrawImage(g, r, 5);
+        r.X += 16;
+        r.Width -= 16;
+      }
+      
+      //tag title
+      using (StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap)) {
+        fmt.LineAlignment = StringAlignment.Center;
+        fmt.Trimming = StringTrimming.EllipsisCharacter;
+        fmt.Alignment = StringAlignment.Near;
+        SizeF stringSize = new SizeF();
+        using (var f = new Font(this.Font, FontStyle.Bold)) {
+          g.DrawString(this.GetText(), f, this.TextBrush, r, fmt);
+          stringSize = g.MeasureString(this.GetText(), f);
+        }
+        var pad = (int)stringSize.Width + 3;
+        r.X += pad;
+        r.Width -= pad;
+
+        //count badge
+        using (var f = new Font(this.Font.FontFamily, this.Font.Size - 1, FontStyle.Regular)) {
+          stringSize = g.MeasureString(tag.Count.ToString(), f);
+          var badgerect = new Rectangle(r.X + 3, r.Y + 3, (int)stringSize.Width + 3, r.Height - 6);
+          using (GraphicsPath path = this.GetRoundedRect(badgerect, 10)) {
+            using (SolidBrush b = new SolidBrush(Color.FromArgb(80, Color.Black))) {
+              g.FillPath(b, path); //bg
+            }
+            using (SolidBrush b = new SolidBrush(Color.White)) {
+              fmt.Alignment = StringAlignment.Center;
+              g.DrawString(tag.Count.ToString(), f, b, badgerect, fmt); //count
+            }
+          }
+        }        
+      }
+    }
+
+    //draw note title with modify date
+    private void drawNote(Graphics g, Rectangle r, NoteItem note) {
+      //note indent
+      r.X += 32;
+      r.Width -= 32;
+      //note title
+      using (StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap)) {
+        fmt.LineAlignment = StringAlignment.Center;
+        fmt.Trimming = StringTrimming.EllipsisCharacter;
+        
+        //modify date
+        var stringSize = g.MeasureString(note.DateShort, this.Font);
+        var offset = (int)stringSize.Width + 1;
+        r.Width -= offset;
+        var daterect = new Rectangle(r.X + r.Width, r.Y, offset, r.Height);
+        using (SolidBrush b = new SolidBrush(Color.FromArgb(128, this.GetForegroundColor()))) {
+          fmt.Alignment = StringAlignment.Far;
+          g.DrawString(note.DateShort, this.Font, b, daterect, fmt);
+        }
+
+        //note title
+        fmt.Alignment = StringAlignment.Near;
+        g.DrawString(this.GetText(), this.Font, this.TextBrush, r, fmt);
+      }
+    }
+
+    /// <summary>
+    /// Return a GraphicPath that is round corner rectangle.
+    /// </summary>
+    protected GraphicsPath GetRoundedRect(Rectangle rect, float diameter) {
+      GraphicsPath path = new GraphicsPath();
+
+      RectangleF arc = new RectangleF(rect.X, rect.Y, diameter, diameter);
+      path.AddArc(arc, 180, 90);
+      arc.X = rect.Right - diameter;
+      path.AddArc(arc, 270, 90);
+      arc.Y = rect.Bottom - diameter;
+      path.AddArc(arc, 0, 90);
+      arc.X = rect.Left;
+      path.AddArc(arc, 90, 90);
+      path.CloseFigure();
+
+      return path;
+    }
+  }
+  #endregion tree owner draw
 
   internal class scStyle {
     public string name { get; set; }

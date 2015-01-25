@@ -39,7 +39,6 @@
       this.pictureBox1 = new System.Windows.Forms.PictureBox();
       this.tree = new BrightIdeasSoftware.TreeListView();
       this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-      this.cDate = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.cSort = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.treeMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.imageList1 = new System.Windows.Forms.ImageList(this.components);
@@ -139,9 +138,8 @@
       // tree
       // 
       this.tree.AllColumns.Add(this.cName);
-      this.tree.AllColumns.Add(this.cDate);
       this.tree.AllColumns.Add(this.cSort);
-      this.tree.AlternateRowBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+      this.tree.AlternateRowBackColor = System.Drawing.SystemColors.Window;
       this.tree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -151,11 +149,14 @@
       this.tree.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.cName});
       this.tree.ContextMenuStrip = this.treeMenu;
+      this.tree.CopySelectionOnControlC = false;
       this.tree.EmptyListMsg = "";
       this.tree.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
       this.tree.FullRowSelect = true;
       this.tree.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
       this.tree.HideSelection = false;
+      this.tree.HighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
+      this.tree.HighlightForegroundColor = System.Drawing.SystemColors.HighlightText;
       this.tree.IsSearchOnSortColumn = false;
       this.tree.Location = new System.Drawing.Point(0, 30);
       this.tree.Margin = new System.Windows.Forms.Padding(0);
@@ -167,7 +168,7 @@
       this.tree.SmallImageList = this.imageList1;
       this.tree.TabIndex = 2;
       this.tree.UnfocusedHighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
-      this.tree.UnfocusedHighlightForegroundColor = System.Drawing.Color.White;
+      this.tree.UnfocusedHighlightForegroundColor = System.Drawing.SystemColors.HighlightText;
       this.tree.UseAlternatingBackColors = true;
       this.tree.UseCompatibleStateImageBehavior = false;
       this.tree.UseNotifyPropertyChanged = true;
@@ -193,20 +194,6 @@
       this.cName.FillsFreeSpace = true;
       this.cName.Text = "Name";
       // 
-      // cDate
-      // 
-      this.cDate.AspectName = "";
-      this.cDate.AutoCompleteEditor = false;
-      this.cDate.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
-      this.cDate.DisplayIndex = 1;
-      this.cDate.HeaderTextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-      this.cDate.IsEditable = false;
-      this.cDate.IsVisible = false;
-      this.cDate.Text = "Date";
-      this.cDate.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-      this.cDate.UseFiltering = false;
-      this.cDate.Width = 30;
-      // 
       // cSort
       // 
       this.cSort.AspectName = "";
@@ -230,9 +217,12 @@
       // 
       this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
       this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-      this.imageList1.Images.SetKeyName(0, "add.png");
-      this.imageList1.Images.SetKeyName(1, "search.png");
-      this.imageList1.Images.SetKeyName(2, "settings.png");
+      this.imageList1.Images.SetKeyName(0, "add");
+      this.imageList1.Images.SetKeyName(1, "settings");
+      this.imageList1.Images.SetKeyName(2, "open.png");
+      this.imageList1.Images.SetKeyName(3, "close");
+      this.imageList1.Images.SetKeyName(4, "all.png");
+      this.imageList1.Images.SetKeyName(5, "trash.png");
       // 
       // statusBar
       // 
@@ -443,7 +433,6 @@
         private System.Windows.Forms.ToolStripStatusLabel statusText;
         private BrightIdeasSoftware.TreeListView tree;
         private BrightIdeasSoftware.OLVColumn cName;
-        private BrightIdeasSoftware.OLVColumn cDate;
         private System.Windows.Forms.ToolStripSplitButton btnAdd;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.PictureBox pictureBox1;

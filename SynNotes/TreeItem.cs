@@ -62,20 +62,18 @@ namespace SynNotes {
     }
 
     public List<TagItem> Tags { get; set; } // assigned tags objects
-    public float ModifyDate {               // unixtime of last modify
-      get { return modifyDate; }
-      set {
-        if (modifyDate == value) return;
-        modifyDate = value;
-        base.OnPropertyChanged("DateShort");
-      }
-    }
-    private float modifyDate;
+    public float ModifyDate { get; set; }   // unixtime of last modify
     public string DateShort {               // short string of last modify
       get {
-         return ModifyDate.ToString();
+        var now = (float)(DateTime.UtcNow.Subtract(Epoch)).TotalSeconds;
+        var diff = now - ModifyDate;
+        var dt = Epoch.AddSeconds(ModifyDate).ToLocalTime();
+        if (diff < 24 * 60 * 60) return dt.ToString("HH:mm"); // this day
+        else if (DateTime.Today.Year != dt.Year) return dt.ToString("MMM yy "); //another year
+        else return dt.ToString("d MMM"); // this year
       }
     }
+    private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     public bool Deleted { get; set; }       // is deleted
     public string Snippet { get; set; }     // search match preview
     public int TopLine { get; set; }        // to scroll text to the same place when it was
