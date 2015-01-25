@@ -17,7 +17,7 @@ namespace SynNotes {
       private Form1 f;                       // main form 
       public NoteItem Item { get; set; }     // note id
       private List<Label> Labels;            // tag labels displayed
-      private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); //unixtime start
+      private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); //unixtime start      
 
       public Note(Form1 form) {
         Labels = new List<Label>();
@@ -109,7 +109,8 @@ namespace SynNotes {
       public void Save() {
         if (Item == null) return;
         Item.ModifyDate = (float)(DateTime.UtcNow.Subtract(Epoch)).TotalSeconds;
-        Item.Name = GetTitle();        
+        Item.Name = GetTitle();
+        foreach (var tag in Item.Tags) f.tree.RefreshObject(tag); //refresh tag to resort notes (if note name changed)
         //save text
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {

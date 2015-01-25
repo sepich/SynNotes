@@ -44,6 +44,7 @@
       this.imageList1 = new System.Windows.Forms.ImageList(this.components);
       this.statusBar = new System.Windows.Forms.StatusStrip();
       this.btnAdd = new System.Windows.Forms.ToolStripSplitButton();
+      this.btnPin = new System.Windows.Forms.ToolStripSplitButton();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
       this.tbSearch = new System.Windows.Forms.TextBox();
       this.btnLexer = new System.Windows.Forms.Label();
@@ -224,6 +225,7 @@
       this.imageList1.Images.SetKeyName(3, "close");
       this.imageList1.Images.SetKeyName(4, "all.png");
       this.imageList1.Images.SetKeyName(5, "trash.png");
+      this.imageList1.Images.SetKeyName(6, "pinsmall.png");
       // 
       // statusBar
       // 
@@ -231,6 +233,7 @@
       this.statusBar.GripMargin = new System.Windows.Forms.Padding(0);
       this.statusBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.btnAdd,
+            this.btnPin,
             this.statusText});
       this.statusBar.Location = new System.Drawing.Point(0, 624);
       this.statusBar.Name = "statusBar";
@@ -244,6 +247,7 @@
       this.btnAdd.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
       this.btnAdd.DropDownButtonWidth = 0;
       this.btnAdd.Image = ((System.Drawing.Image)(resources.GetObject("btnAdd.Image")));
+      this.btnAdd.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
       this.btnAdd.ImageTransparentColor = System.Drawing.Color.Magenta;
       this.btnAdd.Margin = new System.Windows.Forms.Padding(0);
       this.btnAdd.MergeIndex = -2;
@@ -252,12 +256,24 @@
       this.btnAdd.Text = "Add Note";
       this.btnAdd.ButtonClick += new System.EventHandler(this.btnAdd_ButtonClick);
       // 
+      // btnPin
+      // 
+      this.btnPin.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+      this.btnPin.DropDownButtonWidth = 0;
+      this.btnPin.Image = ((System.Drawing.Image)(resources.GetObject("btnPin.Image")));
+      this.btnPin.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+      this.btnPin.ImageTransparentColor = System.Drawing.Color.Magenta;
+      this.btnPin.Margin = new System.Windows.Forms.Padding(0);
+      this.btnPin.Name = "btnPin";
+      this.btnPin.Size = new System.Drawing.Size(21, 22);
+      this.btnPin.Text = "Pin Note";
+      this.btnPin.Click += new System.EventHandler(this.btnPin_Click);
+      // 
       // statusText
       // 
       this.statusText.Name = "statusText";
-      this.statusText.Size = new System.Drawing.Size(191, 17);
+      this.statusText.Size = new System.Drawing.Size(170, 17);
       this.statusText.Spring = true;
-      this.statusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
       // 
       // tbSearch
       // 
@@ -371,6 +387,7 @@
       this.scEdit.Styles.LineNumber.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.Styles.Max.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.TabIndex = 2;
+      this.scEdit.DocumentChange += new System.EventHandler<ScintillaNET.NativeScintillaEventArgs>(this.scEdit_DocumentChange);
       this.scEdit.SelectionChanged += new System.EventHandler(this.scEdit_SelectionChanged);
       // 
       // lexerMenu
@@ -442,6 +459,7 @@
         private System.Windows.Forms.ContextMenuStrip treeMenu;
         private System.Windows.Forms.Label btnLexer;
         private System.Windows.Forms.ContextMenuStrip lexerMenu;
+        private System.Windows.Forms.ToolStripSplitButton btnPin;
     }
 }
 

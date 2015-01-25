@@ -35,6 +35,7 @@ namespace SynNotes {
     TagItem tagDeleted;            // pointer to DELETED tag
     TagItem tagAll;                // pointer to ALL tag
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
+    public static Timer saveTimer; //autosave
 
     public Form1() {InitializeComponent();}
 
@@ -395,7 +396,11 @@ namespace SynNotes {
       cSort.AspectGetter = delegate(object x) {  //hidden column used for sorting
         var tag = x as TagItem;
         if (tag != null) return tag.Index;
-        else return ((NoteItem)x).Name;
+        else {
+          var note = x as NoteItem;
+          if (note.Pinned) return "";
+          return note.Name;
+        }
       };
       tree.Sort(cSort, SortOrder.Ascending);     //sort by this hidden column
       //restore view
@@ -422,12 +427,12 @@ namespace SynNotes {
     private void readNotes(List<NoteItem> result, string query=""){
       string s;
       if (query.Length > 0)
-        s = @"SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, snippet(fts, '<b>', '</b>', '...')" +
+        s = @"SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned, snippet(fts, '<b>', '</b>', '...')" +
         " FROM fts s LEFT JOIN notes n ON s.docid=n.id LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
         " WHERE NOT n.deleted AND s.content MATCH ?"+
         " ORDER BY t.`index`";
       else
-        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer" +                                        
+        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned" +                                        
         " FROM notes n LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
         " ORDER BY n.id, t.`index`";
       NoteItem node = new NoteItem();
@@ -448,7 +453,8 @@ namespace SynNotes {
               node.Tags = new List<TagItem>();              
               if (!rdr.IsDBNull(4)) node.Tags.Add(tags.Find(x => x.Id == rdr.GetInt32(4)));
               if (!rdr.IsDBNull(5)) node.Lexer = rdr.GetString(5);
-              if (query.Length > 0) node.Snippet = rdr.GetString(6);
+              node.Pinned = rdr.GetBoolean(6);
+              if (query.Length > 0) node.Snippet = rdr.GetString(7);
               result.Add(node);
             }
             else node.Tags.Add(tags.Find(x => x.Id == rdr.GetInt32(4)));
@@ -1111,7 +1117,48 @@ namespace SynNotes {
         }
       }
     }
+
+    //trigger autosave on change
+    private void scEdit_DocumentChange(object sender, NativeScintillaEventArgs e) {
+      if (tree.SelectedObject == note.Item) {
+        if (saveTimer == null) {
+          saveTimer = new Timer();
+          saveTimer.Interval = 5000;
+          saveTimer.Tick += saveTimer_Elapsed;
+        }
+        else if (statusText.Text != "Changed") statusText.Text = "Changed";
+        saveTimer.Stop();
+        saveTimer.Start();
+      }
+    }
+
+    //autosave
+    void saveTimer_Elapsed(object sender, EventArgs e) {
+      statusText.Text = "Saved";
+      note.Save();
+    }
     #endregion scintilla
+
+    //pin note
+    private void btnPin_Click(object sender, EventArgs e) {
+      var note = tree.SelectedObject as NoteItem;
+      if (note != null) {
+        note.Pinned = note.Pinned ? false : true;
+        tree.RefreshObject(tree.GetParent(note)); //resort
+        //save to db
+        using (SQLiteTransaction tr = sql.BeginTransaction()) {
+          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+            cmd.CommandText = "UPDATE notes SET pinned=? WHERE id=?";
+            cmd.Parameters.AddWithValue(null, note.Pinned);
+            cmd.Parameters.AddWithValue(null, note.Id);
+            cmd.ExecuteNonQuery();
+          }
+          tr.Commit();
+        }
+      }
+    }
+
+
 
 
 
@@ -1259,6 +1306,14 @@ namespace SynNotes {
         //note title
         fmt.Alignment = StringAlignment.Near;
         g.DrawString(this.GetText(), this.Font, this.TextBrush, r, fmt);
+      }
+      //pinned
+      if (note.Pinned) {
+        var stringSize = g.MeasureString(this.GetText(), this.Font);
+        var offset = (int)stringSize.Width;
+        r.X += offset;
+        r.Width -= offset;
+        this.DrawImage(g, r, 6);
       }
     }
 

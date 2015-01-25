@@ -15,6 +15,7 @@ namespace SynNotes {
       Graphics_DrawRtfText.rtfDrawer.Rtf = rtf;
       Graphics_DrawRtfText.rtfDrawer.ForeColor = color;
       Graphics_DrawRtfText.rtfDrawer.Font = font;
+      Graphics_DrawRtfText.rtfDrawer.DetectUrls = false;
       Graphics_DrawRtfText.rtfDrawer.Draw(graphics, layoutArea);
     }
 

@@ -77,6 +77,7 @@ namespace SynNotes {
     public bool Deleted { get; set; }       // is deleted
     public string Snippet { get; set; }     // search match preview
     public int TopLine { get; set; }        // to scroll text to the same place when it was
+    public bool Pinned { get; set; }        // note is pinned
   }
 
 }
