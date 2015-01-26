@@ -28,8 +28,10 @@ namespace SynNotes {
       /// show note for selected item
       /// </summary>
       public void ShowSelected() {
-        if (Item != null && f.tbSearch.ForeColor == SystemColors.GrayText) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //save previous note top line
-        if (f.tree.SelectedItem != null && f.tree.SelectedObject is NoteItem && (NoteItem)f.tree.SelectedObject != Item) Item = (NoteItem)f.tree.SelectedObject;
+        if (Item != null && f.tbSearch.ForeColor == SystemColors.GrayText) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //not search, save previous note top line
+        if (f.tree.SelectedItem == null) return;
+        var n = f.tree.SelectedObject  as NoteItem;
+        if (n != null && n != Item) Item = n;
         else return;
 
         using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
@@ -109,8 +111,12 @@ namespace SynNotes {
       public void Save() {
         if (Item == null) return;
         Item.ModifyDate = (float)(DateTime.UtcNow.Subtract(Epoch)).TotalSeconds;
-        Item.Name = GetTitle();
-        foreach (var tag in Item.Tags) f.tree.RefreshObject(tag); //refresh tag to resort notes (if note name changed)
+        var t=GetTitle();
+        if (Item.Name != t) {
+          Item.Name = t;
+          foreach (var tag in Item.Tags) f.tree.RefreshObject(tag); //refresh tag to resort notes (if note name changed)
+          f.Text = t;
+        }
         //save text
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {

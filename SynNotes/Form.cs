@@ -469,6 +469,8 @@ namespace SynNotes {
     private void tree_SelectionChanged(object sender, EventArgs e) {
       if (scEdit.Modified) note.Save();
       note.ShowSelected();
+      saveTimer.Stop(); //dont autosave on textchange this time
+      statusText.Text = Glob.Saved;
     }
 
     // expand tag by key / mouse click
@@ -1161,21 +1163,19 @@ namespace SynNotes {
 
     //trigger autosave on change
     private void scEdit_DocumentChange(object sender, NativeScintillaEventArgs e) {
-      if (tree.SelectedObject == note.Item) {
-        if (saveTimer == null) {
-          saveTimer = new Timer();
-          saveTimer.Interval = 5000;
-          saveTimer.Tick += saveTimer_Elapsed;
-        }
-        else if (statusText.Text != "Changed") statusText.Text = "Changed";
-        saveTimer.Stop();
-        saveTimer.Start();
+      if (saveTimer == null) {
+        saveTimer = new Timer();
+        saveTimer.Interval = 5000;
+        saveTimer.Tick += saveTimer_Elapsed;
       }
+      if (statusText.Text != Glob.Changed) statusText.Text = Glob.Changed;
+      saveTimer.Stop();
+      saveTimer.Start();    
     }
 
     //autosave
     void saveTimer_Elapsed(object sender, EventArgs e) {
-      statusText.Text = "Saved";
+      statusText.Text = Glob.Saved;
       note.Save();
     }
     #endregion scintilla
@@ -1400,5 +1400,7 @@ namespace SynNotes {
     public const string Deleted = "Deleted";
     public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Cpp", "Css", "Diff", "Hypertext", "Lua", "Pascal", "Perl", "Powershell", "Props", "Python", "Ruby", "Sql", "Tcl", "VB", "VBScript", "Xml", "Yaml", "Null" };
     public const string Inherit = "Inherit";
+    public const string Changed = "changed";
+    public const string Saved = "saved";
   }
 }
