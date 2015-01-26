@@ -180,6 +180,7 @@
       this.tree.CellEditFinishing += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditFinishing);
       this.tree.CellEditStarting += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditStarting);
       this.tree.CellEditValidating += new BrightIdeasSoftware.CellEditEventHandler(this.tree_CellEditValidating);
+      this.tree.CellClick += new System.EventHandler<BrightIdeasSoftware.CellClickEventArgs>(this.tree_CellClick);
       this.tree.CellRightClick += new System.EventHandler<BrightIdeasSoftware.CellRightClickEventArgs>(this.tree_CellRightClick);
       this.tree.ModelCanDrop += new System.EventHandler<BrightIdeasSoftware.ModelDropEventArgs>(this.tree_ModelCanDrop);
       this.tree.ModelDropped += new System.EventHandler<BrightIdeasSoftware.ModelDropEventArgs>(this.tree_ModelDropped);
@@ -226,6 +227,9 @@
       this.imageList1.Images.SetKeyName(4, "all.png");
       this.imageList1.Images.SetKeyName(5, "trash.png");
       this.imageList1.Images.SetKeyName(6, "pinsmall.png");
+      this.imageList1.Images.SetKeyName(7, "pinsmall_i.png");
+      this.imageList1.Images.SetKeyName(8, "open_i.png");
+      this.imageList1.Images.SetKeyName(9, "close_i.png");
       // 
       // statusBar
       // 

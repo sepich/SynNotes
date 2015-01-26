@@ -475,8 +475,17 @@ namespace SynNotes {
     private void tree_ItemActivate(object sender, EventArgs e) {
       if (tree.SelectedObject is TagItem) tree.ToggleExpansion(tree.SelectedObject);
     }
+
+    //activate note on tree click if it is search result
     private void tree_MouseClick(object sender, MouseEventArgs e) {
       if (tree.RowHeight > 0 && e.Clicks == 1) scEdit.Focus();
+    }
+
+    //tag expand/collapse by clicking on icon
+    private void tree_CellClick(object sender, CellClickEventArgs e) {
+      if (e.Location.X < 16) {
+        if (e.Model is TagItem) tree.ToggleExpansion(e.Model);
+      }
     }
 
     // edit only valid for tags
@@ -552,9 +561,16 @@ namespace SynNotes {
         }
         else {
           treeMenu.Items.Add("New Note (F7)", null, btnAdd_ButtonClick);
+          if(n.Pinned) treeMenu.Items.Add("Unpin Note", null, pinClick);
+          else treeMenu.Items.Add("Pin Note", null, pinClick);
           treeMenu.Items.Add("Delete (Del)", null, delClick);
         }
       }
+    }
+
+    //pin note
+    private void pinClick(object sender, EventArgs e) {
+      pinNote();
     }
 
     //set lexer for tag
@@ -618,8 +634,12 @@ namespace SynNotes {
       deleteSelected();
     }
 
+    //bottom buttons 
     private void btnAdd_ButtonClick(object sender, EventArgs e) {
       createNote();
+    }
+    private void btnPin_Click(object sender, EventArgs e) {
+      pinNote();
     }
 
     /// <summary>
@@ -716,6 +736,27 @@ namespace SynNotes {
         tr.Commit();
       }
       if (n > 1 && tree.SelectedObjects.Count > 0) tree.SelectedObject = tree.SelectedObjects[0]; //reset the selection
+    }
+
+    /// <summary>
+    /// (un)pin selected note
+    /// </summary>
+    private void pinNote() {
+      var note = tree.SelectedObject as NoteItem;
+      if (note != null) {
+        note.Pinned = note.Pinned ? false : true;
+        tree.RefreshObject(tree.GetParent(note)); //resort
+        //save to db
+        using (SQLiteTransaction tr = sql.BeginTransaction()) {
+          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+            cmd.CommandText = "UPDATE notes SET pinned=? WHERE id=?";
+            cmd.Parameters.AddWithValue(null, note.Pinned);
+            cmd.Parameters.AddWithValue(null, note.Id);
+            cmd.ExecuteNonQuery();
+          }
+          tr.Commit();
+        }
+      }
     }
     #endregion tree context menu
 
@@ -1139,24 +1180,9 @@ namespace SynNotes {
     }
     #endregion scintilla
 
-    //pin note
-    private void btnPin_Click(object sender, EventArgs e) {
-      var note = tree.SelectedObject as NoteItem;
-      if (note != null) {
-        note.Pinned = note.Pinned ? false : true;
-        tree.RefreshObject(tree.GetParent(note)); //resort
-        //save to db
-        using (SQLiteTransaction tr = sql.BeginTransaction()) {
-          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
-            cmd.CommandText = "UPDATE notes SET pinned=? WHERE id=?";
-            cmd.Parameters.AddWithValue(null, note.Pinned);
-            cmd.Parameters.AddWithValue(null, note.Id);
-            cmd.ExecuteNonQuery();
-          }
-          tr.Commit();
-        }
-      }
-    }
+
+
+
 
 
 
@@ -1239,8 +1265,14 @@ namespace SynNotes {
       ImageList il = this.ListView.SmallImageList;
       TreeListView tree = (TreeListView)this.ListView;
       TreeListView.Branch br = tree.TreeModel.GetBranch(this.RowObject);
-      if (br.IsExpanded) this.DrawImage(g, r, 2); //opened
-      else this.DrawImage(g, r, 3); //closed
+      if (br.IsExpanded) {//opened
+        if (this.IsItemSelected) this.DrawImage(g, r, 8);
+        else this.DrawImage(g, r, 2);
+      }
+      else {//closed
+        if (this.IsItemSelected) this.DrawImage(g, r, 9); 
+        else this.DrawImage(g, r, 3);
+      }
       r.X += 16;
       r.Width -= 16;
       
@@ -1313,7 +1345,8 @@ namespace SynNotes {
         var offset = (int)stringSize.Width;
         r.X += offset;
         r.Width -= offset;
-        this.DrawImage(g, r, 6);
+        if (this.IsItemSelected) this.DrawImage(g, r, 7); //inverted
+        else this.DrawImage(g, r, 6);
       }
     }
 
