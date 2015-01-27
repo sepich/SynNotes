@@ -39,6 +39,7 @@
       this.pictureBox1 = new System.Windows.Forms.PictureBox();
       this.tree = new BrightIdeasSoftware.TreeListView();
       this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+      this.fancyRenderer = new SynNotes.FancyRenderer();
       this.cSort = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.treeMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.imageList1 = new System.Windows.Forms.ImageList(this.components);
@@ -195,6 +196,7 @@
       this.cName.AutoCompleteEditor = false;
       this.cName.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
       this.cName.FillsFreeSpace = true;
+      this.cName.Renderer = this.fancyRenderer;
       this.cName.Text = "Name";
       // 
       // cSort
@@ -257,7 +259,7 @@
       this.btnAdd.MergeIndex = -2;
       this.btnAdd.Name = "btnAdd";
       this.btnAdd.Size = new System.Drawing.Size(21, 22);
-      this.btnAdd.Text = "Add Note";
+      this.btnAdd.Text = "Add Note (F7)";
       this.btnAdd.ButtonClick += new System.EventHandler(this.btnAdd_ButtonClick);
       // 
       // btnPin
@@ -464,6 +466,7 @@
         private System.Windows.Forms.Label btnLexer;
         private System.Windows.Forms.ContextMenuStrip lexerMenu;
         private System.Windows.Forms.ToolStripSplitButton btnPin;
+        private FancyRenderer fancyRenderer;
     }
 }
 

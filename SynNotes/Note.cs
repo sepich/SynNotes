@@ -240,6 +240,7 @@ namespace SynNotes {
                 tagItem.Id = f.sql.LastInsertRowId;
                 tagItem.Index = f.tags.Count - 1;
                 f.tree.AddObject(tagItem);
+                f.cName.Renderer = f.fancyRenderer; //OLV drop renderer when Roots refreshed
                 f.tree.SelectedObject = Item;
                 f.tags.Add(tagItem);
               }

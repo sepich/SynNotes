@@ -292,6 +292,7 @@ namespace SynNotes {
       tree.EmptyListMsg = "";
       tree.IsSimpleDragSource = true;
       tree.IsSimpleDropSink = true;
+      
       SimpleDropSink sink = (SimpleDropSink)tree.DropSink;
       sink.CanDropOnSubItem = false;
       sink.CanDropOnBackground = false;
@@ -323,7 +324,7 @@ namespace SynNotes {
         return null;
       };
       tree.Roots = tags;
-      cName.Renderer = new ListRenderer();
+      cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
       //select current
       if(note != null) tree.Reveal(notes.Find(x => x.Id == note.Item.Id), true);
     }
@@ -350,7 +351,7 @@ namespace SynNotes {
       found.Clear();
       readNotes(found, query);
       tree.Roots = found;
-      cName.Renderer = new ListRenderer();
+      cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
       //select first result
       if (found.Count > 0) {
         if (tree.SelectedIndex == 0) note.ShowSelected();
@@ -704,6 +705,7 @@ namespace SynNotes {
                 cmd.CommandText = "DELETE FROM tags WHERE id=" + tag.Id;
                 cmd.ExecuteNonQuery();
                 tree.RemoveObject(tag);
+                cName.Renderer = fancyRenderer; //OLV drop renderer when Roots refreshed
                 tags.Remove(tag);
                 notes.ForEach(x => x.Tags.Remove(tag));
                 note.RemoveLabel(null, tag); //del from tagBox if exist
@@ -818,7 +820,7 @@ namespace SynNotes {
         case DropTargetLocation.Item:
           moveNote(e.SourceModels, (TagItem)e.TargetModel, e.StandardDropActionFromKeys);
           e.RefreshObjects();
-          cName.Renderer = new ListRenderer();
+          cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
           break;
       }
     }
@@ -875,7 +877,7 @@ namespace SynNotes {
         if (!x.System) x.Index = i++;
       });
       tree.Roots = tags;
-      cName.Renderer = new ListRenderer();
+      cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
       tree.SelectedObjects = from;
       //save to db
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
@@ -1196,8 +1198,8 @@ namespace SynNotes {
   }
 
   #region tree owner draw
-  public class ListRenderer : BaseRenderer {
-    public override void Render(Graphics g, Rectangle r) {      
+  public class FancyRenderer : BaseRenderer {
+    public override void Render(Graphics g, Rectangle r) {
       //get objects
       TagItem tag = null;
       NoteItem note = null;
@@ -1207,7 +1209,7 @@ namespace SynNotes {
         isTag = true;
       }
       else note = (NoteItem)this.RowObject;
-      
+
       this.DrawBackground(g, r);
       if (isTag) drawTag(g, r, tag);
       else if (this.ListView.RowHeight > 0) drawFound(g, r, note);
@@ -1241,16 +1243,16 @@ namespace SynNotes {
 
         //note title
         fmt.Alignment = StringAlignment.Near;
-        r.Width -= (int)stringSize.Width - 1;        
-        using (var f = new Font(this.Font, FontStyle.Bold)) 
+        r.Width -= (int)stringSize.Width - 1;
+        using (var f = new Font(this.Font, FontStyle.Bold))
         using (var b = new SolidBrush(ctag)) {
           g.DrawString(this.GetText(), f, b, r, fmt);
-        }        
+        }
       }
 
       //search result to rtf
       var s = note.Snippet.Replace("\n", " ").Replace("\r", " ");
-      while (s.Contains("  ")) s = s.Replace("  ", " "); 
+      while (s.Contains("  ")) s = s.Replace("  ", " ");
       s = s.Replace(@"\", @"\\")
            .Replace("{", @"\{")
            .Replace("}", @"\}")
@@ -1270,12 +1272,12 @@ namespace SynNotes {
         else this.DrawImage(g, r, 2);
       }
       else {//closed
-        if (this.IsItemSelected) this.DrawImage(g, r, 9); 
+        if (this.IsItemSelected) this.DrawImage(g, r, 9);
         else this.DrawImage(g, r, 3);
       }
       r.X += 16;
       r.Width -= 16;
-      
+
       //system tag icon        
       if (tag.System) {
         if (tag.Name == Glob.All) this.DrawImage(g, r, 4);
@@ -1283,7 +1285,7 @@ namespace SynNotes {
         r.X += 16;
         r.Width -= 16;
       }
-      
+
       //tag title
       using (StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap)) {
         fmt.LineAlignment = StringAlignment.Center;
@@ -1311,7 +1313,7 @@ namespace SynNotes {
               g.DrawString(tag.Count.ToString(), f, b, badgerect, fmt); //count
             }
           }
-        }        
+        }
       }
     }
 
@@ -1324,7 +1326,7 @@ namespace SynNotes {
       using (StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap)) {
         fmt.LineAlignment = StringAlignment.Center;
         fmt.Trimming = StringTrimming.EllipsisCharacter;
-        
+
         //modify date
         var stringSize = g.MeasureString(note.DateShort, this.Font);
         var offset = (int)stringSize.Width + 1;
@@ -1369,7 +1371,7 @@ namespace SynNotes {
       return path;
     }
   }
-  #endregion tree owner draw
+  #endregion tree owner draw 
 
   internal class scStyle {
     public string name { get; set; }
