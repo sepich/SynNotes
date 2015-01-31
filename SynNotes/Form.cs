@@ -291,8 +291,7 @@ namespace SynNotes {
       tree.RowHeight = -1;
       tree.EmptyListMsg = "";
       tree.IsSimpleDragSource = true;
-      tree.IsSimpleDropSink = true;
-      
+      tree.IsSimpleDropSink = true;      
       SimpleDropSink sink = (SimpleDropSink)tree.DropSink;
       sink.CanDropOnSubItem = false;
       sink.CanDropOnBackground = false;
@@ -323,7 +322,17 @@ namespace SynNotes {
         }
         return null;
       };
+      cSort.AspectGetter = delegate(object x) {  //hidden column used for sorting
+        var tag = x as TagItem;
+        if (tag != null) return tag.Index;
+        else {
+          var n = x as NoteItem;
+          if (n.Pinned) return "";
+          return n.Name;
+        }
+      };
       tree.Roots = tags;
+      tree.Sort(cSort, SortOrder.Ascending);     //sort by this hidden column
       cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
       //select current
       if(note != null) tree.Reveal(notes.Find(x => x.Id == note.Item.Id), true);
@@ -342,6 +351,11 @@ namespace SynNotes {
         tree.EmptyListMsg = "0 results found";
         tree.IsSimpleDragSource = false;
         tree.IsSimpleDropSink = false;
+        cSort.AspectGetter = delegate(object x) {  //hidden column used for sorting
+          var note = x as NoteItem;
+          if (note != null) return note.Relevance;
+          return 0;
+        }; 
       }
       //search
       if (!query.Contains("*")) { //search by prefixes by default
@@ -351,11 +365,13 @@ namespace SynNotes {
       found.Clear();
       readNotes(found, query);
       tree.Roots = found;
+      tree.Sort(cSort, SortOrder.Descending);
       cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
       //select first result
       if (found.Count > 0) {
-        if (tree.SelectedIndex == 0) note.ShowSelected();
-        else tree.Reveal(found[0], true);        
+        tree.SelectedIndex = 0;
+        note.ShowSelected();
+        tree.Reveal(tree.SelectedObject, true);
       }
     }
 
@@ -390,20 +406,9 @@ namespace SynNotes {
       tags.Add(tagDeleted);
 
       //get notes from db (filling tags)
-      readNotes(notes);
-      // startup view is tags view
-      treeAsTags();
+      readNotes(notes);      
+      treeAsTags();// startup view is tags view
 
-      cSort.AspectGetter = delegate(object x) {  //hidden column used for sorting
-        var tag = x as TagItem;
-        if (tag != null) return tag.Index;
-        else {
-          var note = x as NoteItem;
-          if (note.Pinned) return "";
-          return note.Name;
-        }
-      };
-      tree.Sort(cSort, SortOrder.Ascending);     //sort by this hidden column
       //restore view
       foreach (var tag in tags) {
         if (tag.Expanded) tree.Expand(tag);
@@ -428,10 +433,10 @@ namespace SynNotes {
     private void readNotes(List<NoteItem> result, string query=""){
       string s;
       if (query.Length > 0)
-        s = @"SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned, snippet(fts, '<b>', '</b>', '...')" +
+        s = @"SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned, snippet(fts, '<b>', '</b>', '...'), matchinfo(fts)" +
         " FROM fts s LEFT JOIN notes n ON s.docid=n.id LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
-        " WHERE NOT n.deleted AND s.content MATCH ?"+
-        " ORDER BY t.`index`";
+        " WHERE NOT n.deleted AND fts MATCH ?"+
+        " ORDER BY n.id, t.`index` LIMIT 25";
       else
         s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned" +                                        
         " FROM notes n LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
@@ -455,7 +460,10 @@ namespace SynNotes {
               if (!rdr.IsDBNull(4)) node.Tags.Add(tags.Find(x => x.Id == rdr.GetInt32(4)));
               if (!rdr.IsDBNull(5)) node.Lexer = rdr.GetString(5);
               node.Pinned = rdr.GetBoolean(6);
-              if (query.Length > 0) node.Snippet = rdr.GetString(7);
+              if (query.Length > 0) {
+                node.Snippet = rdr.GetString(7);
+                node.Relevance = getRelevance(rdr,8);
+              }
               result.Add(node);
             }
             else node.Tags.Add(tags.Find(x => x.Id == rdr.GetInt32(4)));
@@ -463,6 +471,39 @@ namespace SynNotes {
         }
       }
     }
+
+    // parse sqlite matchinfo
+    // https://www.sqlite.org/fts3.html#matchinfo
+    private int getRelevance(SQLiteDataReader rdr, int col) {
+      byte[] buffer = new byte[rdr.GetBytes(col, 0, null, 0, 0)];
+      try {
+        rdr.GetBytes(col, 0, buffer, 0, buffer.Length);
+        int[] info = GetIntArrayFromByteArray(buffer);
+        int res=0;
+        var p = info[0];
+        var c = info[1];
+        for (int i = 0; i < p; i++) {
+          for (int j = 0; j < c; j++) {
+            var hits = info[3 * (j + i * c) + 2];//In the current row, the number of times the phrase appears in the column.
+            if (hits > 0 && j == 0) hits += 100; //matched in title
+            res += hits;
+          }          
+        }
+        return res;
+      }
+      catch {
+        statusText.Text = "Search error";
+      }
+      return 0;
+    }
+
+    public static int[] GetIntArrayFromByteArray(byte[] byteArray) {
+      int[] intArray = new int[byteArray.Length / 4];
+      for (int i = 0; i < byteArray.Length; i += 4)
+        intArray[i / 4] = BitConverter.ToInt32(byteArray, i);
+      return intArray;
+    }
+
     #endregion tree
 
     #region tree events
@@ -1248,6 +1289,17 @@ namespace SynNotes {
         using (var b = new SolidBrush(ctag)) {
           g.DrawString(this.GetText(), f, b, r, fmt);
         }
+        
+        //pinned
+        if (note.Pinned) {
+          ImageList il = this.ListView.SmallImageList;
+          stringSize = g.MeasureString(this.GetText(), this.Font);
+          offset = (int)stringSize.Width;
+          r.X += offset + 3;
+          r.Y = 0;
+          if (this.IsItemSelected) il.Draw(g, r.Location, 7); //inverted
+          else il.Draw(g, r.Location, 6);
+        }
       }
 
       //search result to rtf
@@ -1343,12 +1395,13 @@ namespace SynNotes {
       }
       //pinned
       if (note.Pinned) {
+        ImageList il = this.ListView.SmallImageList;
         var stringSize = g.MeasureString(this.GetText(), this.Font);
         var offset = (int)stringSize.Width;
         r.X += offset;
         r.Width -= offset;
-        if (this.IsItemSelected) this.DrawImage(g, r, 7); //inverted
-        else this.DrawImage(g, r, 6);
+        if (this.IsItemSelected) il.Draw(g, r.Location, 7); //inverted
+        else il.Draw(g, r.Location, 6);
       }
     }
 

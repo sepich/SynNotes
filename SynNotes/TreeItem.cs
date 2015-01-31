@@ -78,6 +78,7 @@ namespace SynNotes {
     public string Snippet { get; set; }     // search match preview
     public int TopLine { get; set; }        // to scroll text to the same place when it was
     public bool Pinned { get; set; }        // note is pinned
+    public int Relevance { get; set; }      // used to order search results
   }
 
 }
