@@ -772,10 +772,12 @@ namespace SynNotes {
                 cmd.CommandText = "UPDATE notes SET deleted=1 WHERE id=" + i.Id;
                 cmd.ExecuteNonQuery();
                 i.Deleted = true;
-                tree.RefreshObject(tagAll);
-              } 
-              tree.RefreshObject(tagDeleted);              
-              if(tree.RowHeight == -1) i.Tags.ForEach(x => tree.RefreshObject(x));
+                if (tree.RowHeight == -1) tree.RefreshObject(tagAll);
+              }
+              if (tree.RowHeight == -1) {
+                tree.RefreshObject(tagDeleted);
+                i.Tags.ForEach(x => tree.RefreshObject(x));
+              }
               else treeAsList(tbSearch.Text);
             }
           }
@@ -791,8 +793,11 @@ namespace SynNotes {
     private void pinNote() {
       var note = tree.SelectedObject as NoteItem;
       if (note != null) {
-        if (tree.RowHeight > 0) note = notes.Find(x => x.Id == note.Id);
         note.Pinned = note.Pinned ? false : true;
+        if (tree.RowHeight > 0) {
+          note = notes.Find(x => x.Id == note.Id);
+          note.Pinned = note.Pinned ? false : true;
+        }        
         //save to db
         using (SQLiteTransaction tr = sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
@@ -803,7 +808,7 @@ namespace SynNotes {
           }
           tr.Commit();
         }
-        if (tree.RowHeight > 0) treeAsList(tbSearch.Text); // refresh search
+        if (tree.RowHeight > 0) tree.RefreshObject(tree.SelectedObject);
         else tree.RefreshObject(tree.GetParent(note)); //resort
       }
     }
