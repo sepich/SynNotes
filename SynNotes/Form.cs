@@ -604,7 +604,7 @@ namespace SynNotes {
           treeMenu.Items.Add("Purge (Del)", null, delClick);
         }
         else {
-          treeMenu.Items.Add("New Note (F7)", null, btnAdd_ButtonClick);
+          if(tree.RowHeight == -1) treeMenu.Items.Add("New Note (F7)", null, btnAdd_ButtonClick);
           if(n.Pinned) treeMenu.Items.Add("Unpin Note", null, pinClick);
           else treeMenu.Items.Add("Pin Note", null, pinClick);
           treeMenu.Items.Add("Delete (Del)", null, delClick);
@@ -755,6 +755,7 @@ namespace SynNotes {
             //delete note
             else {
               var i = (NoteItem)item;
+              if (tree.RowHeight > 0) i = notes.Find(x => x.Id == i.Id);
               //purge it
               if (i.Deleted) {
                 if (n == 1 && MessageBox.Show("Purge the note: " + i.Name + "?\n(This will purge the Note, no undelete is possible)", "Purge Note?",
@@ -774,7 +775,8 @@ namespace SynNotes {
                 tree.RefreshObject(tagAll);
               } 
               tree.RefreshObject(tagDeleted);              
-              i.Tags.ForEach(x => tree.RefreshObject(x));
+              if(tree.RowHeight == -1) i.Tags.ForEach(x => tree.RefreshObject(x));
+              else treeAsList(tbSearch.Text);
             }
           }
         }
@@ -789,8 +791,8 @@ namespace SynNotes {
     private void pinNote() {
       var note = tree.SelectedObject as NoteItem;
       if (note != null) {
+        if (tree.RowHeight > 0) note = notes.Find(x => x.Id == note.Id);
         note.Pinned = note.Pinned ? false : true;
-        tree.RefreshObject(tree.GetParent(note)); //resort
         //save to db
         using (SQLiteTransaction tr = sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
@@ -801,6 +803,8 @@ namespace SynNotes {
           }
           tr.Commit();
         }
+        if (tree.RowHeight > 0) treeAsList(tbSearch.Text); // refresh search
+        else tree.RefreshObject(tree.GetParent(note)); //resort
       }
     }
     #endregion tree context menu
@@ -873,7 +877,6 @@ namespace SynNotes {
           var sqlTag = new SQLiteParameter();
           foreach (var i in from) {
             var n = i as NoteItem;
-            if (n.Tags.Contains(to)) continue;
             if (n.Deleted && to == tagDeleted) continue;
             if (!n.Deleted && to == tagDeleted) { //delete
               n.Deleted = true;
@@ -906,6 +909,7 @@ namespace SynNotes {
         tr.Commit();
       }
       tree.SelectedObjects = from;
+      //tree.Sort();
       note.drawTags(); //redraw tagbox
     }
 
@@ -937,7 +941,6 @@ namespace SynNotes {
         tr.Commit();
       }
     }
-
     #endregion tree drag'n'drop
 
     #region tag box
@@ -1292,13 +1295,13 @@ namespace SynNotes {
         
         //pinned
         if (note.Pinned) {
-          ImageList il = this.ListView.SmallImageList;
+          r.Height = offset;
           stringSize = g.MeasureString(this.GetText(), this.Font);
           offset = (int)stringSize.Width;
           r.X += offset + 3;
-          r.Y = 0;
-          if (this.IsItemSelected) il.Draw(g, r.Location, 7); //inverted
-          else il.Draw(g, r.Location, 6);
+          r.Y -= 3;
+          if (this.IsItemSelected) this.DrawImage(g, r, 7); //inverted
+          else this.DrawImage(g, r, 6);
         }
       }
 
@@ -1395,13 +1398,12 @@ namespace SynNotes {
       }
       //pinned
       if (note.Pinned) {
-        ImageList il = this.ListView.SmallImageList;
         var stringSize = g.MeasureString(this.GetText(), this.Font);
         var offset = (int)stringSize.Width;
         r.X += offset;
         r.Width -= offset;
-        if (this.IsItemSelected) il.Draw(g, r.Location, 7); //inverted
-        else il.Draw(g, r.Location, 6);
+        if (this.IsItemSelected) this.DrawImage(g, r, 7); //inverted
+        else this.DrawImage(g, r, 6);
       }
     }
 

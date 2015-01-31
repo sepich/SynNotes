@@ -53,9 +53,9 @@
     <ApplicationIcon>SynNotes.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ObjectListView, Version=2.8.0.37175, Culture=neutral, PublicKeyToken=b1c5bf581481bcd4, processorArchitecture=MSIL">
+    <Reference Include="ObjectListView, Version=2.8.1.33936, Culture=neutral, PublicKeyToken=b1c5bf581481bcd4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\ObjectListView.Official.2.8.0\lib\net20\ObjectListView.dll</HintPath>
+      <HintPath>..\packages\ObjectListView.Official.2.8.1\lib\net20\ObjectListView.dll</HintPath>
     </Reference>
     <Reference Include="ScintillaNET">
       <HintPath>..\Lib\ScintillaNET.dll</HintPath>
