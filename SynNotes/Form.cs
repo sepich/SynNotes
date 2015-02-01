@@ -70,6 +70,8 @@ namespace SynNotes {
       initTree();
       note = new Note(this);
       initScintilla();
+      //send mouse wheel event to control under cursor
+      Application.AddMessageFilter(new MouseWheelMessageFilter());
     }
 
     private void Form1_FormClosed(object sender, FormClosedEventArgs e) {
@@ -331,8 +333,8 @@ namespace SynNotes {
           return n.Name;
         }
       };
-      tree.Roots = tags;
       tree.Sort(cSort, SortOrder.Ascending);     //sort by this hidden column
+      tree.Roots = tags;      
       cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
       //select current
       if(note != null) tree.Reveal(notes.Find(x => x.Id == note.Item.Id), true);
@@ -436,7 +438,7 @@ namespace SynNotes {
         s = @"SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned, snippet(fts, '<b>', '</b>', '...'), matchinfo(fts)" +
         " FROM fts s LEFT JOIN notes n ON s.docid=n.id LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
         " WHERE NOT n.deleted AND fts MATCH ?"+
-        " ORDER BY n.id, t.`index` LIMIT 25";
+        " ORDER BY n.id, t.`index`";
       else
         s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned" +                                        
         " FROM notes n LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
@@ -503,7 +505,6 @@ namespace SynNotes {
         intArray[i / 4] = BitConverter.ToInt32(byteArray, i);
       return intArray;
     }
-
     #endregion tree
 
     #region tree events
@@ -794,7 +795,7 @@ namespace SynNotes {
       var note = tree.SelectedObject as NoteItem;
       if (note != null) {
         note.Pinned = note.Pinned ? false : true;
-        if (tree.RowHeight > 0) {
+        if (tree.RowHeight > 0) { // we're in search mode
           note = notes.Find(x => x.Id == note.Id);
           note.Pinned = note.Pinned ? false : true;
         }        
@@ -1244,6 +1245,8 @@ namespace SynNotes {
 
 
 
+
+
   }
 
   #region tree owner draw
@@ -1445,15 +1448,38 @@ namespace SynNotes {
     public bool underline { get; set; }
   }
 
+  //send mouse wheel event to control under cursor
+  internal class MouseWheelMessageFilter : IMessageFilter {
+    public bool PreFilterMessage(ref Message m) {
+      if (m.Msg == NativeMethods.WM_MOUSEWHEEL) {
+        // LParam contains the location of the mouse pointer
+        Point pos = new Point(m.LParam.ToInt32() & 0xffff, m.LParam.ToInt32() >> 16);
+        IntPtr hWnd = NativeMethods.WindowFromPoint(pos);
+        if (hWnd != IntPtr.Zero && hWnd != m.HWnd && Control.FromHandle(hWnd) != null) {
+          // redirect the message to the correct control
+          NativeMethods.SendMessage(hWnd, m.Msg, m.WParam, m.LParam);
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
   // WinAPI
-  internal static class NativeMethods {    
+  internal static class NativeMethods {
+    internal const uint SW_RESTORE = 0x09;
+    internal const int WM_MOUSEWHEEL = 0x20a;
+
     [DllImport("user32.dll")]
     internal static extern int ShowWindow(IntPtr hWnd, uint Msg);
-    internal const uint SW_RESTORE = 0x09;
     [DllImport("user32.dll")]
     internal static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
     //[DllImport("user32.dll")]
     //internal static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+    [DllImport("user32.dll")]
+    internal static extern IntPtr WindowFromPoint(Point pt);
+    [DllImport("user32.dll")]
+    internal static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
   }
 
   // globals
