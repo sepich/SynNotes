@@ -36,6 +36,7 @@ namespace SynNotes {
     TagItem tagAll;                // pointer to ALL tag
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
     public static Timer saveTimer; //autosave
+    int treeTopLine, treeSelLine;  //used to restore tree position after restore of window
 
     public Form1() {InitializeComponent();}
 
@@ -231,7 +232,14 @@ namespace SynNotes {
     /// </summary>
     private void HotkeyPressed(object sender, KeyPressedEventArgs e) {
       // Show hotkey  
-      if (this.WindowState == FormWindowState.Minimized) NativeMethods.ShowWindow(this.Handle, NativeMethods.SW_RESTORE);
+      if (this.WindowState == FormWindowState.Minimized) {
+        NativeMethods.ShowWindow(this.Handle, NativeMethods.SW_RESTORE);
+        //restore selected
+        if (tree.SelectedObject == null) {
+          tree.TopItemIndex = treeTopLine;
+          tree.SelectedIndex = treeSelLine;
+        }
+      }
       else {
         this.Activate();
         this.BringToFront();
@@ -247,7 +255,11 @@ namespace SynNotes {
           tbSearch.Text = "";
           if (!tbSearch.Focused) tbSearch.Focus();
         }
-        else this.WindowState = FormWindowState.Minimized;
+        else {
+          treeTopLine = tree.TopItemIndex;
+          treeSelLine = tree.SelectedIndex;
+          this.WindowState = FormWindowState.Minimized;
+        }
       }
       else if (e.KeyCode == Keys.Delete && tree.Focused) deleteSelected();
       else if (e.KeyCode == Keys.F7 && e.Modifiers == Keys.None) createNote();
@@ -422,6 +434,8 @@ namespace SynNotes {
         if (res == null) createNote(); //first run - create new note and select it
         else tree.Reveal(notes.Find(x => x.Id == Convert.ToInt32(res)), true);
         if (tree.SelectedObject == null) tree.Reveal(notes[0], true);
+        treeTopLine = tree.TopItemIndex;
+        treeSelLine = tree.SelectedIndex;
       }
     }
 
