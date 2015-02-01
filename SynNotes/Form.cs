@@ -333,8 +333,8 @@ namespace SynNotes {
           return n.Name;
         }
       };
+      tree.Roots = tags;
       tree.Sort(cSort, SortOrder.Ascending);     //sort by this hidden column
-      tree.Roots = tags;      
       cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
       //select current
       if(note != null) tree.Reveal(notes.Find(x => x.Id == note.Item.Id), true);
@@ -423,10 +423,6 @@ namespace SynNotes {
         else tree.Reveal(notes.Find(x => x.Id == Convert.ToInt32(res)), true);
         if (tree.SelectedObject == null) tree.Reveal(notes[0], true);
       }
-
-      //renderer
-      //tree.TreeColumnRenderer.LinePen = new Pen(Color.Transparent);
-      //cName.Renderer = new ListRenderer();
     }
 
     /// <summary>
