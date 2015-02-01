@@ -65,9 +65,12 @@ namespace SynNotes {
         //highlight search term and scroll to it
         if (f.tbSearch.ForeColor == SystemColors.WindowText && f.tbSearch.Text.Length > 0) {
           var top = f.scEdit.Lines.Count;
-          foreach (Range r in f.scEdit.FindReplace.FindAll(f.tbSearch.Text)) {
-            r.SetIndicator(0);
-            if (r.StartingLine.Number < top) top = r.StartingLine.Number;
+          foreach (var item in f.tbSearch.Text.Split(' ')) {
+            if (item.Length == 0) continue;
+            foreach (Range r in f.scEdit.FindReplace.FindAll(item)) {
+              r.SetIndicator(0);
+              if (r.StartingLine.Number < top) top = r.StartingLine.Number;
+            }
           }
           f.scEdit.Lines.FirstVisibleIndex = top;
         }
