@@ -34,6 +34,10 @@ Theme=Visual Studio Dark.xml
 ```
 
 ##### Lexers
- - When Note has no Lexer (language to syntax highllight) selected it will inherit it from it's tags. 
+ - When Note has no explicit Lexer (language to highlight syntax) selected it will inherit it from it's tags. 
  - If Note has multiple tags assigned, privilege has Tag which is higher in tree (you can arrange tags by drag'n'drop) In this case name of Lexer would be prefixed by ^
  - If both Note and all it's Tags has no Lexer assigned `bash` is used by default
+
+##### Download
+You can download compiled binaries at [Releases](https://github.com/sepich/SynNotes/releases) section  
+Changelog is available in [commits](https://github.com/sepich/SynNotes/commits/master) section
