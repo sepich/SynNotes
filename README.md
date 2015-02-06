@@ -1,5 +1,6 @@
 # SynNotes
-Simple syntax highlighted Notes manager with full-text search and GMaill like tags as folders
+Simple syntax highlighted Notes manager with incremental full-text search and GMaill like tags as folders.  
+Most of the time app basically hides in the system tray. Then you push global hotkey, and it appears with last Note opened and Search field already focused. After you found data needed hide the app back by pressing `ESC`.
 ![overview](http://habrastorage.org/files/34c/10f/8da/34c10f8da396435882ea93d20c77364b.png)
 ![search](http://habrastorage.org/files/562/b9a/c7c/562b9ac7cb764f89a34ecd63fc65719a.png)
 
