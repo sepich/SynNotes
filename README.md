@@ -5,7 +5,7 @@ Most of the time app basically hides in the system tray. Then you push global ho
 ![search](http://habrastorage.org/files/562/b9a/c7c/562b9ac7cb764f89a34ecd63fc65719a.png)
 
 #### Used
- - C#
+ - C# .Net4.0
  - [Scintilla.NET](http://scintillanet.codeplex.com/)
  - [System.Data.SQLite](http://system.data.sqlite.org/index.html/doc/trunk/www/index.wiki)
  - [ObjectListView](http://objectlistview.sourceforge.net/cs/index.html)
@@ -13,22 +13,27 @@ Most of the time app basically hides in the system tray. Then you push global ho
 #### Todo
  - [Simplenote](http://simple-note.appspot.com/) sync
  
+#### Download
+You can download compiled binaries at [Releases](https://github.com/sepich/SynNotes/releases) section  
+Changelog is available in [commits](https://github.com/sepich/SynNotes/commits/master) section
+
+#### Installation
+Just unpack and use. App does not use registry and tries to keep db and ini-file config alongside with exe file. If app dir is not writable (you unpacked it to `%ProgramFiles%`) then `%AppData%\SynNotes` directory used instead.
+
 #### Notes
 That is very simple app and it will be so. No bells'n'whistles for reduced memory footprint (c# lol;). 
 
 ##### Configuration
-Some configuration could be done by editing `settings.ini` which is located:
- - in executable directory if it is available for writing
- - `%AppData%\SynNotes` if executable dir is not available for writing (ex: `Programm Files`)
+Some configuration could be done by editing `settings.ini`.
 
-For *Global Hotkeys* edit Keys part (default is `Win+tilde` for Search):
+This part is for *Global Hotkeys* . Default is `Win+tilde` for Search, and no Hotkey assigned to just show app
 ```ini
 [Keys]
 HotkeyShow=
 HotkeySearch=Win+`
 ```
 
-For fans of dark backrounds basic dark theme included. You can enable it like this:
+App support themes of [Notepad++](http://notepad-plus-plus.org/) format which are stored in `/themes` folder. So, you can edit them or create new with visual editor of NP++. Then enable it like this:
 ```ini
 [Scintilla]
 Theme=Visual Studio Dark.xml
@@ -38,7 +43,3 @@ Theme=Visual Studio Dark.xml
  - When Note has no explicit Lexer (language to highlight syntax) selected it will inherit it from it's tags. 
  - If Note has multiple tags assigned, privilege has Tag which is higher in tree (you can arrange tags by drag'n'drop) In this case name of Lexer would be prefixed by ^
  - If both Note and all it's Tags has no Lexer assigned `bash` is used by default
-
-##### Download
-You can download compiled binaries at [Releases](https://github.com/sepich/SynNotes/releases) section  
-Changelog is available in [commits](https://github.com/sepich/SynNotes/commits/master) section
