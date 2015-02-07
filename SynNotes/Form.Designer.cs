@@ -47,6 +47,7 @@
       this.btnAdd = new System.Windows.Forms.ToolStripSplitButton();
       this.btnPin = new System.Windows.Forms.ToolStripSplitButton();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
+      this.btnSync = new System.Windows.Forms.ToolStripSplitButton();
       this.tbSearch = new System.Windows.Forms.TextBox();
       this.btnLexer = new System.Windows.Forms.Label();
       this.tagBox = new System.Windows.Forms.TextBox();
@@ -235,12 +236,14 @@
       // 
       // statusBar
       // 
+      this.statusBar.AutoSize = false;
       this.statusBar.BackColor = System.Drawing.SystemColors.Control;
       this.statusBar.GripMargin = new System.Windows.Forms.Padding(0);
       this.statusBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.btnAdd,
             this.btnPin,
-            this.statusText});
+            this.statusText,
+            this.btnSync});
       this.statusBar.Location = new System.Drawing.Point(0, 624);
       this.statusBar.Name = "statusBar";
       this.statusBar.ShowItemToolTips = true;
@@ -278,8 +281,24 @@
       // statusText
       // 
       this.statusText.Name = "statusText";
-      this.statusText.Size = new System.Drawing.Size(170, 17);
+      this.statusText.Size = new System.Drawing.Size(118, 17);
       this.statusText.Spring = true;
+      // 
+      // btnSync
+      // 
+      this.btnSync.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+      this.btnSync.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+      this.btnSync.DoubleClickEnabled = true;
+      this.btnSync.DropDownButtonWidth = 0;
+      this.btnSync.Image = ((System.Drawing.Image)(resources.GetObject("btnSync.Image")));
+      this.btnSync.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+      this.btnSync.ImageTransparentColor = System.Drawing.Color.Magenta;
+      this.btnSync.Margin = new System.Windows.Forms.Padding(0);
+      this.btnSync.Name = "btnSync";
+      this.btnSync.Size = new System.Drawing.Size(21, 22);
+      this.btnSync.Text = "Sync (DblClick for Settings)";
+      this.btnSync.Click += new System.EventHandler(this.btnSync_Click);
+      this.btnSync.DoubleClick += new System.EventHandler(this.btnSync_DoubleClick);
       // 
       // tbSearch
       // 
@@ -468,6 +487,7 @@
         private System.Windows.Forms.ContextMenuStrip lexerMenu;
         private System.Windows.Forms.ToolStripSplitButton btnPin;
         private FancyRenderer fancyRenderer;
+        private System.Windows.Forms.ToolStripSplitButton btnSync;
     }
 }
 

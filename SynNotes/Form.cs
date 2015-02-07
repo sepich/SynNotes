@@ -27,7 +27,7 @@ namespace SynNotes {
     const string dbfile = "notes.db";
     const string dbver = "1";
     string userdir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SynNotes\\";
-    KeyHook hook = new KeyHook();  // global hotkeys hook
+    KeyHook hook;                  // global hotkeys hook
     SQLiteConnection sql;          // sqlite connection handler
     Note note;                     // model for right part of the screen
     List<TagItem> tags = new List<TagItem>();    // minimal metadata cache for tags from db
@@ -35,10 +35,15 @@ namespace SynNotes {
     TagItem tagDeleted;            // pointer to DELETED tag
     TagItem tagAll;                // pointer to ALL tag
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
-    public static Timer saveTimer; //autosave
-    int treeTopLine, treeSelLine;  //used to restore tree position after restore of window
+    public static Timer saveTimer; // autosave
+    int treeTopLine, treeSelLine;  // used to restore tree position after restore of window
+    internal Sync sync;                     // simplenote sync
 
-    public Form1() {InitializeComponent();}
+    #region init/close
+    public Form1() {
+      InitializeComponent();
+      statusBar.Padding = new Padding(0, 0, 0, 0); //http://stackoverflow.com/questions/2646606/how-do-i-reclaim-the-space-from-the-grip
+    }
 
     //this event fires before form shown, doing inits which affect form appearance
     private void Form1_Move(object sender, EventArgs e) {
@@ -72,14 +77,34 @@ namespace SynNotes {
 
     //non affecting appearance inits
     private void Form1_Shown(object sender, EventArgs e) {
-      // hotkeys
-      hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(HotkeyPressed);
-      hook.SetHotkey(1, ini.GetValue("Keys", "HotkeyShow", ""));
-      string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
-      hook.SetHotkey(2, s);
-      tbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
-      // send mouse wheel event to control under cursor
-      Application.AddMessageFilter(new MouseWheelMessageFilter());
+      //delay inits after form drawn
+      Task.Factory.StartNew(() => {
+        System.Threading.Thread.Sleep(500);
+      }).ContinueWith(search => {
+        // hotkeys
+        string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
+        tbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
+        hook = new KeyHook();
+        hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(HotkeyPressed);
+        hook.SetHotkey(1, ini.GetValue("Keys", "HotkeyShow", ""));        
+        hook.SetHotkey(2, s);        
+        
+        // send mouse wheel event to control under cursor
+        Application.AddMessageFilter(new MouseWheelMessageFilter());
+        
+        // read sync acc
+        sync = new Sync();
+        using (SQLiteCommand cmd = new SQLiteCommand("SELECT value FROM config WHERE name='email'", sql)) {
+          var res = cmd.ExecuteScalar();
+          if (res != null) sync.Email = (string)res;
+          cmd.CommandText = "SELECT value FROM config WHERE name='password'";
+          res = cmd.ExecuteScalar();
+          if (res != null) sync.Password = (string)res;
+          cmd.CommandText = "SELECT value FROM config WHERE name='freq'";
+          res = cmd.ExecuteScalar();
+          if (res != null) sync.Freq = int.Parse((string)res);
+        }
+      }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
     private void Form1_FormClosed(object sender, FormClosedEventArgs e) {
@@ -233,7 +258,9 @@ namespace SynNotes {
         }
       }
     }
+    #endregion init/close
 
+    #region hotkeys
     /// <summary>
     /// called for registered hotkeys
     /// </summary>
@@ -271,6 +298,7 @@ namespace SynNotes {
       else if (e.KeyCode == Keys.Delete && tree.Focused) deleteSelected();
       else if (e.KeyCode == Keys.F7 && e.Modifiers == Keys.None) createNote();
     }
+    #endregion hotkeys
 
     #region notify icon
     private void notifyIcon1_Click(object sender, EventArgs e) {
@@ -399,7 +427,8 @@ namespace SynNotes {
           tree.Reveal(tree.SelectedObject, true);
         }
         else tree.EmptyListMsg = "0 results found";
-      }, TaskScheduler.FromCurrentSynchronizationContext());      
+      }, TaskScheduler.FromCurrentSynchronizationContext());
+
     }
 
     //init tree with root items from db
@@ -1257,6 +1286,34 @@ namespace SynNotes {
     }
     #endregion scintilla
 
+    #region sync
+    //
+    private void btnSync_Click(object sender, EventArgs e) {
+
+    }
+
+    //configure simplenote user
+    private void btnSync_DoubleClick(object sender, EventArgs e) {
+      Form frmSync = new FormSync(this);
+      if (frmSync.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
+        using (SQLiteTransaction tr = sql.BeginTransaction()) {
+          using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('email', ?)";
+            cmd.Parameters.AddWithValue(null, sync.Email);
+            cmd.ExecuteNonQuery();
+            cmd.Parameters.Clear();
+            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('password', ?)";
+            cmd.Parameters.AddWithValue(null, sync.Password);
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('freq'," + sync.Freq + ")";
+            cmd.ExecuteNonQuery();
+          }
+          tr.Commit();
+        }
+      }
+      frmSync.Dispose();
+    }
+    #endregion sync
 
 
 
@@ -1270,7 +1327,8 @@ namespace SynNotes {
 
 
 
-   
+
+
 
 
 
@@ -1476,7 +1534,9 @@ namespace SynNotes {
     public bool underline { get; set; }
   }
 
-  //send mouse wheel event to control under cursor
+  /// <summary>
+  /// send mouse wheel event to control under cursor
+  /// </summary>
   internal class MouseWheelMessageFilter : IMessageFilter {
     public bool PreFilterMessage(ref Message m) {
       if (m.Msg == NativeMethods.WM_MOUSEWHEEL) {
