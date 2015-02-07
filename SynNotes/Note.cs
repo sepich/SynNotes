@@ -15,7 +15,7 @@ namespace SynNotes {
     /// </summary> 
     class Note {
       private Form1 f;                       // main form 
-      public NoteItem Item { get; set; }     // note id
+      public NoteItem Item { get; set; }     // currently opened note 
       private List<Label> Labels;            // tag labels displayed
       private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); //unixtime start      
 
@@ -30,7 +30,7 @@ namespace SynNotes {
       public void ShowSelected() {
         if (Item != null && f.tbSearch.ForeColor == SystemColors.GrayText) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //not search, save previous note top line
         if (f.tree.SelectedItem == null) return;
-        var n = f.tree.SelectedObject  as NoteItem;
+        var n = f.tree.SelectedObject as NoteItem;
         if (n != null && n != Item) Item = n;
         else return;
 

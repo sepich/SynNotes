@@ -424,8 +424,9 @@
       this.Text = "SynNotes";
       this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
       this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
-      this.Load += new System.EventHandler(this.Form1_Load);
+      this.Shown += new System.EventHandler(this.Form1_Shown);
       this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
+      this.Move += new System.EventHandler(this.Form1_Move);
       this.Resize += new System.EventHandler(this.Form1_Resize);
       trayMenu.ResumeLayout(false);
       this.splitContainer1.Panel1.ResumeLayout(false);

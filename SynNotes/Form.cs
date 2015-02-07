@@ -15,6 +15,7 @@ using ScintillaNET;
 using ScintillaNET.Configuration;
 using System.Xml;
 using System.Drawing.Drawing2D;
+using System.Threading.Tasks;
 
 namespace SynNotes {
 
@@ -31,7 +32,6 @@ namespace SynNotes {
     Note note;                     // model for right part of the screen
     List<TagItem> tags = new List<TagItem>();    // minimal metadata cache for tags from db
     List<NoteItem> notes = new List<NoteItem>(); // minimal metadata cache for notes from db
-    List<NoteItem> found = new List<NoteItem>(); // search results
     TagItem tagDeleted;            // pointer to DELETED tag
     TagItem tagAll;                // pointer to ALL tag
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
@@ -40,38 +40,45 @@ namespace SynNotes {
 
     public Form1() {InitializeComponent();}
 
-    private void Form1_Load(object sender, EventArgs e) {
-      // read settings from ini
-      if (File.Exists(userdir + conffile)) ini = new IniFile(userdir + conffile);
-      else ini = new IniFile(conffile);
-      this.WindowState = (FormWindowState)FormWindowState.Parse(this.WindowState.GetType(), ini.GetValue("Form", "WindowState", "Normal"));
-      this.Form1_Resize(this, null); //trigger tray icon
-      if (this.WindowState == FormWindowState.Normal && !ini.defaults) {
-        this.Top = Int32.Parse(ini.GetValue("Form", "Top", "100"));
-        this.Left = Int32.Parse(ini.GetValue("Form", "Left", "100"));
-        this.Width = Int32.Parse(ini.GetValue("Form", "Width", "500"));
-        this.Height = Int32.Parse(ini.GetValue("Form", "Height", "400"));
+    //this event fires before form shown, doing inits which affect form appearance
+    private void Form1_Move(object sender, EventArgs e) {
+      //only for first start
+      if (note == null) {
+        note = new Note(this);
+        // read settings from ini
+        if (File.Exists(userdir + conffile)) ini = new IniFile(userdir + conffile);
+        else ini = new IniFile(conffile);
+        this.WindowState = (FormWindowState)FormWindowState.Parse(this.WindowState.GetType(), ini.GetValue("Form", "WindowState", "Normal"));
+        this.Form1_Resize(this, null); //trigger tray icon
+        if (this.WindowState == FormWindowState.Normal && !ini.defaults) {
+          this.Top = Int32.Parse(ini.GetValue("Form", "Top", "100"));
+          this.Left = Int32.Parse(ini.GetValue("Form", "Left", "100"));
+          this.Width = Int32.Parse(ini.GetValue("Form", "Width", "500"));
+          this.Height = Int32.Parse(ini.GetValue("Form", "Height", "400"));
+        }
+        // check db
+        if (File.Exists(dbfile)) sqlConnect(dbfile);
+        else if (File.Exists(userdir + dbfile)) sqlConnect(userdir + dbfile);
+        else {
+          sqlConnect(dbfile, false);
+          if (sql == null) sqlConnect(userdir + dbfile);
+          sqlCreate();
+        }
+        // inits        
+        initTree();
+        initScintilla();
       }
-      //System.Threading.Thread.Sleep(5000);
+    }
+
+    //non affecting appearance inits
+    private void Form1_Shown(object sender, EventArgs e) {
       // hotkeys
       hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(HotkeyPressed);
       hook.SetHotkey(1, ini.GetValue("Keys", "HotkeyShow", ""));
       string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
       hook.SetHotkey(2, s);
       tbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
-      //check db
-      if (File.Exists(dbfile)) sqlConnect(dbfile);
-      else if (File.Exists(userdir + dbfile)) sqlConnect(userdir + dbfile);
-      else {
-        sqlConnect(dbfile, false);
-        if(sql==null) sqlConnect(userdir + dbfile);
-        sqlCreate();
-      }
-      //inits
-      initTree();
-      note = new Note(this);
-      initScintilla();
-      //send mouse wheel event to control under cursor
+      // send mouse wheel event to control under cursor
       Application.AddMessageFilter(new MouseWheelMessageFilter());
     }
 
@@ -349,7 +356,7 @@ namespace SynNotes {
       tree.Sort(cSort, SortOrder.Ascending);     //sort by this hidden column
       cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
       //select current
-      if(note != null) tree.Reveal(notes.Find(x => x.Id == note.Item.Id), true);
+      if(note != null && note.Item != null) tree.Reveal(notes.Find(x => x.Id == note.Item.Id), true);
     }
 
     /// <summary>
@@ -358,11 +365,12 @@ namespace SynNotes {
     /// <param name="query">seacrh query</param>
     private void treeAsList(string query) {
       //view
-      if (tree.RowHeight < 0) {      
+      if (tree.RowHeight < 0) {
+        tree.Roots = null;
         tree.RowHeight = 64;
         tree.CanExpandGetter = null;
         tree.ChildrenGetter = null;
-        tree.EmptyListMsg = "0 results found";
+        tree.EmptyListMsg = "";
         tree.IsSimpleDragSource = false;
         tree.IsSimpleDropSink = false;
         cSort.AspectGetter = delegate(object x) {  //hidden column used for sorting
@@ -376,23 +384,28 @@ namespace SynNotes {
         query = query + "*";
         query = query.Replace(" ", "* ");
       }
-      found.Clear();
-      readNotes(found, query);
-      tree.Roots = found;
-      tree.Sort(cSort, SortOrder.Descending);
-      cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
-      //select first result
-      if (found.Count > 0) {
-        tree.SelectedIndex = 0;
-        note.ShowSelected();
-        tree.Reveal(tree.SelectedObject, true);
-      }
+
+      //detach from UI thread
+      Task.Factory.StartNew<List<NoteItem>>((s) => {
+        return readNotes(sql, tags, (string)s);
+      }, query).ContinueWith(search => {
+        tree.Roots = search.Result;
+        tree.Sort(cSort, SortOrder.Descending);
+        cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
+        //select first result
+        if (search.Result.Count > 0) {
+          tree.SelectedIndex = 0;
+          note.ShowSelected();
+          tree.Reveal(tree.SelectedObject, true);
+        }
+        else tree.EmptyListMsg = "0 results found";
+      }, TaskScheduler.FromCurrentSynchronizationContext());      
     }
 
     //init tree with root items from db
     private void initTree() {
       //read tags from db
-      var node = new TagItem(notes);
+      TagItem node;
       using (SQLiteCommand cmd = new SQLiteCommand("SELECT id, name, `index`, expanded, lexer FROM tags ORDER BY `index`", sql)) {
         using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
           while (rdr.Read()) {
@@ -420,7 +433,7 @@ namespace SynNotes {
       tags.Add(tagDeleted);
 
       //get notes from db (filling tags)
-      readNotes(notes);      
+      notes.AddRange(readNotes(sql, tags));
       treeAsTags();// startup view is tags view
 
       //restore view
@@ -442,7 +455,8 @@ namespace SynNotes {
     /// <summary>
     /// get notes from db with tags
     /// </summary>
-    private void readNotes(List<NoteItem> result, string query=""){
+    static List<NoteItem> readNotes(SQLiteConnection sql, List<TagItem> tags, string query=""){
+      List<NoteItem> result = new List<NoteItem>();
       string s;
       if (query.Length > 0)
         s = @"SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned, snippet(fts, '<b>', '</b>', '...'), matchinfo(fts)" +
@@ -482,11 +496,12 @@ namespace SynNotes {
           }
         }
       }
+      return result;
     }
 
     // parse sqlite matchinfo
     // https://www.sqlite.org/fts3.html#matchinfo
-    private int getRelevance(SQLiteDataReader rdr, int col) {
+    private static int getRelevance(SQLiteDataReader rdr, int col) {
       byte[] buffer = new byte[rdr.GetBytes(col, 0, null, 0, 0)];
       try {
         rdr.GetBytes(col, 0, buffer, 0, buffer.Length);
@@ -503,13 +518,13 @@ namespace SynNotes {
         }
         return res;
       }
-      catch {
-        statusText.Text = "Search error";
+      catch(Exception e) {
+        MessageBox.Show("Search error: " + e.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
       }
       return 0;
     }
 
-    public static int[] GetIntArrayFromByteArray(byte[] byteArray) {
+    private static int[] GetIntArrayFromByteArray(byte[] byteArray) {
       int[] intArray = new int[byteArray.Length / 4];
       for (int i = 0; i < byteArray.Length; i += 4)
         intArray[i / 4] = BitConverter.ToInt32(byteArray, i);
@@ -1241,6 +1256,9 @@ namespace SynNotes {
       note.Save();
     }
     #endregion scintilla
+
+
+
 
 
 
