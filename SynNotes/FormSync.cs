@@ -10,17 +10,15 @@ using System.Data.SQLite;
 
 namespace SynNotes {
   public partial class FormSync : Form {
-    Form1 _f;
     string[] SyncFreq = new string[] { "Manual", "1m", "5m", "10m", "15m", "30m", "1h" };
  
-    public FormSync(Form1 frm) {
+    public FormSync() {
       InitializeComponent();
-      // load values from main form
-      _f = frm;
-      tbEmail.Text = _f.sync.Email;
-      tbPass.Text = _f.sync.Password;
+      // load values from Sync
+      tbEmail.Text = Sync.Email;
+      tbPass.Text = Sync.Password;
       cbFreq.DataSource = SyncFreq;
-      switch (_f.sync.Freq) {
+      switch (Sync.Freq) {
         case (1):  cbFreq.SelectedItem = "1m"; break;
         case (5):  cbFreq.SelectedItem = "5m"; break;
         case (10): cbFreq.SelectedItem = "10m"; break;
@@ -43,16 +41,16 @@ namespace SynNotes {
 
     // save values
     private void btnSave_Click(object sender, EventArgs e) {
-      _f.sync.Email = tbEmail.Text.Trim();
-      _f.sync.Password = tbPass.Text;
+      Sync.Email = tbEmail.Text.Trim();
+      Sync.Password = tbPass.Text;
       switch (cbFreq.SelectedItem.ToString()) {
-        case("1m"):  _f.sync.Freq = 1; break;
-        case("5m"):  _f.sync.Freq = 5; break;
-        case("10m"): _f.sync.Freq = 10; break;
-        case("15m"): _f.sync.Freq = 15; break;
-        case("30m"): _f.sync.Freq = 30; break;
-        case("1h"):  _f.sync.Freq = 60; break;
-        default:     _f.sync.Freq = 0; break;
+        case("1m"):  Sync.Freq = 1; break;
+        case("5m"):  Sync.Freq = 5; break;
+        case("10m"): Sync.Freq = 10; break;
+        case("15m"): Sync.Freq = 15; break;
+        case("30m"): Sync.Freq = 30; break;
+        case("1h"):  Sync.Freq = 60; break;
+        default:     Sync.Freq = 0; break;
       } 
       this.DialogResult = System.Windows.Forms.DialogResult.OK;
       this.Close();

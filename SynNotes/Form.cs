@@ -37,7 +37,6 @@ namespace SynNotes {
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
     public static Timer saveTimer; // autosave
     int treeTopLine, treeSelLine;  // used to restore tree position after restore of window
-    internal Sync sync;                     // simplenote sync
 
     #region init/close
     public Form1() {
@@ -80,7 +79,7 @@ namespace SynNotes {
       //delay inits after form drawn
       Task.Factory.StartNew(() => {
         System.Threading.Thread.Sleep(500);
-      }).ContinueWith(search => {
+      }).ContinueWith(t => {
         // hotkeys
         string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
         tbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
@@ -93,16 +92,15 @@ namespace SynNotes {
         Application.AddMessageFilter(new MouseWheelMessageFilter());
         
         // read sync acc
-        sync = new Sync();
         using (SQLiteCommand cmd = new SQLiteCommand("SELECT value FROM config WHERE name='email'", sql)) {
           var res = cmd.ExecuteScalar();
-          if (res != null) sync.Email = (string)res;
+          if (res != null) Sync.Email = (string)res;
           cmd.CommandText = "SELECT value FROM config WHERE name='password'";
           res = cmd.ExecuteScalar();
-          if (res != null) sync.Password = (string)res;
+          if (res != null) Sync.Password = (string)res;
           cmd.CommandText = "SELECT value FROM config WHERE name='freq'";
           res = cmd.ExecuteScalar();
-          if (res != null) sync.Freq = int.Parse((string)res);
+          if (res != null) Sync.Freq = int.Parse((string)res);
         }
       }, TaskScheduler.FromCurrentSynchronizationContext());
     }
@@ -1287,33 +1285,85 @@ namespace SynNotes {
     #endregion scintilla
 
     #region sync
-    //
-    private void btnSync_Click(object sender, EventArgs e) {
-
+    private void btnSync_MouseDown(object sender, MouseEventArgs e) {
+      // show sync account setup on right click
+      if (e.Button == System.Windows.Forms.MouseButtons.Right) showFormSyncAcc();
+      // trigger sync
+      else {
+        // check if account configured
+        if (String.IsNullOrEmpty(Sync.Email) || String.IsNullOrEmpty(Sync.Password)) {
+          showFormSyncAcc();
+          return;
+        }
+        // do sync
+        SnSync();
+      }      
     }
 
-    //configure simplenote user
-    private void btnSync_DoubleClick(object sender, EventArgs e) {
-      Form frmSync = new FormSync(this);
+    //configure simplenote acc
+    private void showFormSyncAcc() {
+      Form frmSync = new FormSync();
       if (frmSync.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
         using (SQLiteTransaction tr = sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
             cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('email', ?)";
-            cmd.Parameters.AddWithValue(null, sync.Email);
+            cmd.Parameters.AddWithValue(null, Sync.Email);
             cmd.ExecuteNonQuery();
             cmd.Parameters.Clear();
             cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('password', ?)";
-            cmd.Parameters.AddWithValue(null, sync.Password);
+            cmd.Parameters.AddWithValue(null, Sync.Password);
             cmd.ExecuteNonQuery();
-            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('freq'," + sync.Freq + ")";
+            cmd.CommandText = "INSERT OR REPLACE INTO config(name,value) VALUES('freq'," + Sync.Freq + ")";
             cmd.ExecuteNonQuery();
           }
           tr.Commit();
         }
       }
       frmSync.Dispose();
+
+      // validate user
+      if (!String.IsNullOrEmpty(Sync.Email)) {
+        statusText.Text = "Validating login/pass...";
+        Task.Factory.StartNew<bool>(() => {
+          return Sync.checkLogin();
+        }).ContinueWith(t => {
+          if (t.Result) statusText.Text = Sync.Email;
+          else statusText.Text = "Wrong login/pass";
+        });
+      }
+    }
+
+    /// <summary>
+    /// do Simplenote sync 
+    /// </summary>
+    private void SnSync() {
+      Sync.getIndex();
+
+      /*
+      (note.date > lastSync)
+      For  any  note  changed  locally  (including  new  notes):
+       Save  note  to  server,  update  note  with  response  
+       //  (new  syncnum,  version,  possibly  newly-­‐merged  content)
+      
+      Sync.getIndex()
+      Get  note  index
+      For  each  remote  note,
+       if  remote  syncnum  >  local  syncnum,
+         Retrieve  note,  update  note  with  response
+       if  new  note  (key  is  not  in  local  store),
+         Retrieve  note,  update  note  with  response
+         Sync.getNote(id)
+       
+      For  each  local  note  not  in  index,
+       Permanent  delete,  remove  note
+      */
+
     }
     #endregion sync
+
+
+
+
 
 
 

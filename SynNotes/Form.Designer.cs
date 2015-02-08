@@ -287,6 +287,7 @@
       // btnSync
       // 
       this.btnSync.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+      this.btnSync.BackColor = System.Drawing.SystemColors.Control;
       this.btnSync.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
       this.btnSync.DoubleClickEnabled = true;
       this.btnSync.DropDownButtonWidth = 0;
@@ -296,9 +297,8 @@
       this.btnSync.Margin = new System.Windows.Forms.Padding(0);
       this.btnSync.Name = "btnSync";
       this.btnSync.Size = new System.Drawing.Size(21, 22);
-      this.btnSync.Text = "Sync (DblClick for Settings)";
-      this.btnSync.Click += new System.EventHandler(this.btnSync_Click);
-      this.btnSync.DoubleClick += new System.EventHandler(this.btnSync_DoubleClick);
+      this.btnSync.Text = "Sync (RightClick for Settings)";
+      this.btnSync.MouseDown += new System.Windows.Forms.MouseEventHandler(this.btnSync_MouseDown);
       // 
       // tbSearch
       // 
