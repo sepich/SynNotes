@@ -37,6 +37,7 @@ namespace SynNotes {
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
     public static Timer saveTimer; // autosave
     int treeTopLine, treeSelLine;  // used to restore tree position after restore of window
+    string ConnString = "";        //params to connect to db 
 
     #region init/close
     public Form1() {
@@ -101,6 +102,9 @@ namespace SynNotes {
           cmd.CommandText = "SELECT value FROM config WHERE name='freq'";
           res = cmd.ExecuteScalar();
           if (res != null) Sync.Freq = int.Parse((string)res);
+          cmd.CommandText = "SELECT value FROM config WHERE name='lastSync'";
+          res = cmd.ExecuteScalar();
+          if (res != null) Sync.LastSync = int.Parse((string)res);
         }
       }, TaskScheduler.FromCurrentSynchronizationContext());
     }
@@ -236,13 +240,15 @@ namespace SynNotes {
     /// </summary>
     private void sqlConnect(string db, bool warn = true) {
       try {
-        SQLiteConnectionStringBuilder connString = new SQLiteConnectionStringBuilder();
+        var connString = new SQLiteConnectionStringBuilder();
         connString.DataSource = db;
         connString.FailIfMissing = false;
         connString.ForeignKeys = true;
-        sql = new SQLiteConnection(connString.ToString());
+        ConnString = connString.ToString();
+
+        sql = new SQLiteConnection(ConnString);
         sql.Open();
-        //check if db valid to throw ex, as Open do nothing
+        //check if db valid and throw ex, as Open do nothing
         using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM config WHERE name='ver'", sql)) {
           if(Convert.ToString(cmd.ExecuteScalar()) != dbver){
             //update db schema
@@ -491,7 +497,7 @@ namespace SynNotes {
         " WHERE NOT n.deleted AND fts MATCH ?"+
         " ORDER BY n.id, t.`index`";
       else
-        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned" +                                        
+        s = "SELECT n.id, n.title, n.modifydate, n.deleted, c.tag, n.lexer, n.pinned, n.key, n.syncnum" +                                        
         " FROM notes n LEFT JOIN nt c ON c.note=n.id LEFT JOIN tags t ON t.id=c.tag" +
         " ORDER BY n.id, t.`index`";
       NoteItem node = new NoteItem();
@@ -513,9 +519,13 @@ namespace SynNotes {
               if (!rdr.IsDBNull(4)) node.Tags.Add(tags.Find(x => x.Id == rdr.GetInt32(4)));
               if (!rdr.IsDBNull(5)) node.Lexer = rdr.GetString(5);
               node.Pinned = rdr.GetBoolean(6);
-              if (query.Length > 0) {
+              if (query.Length > 0) { // search results
                 node.Snippet = rdr.GetString(7);
                 node.Relevance = getRelevance(rdr,8);
+              }
+              else {                  // sync attrs
+                if (!rdr.IsDBNull(7)) node.Key = rdr.GetString(7);
+                if (!rdr.IsDBNull(8)) node.SyncNum = rdr.GetInt32(8);
               }
               result.Add(node);
             }
@@ -651,7 +661,8 @@ namespace SynNotes {
       }
       //for notes
       else {
-        var n = (NoteItem)e.Model;
+        var n = e.Model as NoteItem;
+        if (n == null) return; // right click on blank space
         if (n.Deleted) {
           treeMenu.Items.Add("Restore", null, restoreClick);
           treeMenu.Items.Add("Purge (Del)", null, delClick);
@@ -1296,7 +1307,7 @@ namespace SynNotes {
           return;
         }
         // do sync
-        SnSync();
+        SnSync(0);
       }      
     }
 
@@ -1336,9 +1347,31 @@ namespace SynNotes {
     /// <summary>
     /// do Simplenote sync 
     /// </summary>
-    private void SnSync() {
-      Sync.getIndex();
+    private void SnSync(float since) {
+      var ui = TaskScheduler.FromCurrentSynchronizationContext();
+      statusText.Text = "syncing...";
+      Task.Factory.StartNew(() => {
+        return Sync.getIndex(since);
 
+      }).ContinueWith(t1 => {
+
+        // search for new/updated notes and update db in async mode
+        var num = 0;
+        foreach (var i in t1.Result) {
+          var note = notes.Find(x => x.Key == i.key);
+          if (note == null || note.SyncNum < i.syncnum) {
+            num++;
+            Task.Factory.StartNew(() => {
+              return Sync.getNote(i.key);
+            }).ContinueWith(t2 => {
+              UpdateNote(note, t2.Result, ui);
+            });
+          }
+        }
+        if (num == 0) statusText.Text = Sync.Email;
+        else statusText.Text = num + " new";
+
+      });
       /*
       (note.date > lastSync)
       For  any  note  changed  locally  (including  new  notes):
@@ -1352,11 +1385,83 @@ namespace SynNotes {
          Retrieve  note,  update  note  with  response
        if  new  note  (key  is  not  in  local  store),
          Retrieve  note,  update  note  with  response
-         Sync.getNote(id)
-       
+               
       For  each  local  note  not  in  index,
        Permanent  delete,  remove  note
+       (modifydate < lastSync)
       */
+
+    }
+
+    /// <summary>
+    /// Update note in DB with sync result
+    /// </summary>
+    /// <param name="Note">Note to update, could be null = create new</param>
+    /// <param name="noteData">Data from sync to update with</param>
+    private void UpdateNote(NoteItem n, NoteData raw, TaskScheduler ui) {
+      Task.Factory.StartNew(() => {
+        bool update = true;
+        if (n == null) {
+          n = new NoteItem();
+          update = false;
+        }
+
+        n.Deleted = raw.deleted == 1;
+        n.Key = raw.key;
+        n.ModifyDate = raw.modifydate;
+        n.Name = note.GetTitle(raw.content);
+        n.SyncNum = raw.syncnum;
+
+        // read system tags
+        string systemtags=""; //unparsed tags to save
+        foreach (var tag in raw.systemtags) {
+          if (tag == "pinned") n.Pinned = true;
+          else if (tag == "unread") n.Unread = true;
+          else if (tag.StartsWith("sn-lexer=")) {
+            var lexer = tag.Substring(9);
+            if (Glob.Lexers.Contains(lexer)) n.Lexer = lexer;
+          }
+          else systemtags += tag + " ";
+        }
+
+        // create new connection as it is another thread
+        var conn = new SQLiteConnection(ConnString);
+        conn.Open();
+        using (SQLiteTransaction tr = conn.BeginTransaction()) {
+          using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
+            cmd.CommandText = (update) ?
+              "UPDATE notes SET key=?, deleted=?, modifydate=?, createdate=?, syncnum=?, version=?, systemtags=?, pinned=?, unread=?, title=?, content=?, lexer=? WHERE id=?" :
+              "INSERT INTO notes(key,  deleted,   modifydate,   createdate,   syncnum,   version,   systemtags,   pinned,   unread,   title,   content,   lexer)  VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
+            cmd.Parameters.AddWithValue(null, n.Key);
+            cmd.Parameters.AddWithValue(null, n.Deleted);
+            cmd.Parameters.AddWithValue(null, n.ModifyDate);
+            cmd.Parameters.AddWithValue(null, raw.createdate);
+            cmd.Parameters.AddWithValue(null, n.SyncNum);
+            cmd.Parameters.AddWithValue(null, raw.version);
+            cmd.Parameters.AddWithValue(null, systemtags);
+            cmd.Parameters.AddWithValue(null, n.Pinned);
+            cmd.Parameters.AddWithValue(null, n.Unread);
+            cmd.Parameters.AddWithValue(null, n.Name);
+            cmd.Parameters.AddWithValue(null, raw.content);
+            cmd.Parameters.AddWithValue(null, n.Lexer);
+            if(update) cmd.Parameters.AddWithValue(null, n.Id);
+            cmd.ExecuteNonQuery();
+            if (!update) {
+              n.Id = conn.LastInsertRowId;
+              notes.Add(n);
+            }
+          }
+          tr.Commit();
+        }
+        conn.Close();
+
+      }).ContinueWith(t => {
+        // read tags (and create if not exist)
+        var tmp = tree.SelectedObject;
+        var tags = string.Join(" ", raw.tags);
+        note.ParseTags(tags, n);
+        if (tmp != null && tree.SelectedObject != tmp) tree.SelectedObject = tmp;
+      }, ui);
 
     }
     #endregion sync

@@ -62,14 +62,13 @@ namespace SynNotes {
     }
 
     public List<TagItem> Tags { get; set; } // assigned tags objects
-    public float ModifyDate { get; set; }   // unixtime of last modify
     public string DateShort {               // short string of last modify
       get {
         var now = (float)(DateTime.UtcNow.Subtract(Epoch)).TotalSeconds;
         var diff = now - ModifyDate;
         var dt = Epoch.AddSeconds(ModifyDate).ToLocalTime();
         if (diff < 24 * 60 * 60) return dt.ToString("HH:mm"); // this day
-        else if (DateTime.Today.Year != dt.Year) return dt.ToString("MMM yy "); //another year
+        else if (DateTime.Today.Year != dt.Year) return dt.ToString("MMM yy"); //another year
         else return dt.ToString("d MMM"); // this year
       }
     }
@@ -79,6 +78,11 @@ namespace SynNotes {
     public int TopLine { get; set; }        // to scroll text to the same place when it was
     public bool Pinned { get; set; }        // note is pinned
     public int Relevance { get; set; }      // used to order search results
+    //sync related
+    public string Key { get; set; }         // sync id
+    public float ModifyDate { get; set; }   // unixtime of last modify
+    public int SyncNum { get; set; }        // track note meta-changes
+    public bool Unread { get; set; }        // unread shared note
   }
 
 }

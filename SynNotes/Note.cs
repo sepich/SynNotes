@@ -15,7 +15,8 @@ namespace SynNotes {
     /// </summary> 
     class Note {
       private Form1 f;                       // main form 
-      public NoteItem Item { get; set; }     // currently opened note 
+      public NoteItem Item { get; set; }     // currently opened note
+      private int syncnum;                   // ver of opened note for auto update
       private List<Label> Labels;            // tag labels displayed
       private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); //unixtime start      
 
@@ -28,11 +29,14 @@ namespace SynNotes {
       /// show note for selected item
       /// </summary>
       public void ShowSelected() {
-        if (Item != null && f.tbSearch.ForeColor == SystemColors.GrayText) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //not search, save previous note top line
-        if (f.tree.SelectedItem == null) return;
+        if (Item != null && f.tree.RowHeight < 0) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //not search, save previous note top line
         var n = f.tree.SelectedObject as NoteItem;
-        if (n != null && n != Item) Item = n;
-        else return;
+        if (n == null) return;
+        if (n != Item || syncnum != n.SyncNum) {
+          Item = n;
+          syncnum = n.SyncNum;
+        }
+        else return; // don't redraw same note in search mode
 
         using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
           cmd.CommandText = "SELECT content, lexer, topline FROM notes WHERE id=" + Item.Id;
@@ -50,9 +54,9 @@ namespace SynNotes {
                 Item.Lexer = null;
               }
               else {
-                SetLanguage(rdr.GetString(1));
-                f.btnLexer.Text = rdr.GetString(1);
                 Item.Lexer = rdr.GetString(1);
+                SetLanguage(Item.Lexer);
+                f.btnLexer.Text = Item.Lexer;                
               }              
               if (Item.TopLine == -1 && !rdr.IsDBNull(2) ) Item.TopLine = rdr.GetInt32(2);
               f.scEdit.Lines.FirstVisibleIndex = Item.TopLine;
@@ -137,12 +141,13 @@ namespace SynNotes {
       }
 
       /// <summary>
-      /// get title from active scintilla text
+      /// get title from active scintilla text (or provided text)
       /// </summary>
-      public string GetTitle() {
-        if (f.scEdit.Text.Length == 0) return "(blank)";
-        var len1 = f.scEdit.Text.Length > 100 ? 100 : f.scEdit.Text.Length;
-        var title = f.scEdit.Text.Substring(0, len1).Trim();
+      public string GetTitle(String Text=null) {
+        if (Text == null) Text = f.scEdit.Text;
+        if (Text.Length == 0) return "(blank)";
+        var len1 = Text.Length > 100 ? 100 : Text.Length;
+        var title = Text.Substring(0, len1).Trim();
         var len2 = title.IndexOfAny(new char[] { '\n', '\r' });
         if (len2 > 0) return title.Substring(0, len2); // first non-blank line
         else if (len1 < 100) return title;             // whole text is just one line
@@ -220,16 +225,27 @@ namespace SynNotes {
       /// <summary>
       /// parse textbox for tags to list
       /// </summary>
-      public void ParseTags() {
-        TagItem tagItem;
-        var s = f.tagBox.Text;
-        f.tagBox.Text = "";
+      public void ParseTags(String tagstr=null, NoteItem note=null) {
+        bool draw = false; //called not for current item, don't draw tags/autocompl
+        if (tagstr == null) {
+          tagstr = f.tagBox.Text;
+          f.tagBox.Text = "";
+          draw = true; 
+        }
+        if (note == null) note = Item;
+        
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
-            foreach (var tag in s.Split(new char[] { ' ', ',', ';' })) {
+            //cleanup existing tags, as it is replace
+            if (!draw) {
+              cmd.CommandText = "DELETE FROM nt WHERE note=" + note.Id;
+              cmd.ExecuteNonQuery();
+              note.Tags.Clear();
+            }
+            foreach (var tag in tagstr.Split(new char[] { ' ', ',', ';' })) {
               if (String.IsNullOrEmpty(tag)) continue;
-              if (Item.Tags.Exists(x => x.Name.ToLower() == tag.ToLower())) continue;     //skip already assigned
-              tagItem = f.tags.Find(x => !x.System && x.Name.ToLower() == tag.ToLower()); //search if exist
+              if (note.Tags.Exists(x => x.Name.ToLower() == tag.ToLower())) continue;     //skip already assigned
+              var tagItem = f.tags.Find(x => !x.System && x.Name.ToLower() == tag.ToLower()); //search if exist
               if (tagItem==null) {
                 //create tag in db if it is new
                 cmd.Parameters.Clear();
@@ -244,19 +260,19 @@ namespace SynNotes {
                 tagItem.Index = f.tags.Count - 1;
                 f.tree.AddObject(tagItem);
                 f.cName.Renderer = f.fancyRenderer; //OLV drop renderer when Roots refreshed
-                f.tree.SelectedObject = Item;
+                if (draw) f.tree.SelectedObject = note;
                 f.tags.Add(tagItem);
               }
-              cmd.CommandText = "INSERT INTO nt(note,tag) VALUES(" + Item.Id + "," + tagItem.Id + ")";
+              cmd.CommandText = "INSERT INTO nt(note,tag) VALUES(" + note.Id + "," + tagItem.Id + ")";
               cmd.ExecuteNonQuery();
-              Item.Tags.Add(tagItem);
+              note.Tags.Add(tagItem);
               f.tree.RefreshObject(tagItem);              
-              drawTag(tagItem.Name);
+              if (draw) drawTag(tagItem.Name);
             }
           } 
           tr.Commit();
         }
-        FillAutocomplete(); //refill autocomplete except for parsed tags
+        if (draw) FillAutocomplete(); //refill autocomplete except for parsed tags
       }
 
       /// <summary>
