@@ -106,6 +106,12 @@ namespace SynNotes {
           res = cmd.ExecuteScalar();
           if (res != null) Sync.LastSync = int.Parse((string)res);
         }
+        //init aut-sync timer
+        Sync.timer.Tick += timer_sync;
+        if (Sync.Freq != 0) {
+          Sync.timer.Interval = Sync.Freq * 60 * 1000;          
+          Sync.timer.Start();
+        }
       }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
@@ -513,7 +519,7 @@ namespace SynNotes {
               node = new NoteItem();
               node.Id = id;
               node.Name = rdr.GetString(1);
-              node.ModifyDate = rdr.GetFloat(2);
+              node.ModifyDate = rdr.GetDouble(2);
               node.Deleted = rdr.GetBoolean(3);
               node.Tags = new List<TagItem>();              
               if (!rdr.IsDBNull(4)) node.Tags.Add(tags.Find(x => x.Id == rdr.GetInt32(4)));
@@ -709,10 +715,12 @@ namespace SynNotes {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
           foreach (var i in tree.SelectedObjects) {
             var n = i as NoteItem;
-            if (n != null && n.Deleted) {              
-              cmd.CommandText = "UPDATE notes SET deleted=0 WHERE id=" + n.Id;
-              cmd.ExecuteNonQuery();
+            if (n != null && n.Deleted) {
               n.Deleted = false;
+              n.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
+              cmd.CommandText = "UPDATE notes SET deleted=0, modifydate=? WHERE id=" + n.Id;
+              cmd.Parameters.AddWithValue(null, n.ModifyDate);
+              cmd.ExecuteNonQuery();              
               tree.RefreshObject(tagAll);
               n.Tags.ForEach(x => tree.RefreshObject(x));
             }
@@ -764,7 +772,7 @@ namespace SynNotes {
       else tag = tagAll;
       //add new note to db
       var node = new NoteItem();
-      node.ModifyDate = (float)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+      node.ModifyDate = (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
       node.Name = "New Note";
       if(!tag.System) node.Tags.Add(tag);
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
@@ -833,9 +841,11 @@ namespace SynNotes {
               else {
                 if (n == 1 && MessageBox.Show("Delete the note: " + i.Name + "?\n(This will move the Note to Deleted items folder)", "Delete Note?",
                   MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) == System.Windows.Forms.DialogResult.No) return;
-                cmd.CommandText = "UPDATE notes SET deleted=1 WHERE id=" + i.Id;
-                cmd.ExecuteNonQuery();
                 i.Deleted = true;
+                i.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
+                cmd.CommandText = "UPDATE notes SET deleted=1, modifydate=? WHERE id=" + i.Id;
+                cmd.Parameters.AddWithValue(null, i.ModifyDate);
+                cmd.ExecuteNonQuery();                
                 if (tree.RowHeight == -1) tree.RefreshObject(tagAll);
               }
               if (tree.RowHeight == -1) {
@@ -858,6 +868,7 @@ namespace SynNotes {
       var note = tree.SelectedObject as NoteItem;
       if (note != null) {
         note.Pinned = note.Pinned ? false : true;
+        note.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
         if (tree.RowHeight > 0) { // we're in search mode
           note = notes.Find(x => x.Id == note.Id);
           note.Pinned = note.Pinned ? false : true;
@@ -865,9 +876,9 @@ namespace SynNotes {
         //save to db
         using (SQLiteTransaction tr = sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
-            cmd.CommandText = "UPDATE notes SET pinned=? WHERE id=?";
+            cmd.CommandText = "UPDATE notes SET pinned=?, modifydate=? WHERE id=" + note.Id;
             cmd.Parameters.AddWithValue(null, note.Pinned);
-            cmd.Parameters.AddWithValue(null, note.Id);
+            cmd.Parameters.AddWithValue(null, note.ModifyDate);
             cmd.ExecuteNonQuery();
           }
           tr.Commit();
@@ -949,7 +960,9 @@ namespace SynNotes {
             if (n.Deleted && to == tagDeleted) continue;
             if (!n.Deleted && to == tagDeleted) { //delete
               n.Deleted = true;
-              cmd.CommandText = "UPDATE notes SET deleted=1 WHERE id=" + n.Id;
+              n.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
+              cmd.CommandText = "UPDATE notes SET deleted=1, modifydate=? WHERE id=" + n.Id;
+              cmd.Parameters.AddWithValue(null, n.ModifyDate);
               cmd.ExecuteNonQuery();
             }
             else {              
@@ -958,6 +971,10 @@ namespace SynNotes {
                 cmd.CommandText = "UPDATE notes SET deleted=0 WHERE id=" + n.Id;
                 cmd.ExecuteNonQuery();
               }
+              n.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
+              cmd.CommandText = "UPDATE notes SET modifydate=? WHERE id=" + n.Id;
+              cmd.Parameters.AddWithValue(null, n.ModifyDate);
+              cmd.ExecuteNonQuery();
               if (to == tagAll) continue; 
               if (how == DragDropEffects.Move) n.Tags.Clear();
               n.Tags.Add(to);
@@ -1113,7 +1130,7 @@ namespace SynNotes {
       var lex = i.Text;
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
-          cmd.CommandText = "UPDATE notes SET lexer=? WHERE id="+note.Item.Id;
+          cmd.CommandText = "UPDATE notes SET lexer=?, modifydate=? WHERE id=" + note.Item.Id;
           if (i.Text == Glob.Inherit) {
             foreach (var tag in note.Item.Tags) if (!String.IsNullOrEmpty(tag.Lexer)) {
                 lex = tag.Lexer;
@@ -1128,6 +1145,8 @@ namespace SynNotes {
             cmd.Parameters.AddWithValue(null, lex);
             note.Item.Lexer = lex;
           }
+          note.Item.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
+          cmd.Parameters.AddWithValue(null, note.Item.ModifyDate);
           cmd.ExecuteNonQuery();
         }
         tr.Commit();
@@ -1331,6 +1350,7 @@ namespace SynNotes {
         }
       }
       frmSync.Dispose();
+      if (Sync.Freq == 0) Sync.timer.Stop();
 
       // validate user
       if (!String.IsNullOrEmpty(Sync.Email)) {
@@ -1338,40 +1358,78 @@ namespace SynNotes {
         Task.Factory.StartNew<bool>(() => {
           return Sync.checkLogin();
         }).ContinueWith(t => {
-          if (t.Result) statusText.Text = Sync.Email;
-          else statusText.Text = "Wrong login/pass";
+          if (t.Result) {
+            statusText.Text = Sync.Email;
+            if (Sync.Freq > 0) {
+              Sync.timer.Interval = Sync.Freq * 60 * 1000;
+              Sync.timer.Stop();
+              Sync.timer.Start();
+            }
+          }
+          else {
+            statusText.Text = "Wrong login/pass";
+            Sync.timer.Stop();
+          }
         });
       }
+    }
+
+    // aut-sync timer event
+    private void timer_sync(object sender, EventArgs e) {
+      SnSync(Sync.LastSync);
     }
 
     /// <summary>
     /// do Simplenote sync 
     /// </summary>
-    private void SnSync(float since) {
+    private void SnSync(double since) {
       var ui = TaskScheduler.FromCurrentSynchronizationContext();
       statusText.Text = "syncing...";
-      Task.Factory.StartNew(() => {
-        return Sync.getIndex(since);
+      // detach from ui thread
+      Task.Factory.StartNew<string>(() => {
 
-      }).ContinueWith(t1 => {
-
-        // search for new/updated notes and update db in async mode
-        var num = 0;
-        foreach (var i in t1.Result) {
-          var note = notes.Find(x => x.Key == i.key);
-          if (note == null || note.SyncNum < i.syncnum) {
-            num++;
-            Task.Factory.StartNew(() => {
-              return Sync.getNote(i.key);
-            }).ContinueWith(t2 => {
-              UpdateNote(note, t2.Result, ui);
+        //upload newly created notes
+        try {
+          if (since > 0) {
+            Parallel.ForEach(notes.FindAll(x => x.ModifyDate > since && !String.IsNullOrEmpty(x.Key)), (i) => {
+              var raw = Sync.pushNote(i, sql);
+              UpdateNote(i, raw, ui);
             });
           }
-        }
-        if (num == 0) statusText.Text = Sync.Email;
-        else statusText.Text = num + " new";
+          Parallel.ForEach(notes.FindAll(x => String.IsNullOrEmpty(x.Key)), (i) => {
+            var raw = Sync.pushNote(i, sql);
+            UpdateNote(i, raw, ui);
+          });
 
-      });
+
+          // search for new/updated notes and update db in async mode
+          var num = 0;
+          var index = Sync.getIndex(since);
+          Sync.LastSync = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
+          Parallel.ForEach(index, (i) => {
+            var note = notes.Find(x => x.Key == i.key);
+            var t = double.Parse(i.modifydate, System.Globalization.CultureInfo.InvariantCulture); // dot as decimal separator
+            if (note != null && Math.Round(note.ModifyDate,1) > Math.Round(t,1)) { // local newer
+              num++;
+              var raw = Sync.pushNote(note, sql);
+              UpdateNote(note, raw, ui);
+            }
+            else if (note == null || note.SyncNum < i.syncnum) { // remote newer
+              num++;
+              var raw = Sync.getNote(i.key);
+              UpdateNote(note, raw, ui);
+            }
+          });
+
+          return (num == 0) ? Sync.Email : num + " new";
+        }
+        catch (AggregateException e) {
+          return e.Message; // e.InnerExceptions[0].Message;
+        }
+
+      }).ContinueWith( (t) => { // sync with ui
+        statusText.Text = t.Result;        
+      }, ui);
       /*
       (note.date > lastSync)
       For  any  note  changed  locally  (including  new  notes):
@@ -1389,6 +1447,8 @@ namespace SynNotes {
       For  each  local  note  not  in  index,
        Permanent  delete,  remove  note
        (modifydate < lastSync)
+       
+      Sync tags order
       */
 
     }
@@ -1396,74 +1456,88 @@ namespace SynNotes {
     /// <summary>
     /// Update note in DB with sync result
     /// </summary>
-    /// <param name="Note">Note to update, could be null = create new</param>
-    /// <param name="noteData">Data from sync to update with</param>
+    /// <param name="n">Note to update, could be null = create new</param>
+    /// <param name="raw">Data from sync to update with</param>
+    /// <param name="ui">Scheduler for UI thread to display changes</param>
     private void UpdateNote(NoteItem n, NoteData raw, TaskScheduler ui) {
-      Task.Factory.StartNew(() => {
-        bool update = true;
-        if (n == null) {
-          n = new NoteItem();
-          update = false;
+      bool update = true;
+      if (n == null) {
+        n = new NoteItem();
+        update = false;
+      }
+
+      n.Deleted = raw.deleted == 1;
+      n.Key = raw.key;
+      n.ModifyDate = double.Parse(raw.modifydate, System.Globalization.CultureInfo.InvariantCulture);
+      if (raw.content!=null)  n.Name = note.GetTitle(raw.content);
+      n.SyncNum = raw.syncnum;
+
+      // read system tags
+      string systemtags=""; //unparsed tags to save
+      foreach (var tag in raw.systemtags) {
+        if (tag == "pinned") n.Pinned = true;
+        else if (tag == "unread") n.Unread = true;
+        else if (tag.StartsWith("sn-lexer=")) {
+          var lexer = tag.Substring(9);
+          if (Glob.Lexers.Contains(lexer)) n.Lexer = lexer;
         }
+        else systemtags += tag + " ";
+      }
 
-        n.Deleted = raw.deleted == 1;
-        n.Key = raw.key;
-        n.ModifyDate = raw.modifydate;
-        n.Name = note.GetTitle(raw.content);
-        n.SyncNum = raw.syncnum;
+      // create new connection as it is another thread
+      var conn = new SQLiteConnection(ConnString);
+      conn.Open();
+      using (SQLiteTransaction tr = conn.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
 
-        // read system tags
-        string systemtags=""; //unparsed tags to save
-        foreach (var tag in raw.systemtags) {
-          if (tag == "pinned") n.Pinned = true;
-          else if (tag == "unread") n.Unread = true;
-          else if (tag.StartsWith("sn-lexer=")) {
-            var lexer = tag.Substring(9);
-            if (Glob.Lexers.Contains(lexer)) n.Lexer = lexer;
+          if (raw.content == null) { // no content after push note and no merges
+            cmd.CommandText = (update) ?
+              "UPDATE notes SET key=?, deleted=?, modifydate=?, createdate=?, syncnum=?, version=?, systemtags=?, pinned=?, unread=?, lexer=? WHERE id=?" :
+              "INSERT INTO notes(key,  deleted,   modifydate,   createdate,   syncnum,   version,   systemtags,   pinned,   unread,   lexer)  VALUES(?,?,?,?,?,?,?,?,?,?)";
           }
-          else systemtags += tag + " ";
-        }
-
-        // create new connection as it is another thread
-        var conn = new SQLiteConnection(ConnString);
-        conn.Open();
-        using (SQLiteTransaction tr = conn.BeginTransaction()) {
-          using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
+          else {                    // update content when push & merge, or just a new remote note
             cmd.CommandText = (update) ?
               "UPDATE notes SET key=?, deleted=?, modifydate=?, createdate=?, syncnum=?, version=?, systemtags=?, pinned=?, unread=?, title=?, content=?, lexer=? WHERE id=?" :
               "INSERT INTO notes(key,  deleted,   modifydate,   createdate,   syncnum,   version,   systemtags,   pinned,   unread,   title,   content,   lexer)  VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
-            cmd.Parameters.AddWithValue(null, n.Key);
-            cmd.Parameters.AddWithValue(null, n.Deleted);
-            cmd.Parameters.AddWithValue(null, n.ModifyDate);
-            cmd.Parameters.AddWithValue(null, raw.createdate);
-            cmd.Parameters.AddWithValue(null, n.SyncNum);
-            cmd.Parameters.AddWithValue(null, raw.version);
-            cmd.Parameters.AddWithValue(null, systemtags);
-            cmd.Parameters.AddWithValue(null, n.Pinned);
-            cmd.Parameters.AddWithValue(null, n.Unread);
+          }
+          cmd.Parameters.AddWithValue(null, n.Key);
+          cmd.Parameters.AddWithValue(null, n.Deleted);
+          cmd.Parameters.AddWithValue(null, n.ModifyDate);
+          cmd.Parameters.AddWithValue(null, double.Parse(raw.createdate, System.Globalization.CultureInfo.InvariantCulture));
+          cmd.Parameters.AddWithValue(null, n.SyncNum);
+          cmd.Parameters.AddWithValue(null, raw.version);
+          cmd.Parameters.AddWithValue(null, systemtags.Trim());
+          cmd.Parameters.AddWithValue(null, n.Pinned);
+          cmd.Parameters.AddWithValue(null, n.Unread);
+          if (raw.content != null) {
             cmd.Parameters.AddWithValue(null, n.Name);
             cmd.Parameters.AddWithValue(null, raw.content);
-            cmd.Parameters.AddWithValue(null, n.Lexer);
-            if(update) cmd.Parameters.AddWithValue(null, n.Id);
-            cmd.ExecuteNonQuery();
-            if (!update) {
-              n.Id = conn.LastInsertRowId;
-              notes.Add(n);
-            }
           }
-          tr.Commit();
+          cmd.Parameters.AddWithValue(null, n.Lexer);
+          if(update) cmd.Parameters.AddWithValue(null, n.Id);
+          cmd.ExecuteNonQuery();
+          if (!update) n.Id = conn.LastInsertRowId;
         }
-        conn.Close();
-
-      }).ContinueWith(t => {
-        // read tags (and create if not exist)
-        var tmp = tree.SelectedObject;
-        var tags = string.Join(" ", raw.tags);
-        note.ParseTags(tags, n);
-        if (tmp != null && tree.SelectedObject != tmp) tree.SelectedObject = tmp;
-      }, ui);
-
+        tr.Commit();
+      }
+      conn.Close();
+      
+      // sync with ui
+      Task t1 = new Task(() => {
+        if (!update) notes.Add(n);
+        if (raw.tags.Length > 0) {
+          var tmp = tree.SelectedObject;
+          var tags = string.Join(" ", raw.tags);
+          note.ParseTags(tags, n); // read tags (and create if not exist)
+          if (tmp != null && tree.SelectedObject != tmp) tree.SelectedObject = tmp;
+        }
+        tree.RefreshObject(tagAll);
+        tree.RefreshObject(tagDeleted);
+      });
+      t1.Start(ui);
     }
+
+
     #endregion sync
 
 
@@ -1733,5 +1807,6 @@ namespace SynNotes {
     public const string Inherit = "Inherit";
     public const string Changed = "changed";
     public const string Saved = "saved";
+    public static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); //unixtime start
   }
 }

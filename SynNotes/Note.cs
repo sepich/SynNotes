@@ -17,8 +17,7 @@ namespace SynNotes {
       private Form1 f;                       // main form 
       public NoteItem Item { get; set; }     // currently opened note
       private int syncnum;                   // ver of opened note for auto update
-      private List<Label> Labels;            // tag labels displayed
-      private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); //unixtime start      
+      private List<Label> Labels;            // tag labels displayed      
 
       public Note(Form1 form) {
         Labels = new List<Label>();
@@ -36,7 +35,7 @@ namespace SynNotes {
           Item = n;
           syncnum = n.SyncNum;
         }
-        else return; // don't redraw same note in search mode
+        else return; // don't redraw same note (in search mode)
 
         using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
           cmd.CommandText = "SELECT content, lexer, topline FROM notes WHERE id=" + Item.Id;
@@ -117,7 +116,7 @@ namespace SynNotes {
       /// </summary>
       public void Save() {
         if (Item == null) return;
-        Item.ModifyDate = (float)(DateTime.UtcNow.Subtract(Epoch)).TotalSeconds;
+        Item.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
         var t=GetTitle();
         if (Item.Name != t) {
           Item.Name = t;
@@ -143,7 +142,7 @@ namespace SynNotes {
       /// <summary>
       /// get title from active scintilla text (or provided text)
       /// </summary>
-      public string GetTitle(String Text=null) {
+      public string GetTitle(string Text=null) {
         if (Text == null) Text = f.scEdit.Text;
         if (Text.Length == 0) return "(blank)";
         var len1 = Text.Length > 100 ? 100 : Text.Length;
@@ -233,6 +232,7 @@ namespace SynNotes {
           draw = true; 
         }
         if (note == null) note = Item;
+        var isSearch = f.tree.RowHeight > 0;
         
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
@@ -242,7 +242,7 @@ namespace SynNotes {
               cmd.ExecuteNonQuery();
               note.Tags.Clear();
             }
-            foreach (var tag in tagstr.Split(new char[] { ' ', ',', ';' })) {
+            foreach (var tag in tagstr.Split(new char[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries)) {
               if (String.IsNullOrEmpty(tag)) continue;
               if (note.Tags.Exists(x => x.Name.ToLower() == tag.ToLower())) continue;     //skip already assigned
               var tagItem = f.tags.Find(x => !x.System && x.Name.ToLower() == tag.ToLower()); //search if exist
@@ -258,15 +258,17 @@ namespace SynNotes {
                 tagItem.Name = tag;
                 tagItem.Id = f.sql.LastInsertRowId;
                 tagItem.Index = f.tags.Count - 1;
-                f.tree.AddObject(tagItem);
-                f.cName.Renderer = f.fancyRenderer; //OLV drop renderer when Roots refreshed
-                if (draw) f.tree.SelectedObject = note;
+                if (!isSearch) {
+                  f.tree.AddObject(tagItem);
+                  f.cName.Renderer = f.fancyRenderer; //OLV drop renderer when Roots refreshed
+                  if (draw) f.tree.SelectedObject = note;
+                }
                 f.tags.Add(tagItem);
               }
               cmd.CommandText = "INSERT INTO nt(note,tag) VALUES(" + note.Id + "," + tagItem.Id + ")";
               cmd.ExecuteNonQuery();
               note.Tags.Add(tagItem);
-              f.tree.RefreshObject(tagItem);              
+              if (!isSearch) f.tree.RefreshObject(tagItem);
               if (draw) drawTag(tagItem.Name);
             }
           } 
