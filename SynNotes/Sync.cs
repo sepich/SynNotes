@@ -18,7 +18,6 @@ namespace SynNotes {
     const string host = "https://simple-note.appspot.com";
     static CookieContainer cookies = new CookieContainer();
     static string Token = "";                   // auth token 
-    public static Timer timer = new Timer();    // auto-sync    
 
     /// <summary>
     /// validate email/pass, update token
@@ -58,23 +57,21 @@ namespace SynNotes {
       Debug.WriteLine("Cookies: " + request.CookieContainer.ToString());
       Debug.WriteLine("Data: " + data);
 
-      using (var response = (HttpWebResponse)request.GetResponse()) {
-        string responseValue;
+      string responseValue;
+      using (var response = (HttpWebResponse)request.GetResponse()) {        
         // accept only 200 OK
         if (response.StatusCode != HttpStatusCode.OK) {
           var message = String.Format("Request failed. Received HTTP {0}", response.StatusCode);
           throw new ApplicationException(message);
         }
         // grab the response
-        using (var responseStream = response.GetResponseStream()) {
-          using (var reader = new StreamReader(responseStream)) {
-            responseValue = reader.ReadToEnd();
-          }
+        var responseStream = response.GetResponseStream();
+        using (var reader = new StreamReader(responseStream)) {
+          responseValue = reader.ReadToEnd();
         }
         if (response.Cookies.Count > 0) cookies.Add(response.Cookies); //save cookies
-        response.Close();
-        return responseValue;
       }
+      return responseValue;
     }
 
     /// <summary>
@@ -85,14 +82,13 @@ namespace SynNotes {
       try {
         return Request(Uri, Method, Data);
       }
-      catch (Exception e) { // retry if 401-unauth cookie/token expired
-        var ex = (System.Net.WebException)e;
-        var ex2 = (HttpWebResponse)ex.Response;
-        if (ex2.StatusCode == HttpStatusCode.Unauthorized) {
+      catch (WebException e) { // retry if 401-unauth cookie/token expired
+        var ex = (HttpWebResponse)e.Response;
+        if (ex.StatusCode == HttpStatusCode.Unauthorized) {
           if (checkLogin()) return Request(Uri, Method, Data);
           else throw new ApplicationException("Wrong login/password");
         }
-        else throw e;
+        else throw;
       }
     }
 
@@ -105,7 +101,7 @@ namespace SynNotes {
       var meta = new NotesMeta();
 
       do {
-        var s = RequestRetry("/api2/index?length=100&since=" + since + "&mark=" + meta.mark);
+        var s = RequestRetry("/api2/index?length=100&since=" + since.ToString("R").Replace(',', '.') + "&mark=" + meta.mark);
         meta = js.Deserialize<NotesMeta>(s);
         result.AddRange(meta.data);
       } 
@@ -159,16 +155,56 @@ namespace SynNotes {
       return js.Deserialize<NoteData>(s);
     }
 
+    /// <summary>
+    /// delete note permanently
+    /// </summary>
+    internal static void delNote(NoteItem note) {
+      RequestRetry("/api2/data/" + note.Key, "DELETE");
+    }
+
+    /// <summary>
+    /// get tags index
+    /// </summary>
+    internal static List<TagMeta> getTags() {
+      var result = new List<TagMeta>();
+      var js = new JavaScriptSerializer();
+      var meta = new TagsMeta();
+
+      do {
+        var s = RequestRetry("/api2/tags?length=1000&mark=" + meta.mark);
+        meta = js.Deserialize<TagsMeta>(s);
+        result.AddRange(meta.tags);
+      }
+      while (!String.IsNullOrEmpty(meta.mark));
+
+      return result;
+    }
+
+    /// <summary>
+    /// push tag order info
+    /// </summary>
+    internal static TagMeta pushTag(TagItem i) {
+      var js = new JavaScriptSerializer();
+      var node = new TagMetaUser();
+      node.index = i.Version;
+      node.name = i.Name;
+      var data = js.Serialize(node);
+      var url = (i.Version == 0) ? "/api2/tags" : "/api2/tags/"+i.Name;
+      var s = RequestRetry(url, "POST", data);
+      return js.Deserialize<TagMeta>(s);
+    }
+
+    /// <summary>
+    /// delete tag permanently
+    /// </summary>
+    internal static void delTag(TagItem tag) {
+      RequestRetry("/api2/tags/" + tag.Name, "DELETE");
+    }
+
     public static string Base64Encode(string plainText) {
       var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
       return System.Convert.ToBase64String(plainTextBytes);
     }
-
-
-
-
-
-
   }
 
   //used for deserialize json index
@@ -195,5 +231,17 @@ namespace SynNotes {
   // push new note to server
   class NoteDataUser : NoteMetaUser {
     public string content { get; set; }
+  }
+
+  class TagsMeta {
+    public string mark { get; set; }
+    public TagMeta[] tags { get; set; }
+  }
+  class TagMetaUser {
+    public string name { get; set; }
+    public int index { get; set; }
+  }
+  class TagMeta : TagMetaUser {
+    public int version { get; set; }
   }
 }

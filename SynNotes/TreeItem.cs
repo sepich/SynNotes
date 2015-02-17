@@ -37,6 +37,7 @@ namespace SynNotes {
     public bool System { get; set; }    // sys tags Deleted and All have this set
     public bool Expanded { get; set; }  // should it be expanded on start
     public int Index { get; set; }      // order in list
+    public int Version { get; set; }    // track tag sync changes
     public List<NoteItem> Notes {       // notes of this tag
       get {
         if (!this.System) return notes.FindAll(x => !x.Deleted && x.Tags.Contains(this));
@@ -79,7 +80,7 @@ namespace SynNotes {
     public int Relevance { get; set; }      // used to order search results
     //sync related
     public string Key { get; set; }         // sync id
-    public double ModifyDate { get; set; }   // unixtime of last modify
+    public double ModifyDate { get; set; }  // unixtime of last modify
     public int SyncNum { get; set; }        // track note meta-changes
     public bool Unread { get; set; }        // unread shared note
   }

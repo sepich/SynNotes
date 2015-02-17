@@ -36,6 +36,7 @@ namespace SynNotes {
     TagItem tagAll;                // pointer to ALL tag
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
     public static Timer saveTimer; // autosave
+    public static Timer syncTimer;    // auto-sync
     int treeTopLine, treeSelLine;  // used to restore tree position after restore of window
     string ConnString = "";        //params to connect to db 
 
@@ -107,10 +108,13 @@ namespace SynNotes {
           if (res != null) Sync.LastSync = int.Parse((string)res);
         }
         //init aut-sync timer
-        Sync.timer.Tick += timer_sync;
+        if (syncTimer == null) {
+          syncTimer = new Timer();
+          syncTimer.Tick += timer_sync;
+        }
         if (Sync.Freq != 0) {
-          Sync.timer.Interval = Sync.Freq * 60 * 1000;          
-          Sync.timer.Start();
+          syncTimer.Interval = Sync.Freq * 60 * 1000;
+          syncTimer.Start();
         }
       }, TaskScheduler.FromCurrentSynchronizationContext());
     }
@@ -633,7 +637,7 @@ namespace SynNotes {
       tag.Name = e.NewValue.ToString().Trim(delims);
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
-          cmd.CommandText = "UPDATE tags SET name=? WHERE id=?";
+          cmd.CommandText = "UPDATE tags SET name=?, version=0 WHERE id=?"; // reset version for re-sync
           cmd.Parameters.AddWithValue(null, tag.Name);
           cmd.Parameters.AddWithValue(null, tag.Id);
           cmd.ExecuteNonQuery();
@@ -812,17 +816,9 @@ namespace SynNotes {
             // delete tag
             if (tag != null) {
               if (tag.System) continue; //can't del system folder
-              if (n > 1 || MessageBox.Show("Delete the tag: " + tag.Name + "?\n(This will not delete it's Notes, just unassign this Tag from them)",
-                "Delete Tag?", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1)
-                == System.Windows.Forms.DialogResult.Yes) {
-                cmd.CommandText = "DELETE FROM tags WHERE id=" + tag.Id;
-                cmd.ExecuteNonQuery();
-                tree.RemoveObject(tag);
-                cName.Renderer = fancyRenderer; //OLV drop renderer when Roots refreshed
-                tags.Remove(tag);
-                notes.ForEach(x => x.Tags.Remove(tag));
-                note.RemoveLabel(null, tag); //del from tagBox if exist
-              }
+              if (n > 1 || MessageBox.Show("Delete the tag: " + tag.Name + "?\n(This will not delete it's Notes, just unassign this Tag from them)", "Delete Tag?",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) == System.Windows.Forms.DialogResult.Yes) 
+                  deleteTag(tag);
             }
             //delete note
             else {
@@ -832,10 +828,8 @@ namespace SynNotes {
               if (i.Deleted) {
                 if (n == 1 && MessageBox.Show("Purge the note: " + i.Name + "?\n(This will purge the Note, no undelete is possible)", "Purge Note?",
                   MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) == System.Windows.Forms.DialogResult.No) return;
-                cmd.CommandText = "DELETE FROM notes WHERE id=" + i.Id;
-                cmd.ExecuteNonQuery();
-                notes.Remove(i);
-                if(notes.Count>0) tree.Reveal(notes[0], true);
+                purgeNote(i);
+                continue;
               }
               //move to deleted
               else {
@@ -848,6 +842,7 @@ namespace SynNotes {
                 cmd.ExecuteNonQuery();                
                 if (tree.RowHeight == -1) tree.RefreshObject(tagAll);
               }
+              //update tree
               if (tree.RowHeight == -1) {
                 tree.RefreshObject(tagDeleted);
                 i.Tags.ForEach(x => tree.RefreshObject(x));
@@ -859,6 +854,57 @@ namespace SynNotes {
         tr.Commit();
       }
       if (n > 1 && tree.SelectedObjects.Count > 0) tree.SelectedObject = tree.SelectedObjects[0]; //reset the selection
+    }
+
+    // purge tag
+    private void deleteTag(TagItem tag, bool doSync = true) {
+      using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+        cmd.CommandText = "DELETE FROM tags WHERE id=" + tag.Id; // no need to cleanup `nt` because of cascade
+        cmd.ExecuteNonQuery();
+      }
+      tags.Remove(tag);
+      notes.ForEach(x => x.Tags.Remove(tag));
+      if (tree.RowHeight == -1) {
+        tree.RemoveObject(tag);
+        cName.Renderer = fancyRenderer; //OLV drop renderer when Roots refreshed
+      }
+      note.RemoveLabel(null, tag); //del from tagBox if exist
+
+      // task to sync deletion
+      if (doSync && Sync.Freq > 0 && tag.Version>0) {
+        try {
+          Task.Factory.StartNew(() => { Sync.delTag(tag); });
+        }
+        catch {
+          statusText.Text = "Unable to sync delete";
+        }
+      }
+    }
+
+    // purge note
+    private void purgeNote(NoteItem i, bool doSync = true) {
+      using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
+        cmd.CommandText = "DELETE FROM notes WHERE id=" + i.Id; // no need to cleanup `nt` because of cascade
+        cmd.ExecuteNonQuery();
+      }
+      notes.Remove(i);      
+      // refresh tags
+      if (tree.RowHeight == -1) {
+        if (i.Deleted) tree.RefreshObject(tagDeleted);
+        else i.Tags.ForEach(x => tree.RefreshObject(x));
+        if ((note.Item == null || note.Item.Id == i.Id) && notes.Count > 0) tree.Reveal(notes[0], true);
+      }
+      else treeAsList(tbSearch.Text);
+
+      // task to sync deletion
+      if (doSync && Sync.Freq > 0 && !string.IsNullOrEmpty(i.Key)) {
+        try {
+          Task.Factory.StartNew(() => { Sync.delNote(i); });
+        }
+        catch {
+          statusText.Text = "Unable to sync delete";
+        }
+      }
     }
 
     /// <summary>
@@ -1348,30 +1394,27 @@ namespace SynNotes {
           }
           tr.Commit();
         }
+        syncTimer.Stop();
+
+        // validate user
+        if (!String.IsNullOrEmpty(Sync.Email)) {
+          statusText.Text = "Validating login/pass...";
+          Task.Factory.StartNew<bool>(() => {
+            return Sync.checkLogin();
+          }).ContinueWith(t => {
+            if (t.Result) {
+              statusText.Text = Sync.Email;
+              if (Sync.Freq > 0) {
+                syncTimer.Interval = Sync.Freq * 60 * 1000;
+                syncTimer.Start();
+              }
+            }
+            else statusText.Text = "Wrong login/pass";
+          });
+        }
+      
       }
       frmSync.Dispose();
-      if (Sync.Freq == 0) Sync.timer.Stop();
-
-      // validate user
-      if (!String.IsNullOrEmpty(Sync.Email)) {
-        statusText.Text = "Validating login/pass...";
-        Task.Factory.StartNew<bool>(() => {
-          return Sync.checkLogin();
-        }).ContinueWith(t => {
-          if (t.Result) {
-            statusText.Text = Sync.Email;
-            if (Sync.Freq > 0) {
-              Sync.timer.Interval = Sync.Freq * 60 * 1000;
-              Sync.timer.Stop();
-              Sync.timer.Start();
-            }
-          }
-          else {
-            statusText.Text = "Wrong login/pass";
-            Sync.timer.Stop();
-          }
-        });
-      }
     }
 
     // aut-sync timer event
@@ -1387,20 +1430,21 @@ namespace SynNotes {
       statusText.Text = "syncing...";
       // detach from ui thread
       Task.Factory.StartNew<string>(() => {
-
-        //upload newly created notes
+                
         try {
-          if (since > 0) {
-            Parallel.ForEach(notes.FindAll(x => x.ModifyDate > since && !String.IsNullOrEmpty(x.Key)), (i) => {
+          
+          // upload modified from last sync
+          if (since > 0) { // only for incremental, as in full-sync they sync in index compare later
+            Parallel.ForEach( notes.FindAll(x => x.ModifyDate > since && !String.IsNullOrEmpty(x.Key)), (i) => {
               var raw = Sync.pushNote(i, sql);
               UpdateNote(i, raw, ui);
             });
-          }
-          Parallel.ForEach(notes.FindAll(x => String.IsNullOrEmpty(x.Key)), (i) => {
+          }  
+          // upload newly created, no key id yet
+          Parallel.ForEach( notes.FindAll(x => String.IsNullOrEmpty(x.Key)), (i) => {
             var raw = Sync.pushNote(i, sql);
             UpdateNote(i, raw, ui);
           });
-
 
           // search for new/updated notes and update db in async mode
           var num = 0;
@@ -1421,7 +1465,34 @@ namespace SynNotes {
             }
           });
 
+          // purge notes with key id not in remote index 
+          if (since == 0) { //only in full-sync
+            Parallel.ForEach(notes, (i) => {
+              if (string.IsNullOrEmpty(i.Key)) return;
+              if (!index.Exists(x => x.key == i.Key)) {
+                Task t1 = new Task(() => { purgeNote(i, false); });
+                t1.Start(ui);
+              }
+            });
+          }
+
+          // sync tags order
+          var tagindex = Sync.getTags();
+          Parallel.ForEach(tags.FindAll(x => !x.System), (i) => {
+            var meta = tagindex.Find(x => x.name.ToLower() == i.Name.ToLower());
+            //delete local
+            if (meta == null && i.Version > 0) deleteTag(i, false);
+            //create or update remote
+            else if (meta == null || (meta.index != i.Index && i.Version >= meta.version)) {
+              var raw = Sync.pushTag(i);
+              UpdateTag(i, raw, ui);
+            }
+            // update local
+            else if (i.Version < meta.version) UpdateTag(i, meta, ui);
+          });
+
           return (num == 0) ? Sync.Email : num + " new";
+
         }
         catch (AggregateException e) {
           return e.Message; // e.InnerExceptions[0].Message;
@@ -1430,27 +1501,31 @@ namespace SynNotes {
       }).ContinueWith( (t) => { // sync with ui
         statusText.Text = t.Result;        
       }, ui);
-      /*
-      (note.date > lastSync)
-      For  any  note  changed  locally  (including  new  notes):
-       Save  note  to  server,  update  note  with  response  
-       //  (new  syncnum,  version,  possibly  newly-­‐merged  content)
-      
-      Sync.getIndex()
-      Get  note  index
-      For  each  remote  note,
-       if  remote  syncnum  >  local  syncnum,
-         Retrieve  note,  update  note  with  response
-       if  new  note  (key  is  not  in  local  store),
-         Retrieve  note,  update  note  with  response
-               
-      For  each  local  note  not  in  index,
-       Permanent  delete,  remove  note
-       (modifydate < lastSync)
-       
-      Sync tags order
-      */
+    }
 
+    // update tag order/ver
+    private void UpdateTag(TagItem tag, TagMeta raw, TaskScheduler ui) {
+      tag.Index = raw.index;
+      tag.Version = raw.version;
+      //save to db
+      var conn = new SQLiteConnection(ConnString);
+      conn.Open();
+      using (SQLiteTransaction tr = conn.BeginTransaction()) {
+        using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
+          cmd.CommandText = "UPDATE tags SET `index`=?, vesion=? WHERE id=?"; // don't update name
+          cmd.Parameters.AddWithValue(null, tag.Index);
+          cmd.Parameters.AddWithValue(null, tag.Version);
+          cmd.Parameters.AddWithValue(null, tag.Id);
+        }
+        tr.Commit();
+      }
+      conn.Close();
+
+      // sync with ui
+      Task t1 = new Task(() => {        
+        tree.RefreshObject(tag);
+      });
+      t1.Start(ui);
     }
 
     /// <summary>
