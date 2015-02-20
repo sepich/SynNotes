@@ -18,6 +18,7 @@ namespace SynNotes {
     const string host = "https://simple-note.appspot.com";
     static CookieContainer cookies = new CookieContainer();
     static string Token = "";                   // auth token 
+    private static string UserAgent = "SynNotes/" + Application.ProductVersion;
 
     /// <summary>
     /// validate email/pass, update token
@@ -36,17 +37,18 @@ namespace SynNotes {
     }
 
     // REST call
-    private static string Request(string Uri, string Method = "GET", string data = "", string ContentType = "application/json") {
-      if (Uri.StartsWith("/api2/data")) Uri += "?auth=" + Token + "&email=" + Email; // Cuz note API doesn't check cookies ;(
+    private static string Request(string Uri, string Method = "GET", string Data = "", string ContentType = "application/json") {
+      //if (Uri.StartsWith("/api2/data") || Uri.StartsWith("/api2/tags/")) 
+      if(Method == "POST") Uri += "?auth=" + Token + "&email=" + Email; // Cuz note API doesn't check cookies ;(
       var request = (HttpWebRequest)WebRequest.Create(host + Uri);
       request.Method = Method;
       request.ContentType = ContentType;
-      request.UserAgent = "SynNotes/0.1";
+      request.UserAgent = UserAgent;
       request.Timeout = 10000; //10sec
 
       // send POST
-      if (!string.IsNullOrEmpty(data) && Method == "POST") {
-        var bytes = Encoding.GetEncoding("UTF-8").GetBytes(data);
+      if (!string.IsNullOrEmpty(Data) && Method == "POST") {
+        var bytes = Encoding.GetEncoding("UTF-8").GetBytes(Data);
         request.ContentLength = bytes.Length;
         using (var writeStream = request.GetRequestStream()) {
           writeStream.Write(bytes, 0, bytes.Length);
@@ -55,7 +57,7 @@ namespace SynNotes {
       request.CookieContainer = cookies;
       Debug.WriteLine("Headers: " + request.Headers);
       Debug.WriteLine("Cookies: " + request.CookieContainer.ToString());
-      Debug.WriteLine("Data: " + data);
+      Debug.WriteLine("Data: " + Data);
 
       string responseValue;
       using (var response = (HttpWebResponse)request.GetResponse()) {        
@@ -87,6 +89,11 @@ namespace SynNotes {
         if (ex.StatusCode == HttpStatusCode.Unauthorized) {
           if (checkLogin()) return Request(Uri, Method, Data);
           else throw new ApplicationException("Wrong login/password");
+        }
+        else if (ex.StatusCode == HttpStatusCode.NotFound) { // not found for update = create
+          if (Uri.StartsWith("/api2/tags/")) return Request("/api2/tags", Method, Data);
+          if (Uri.StartsWith("/api2/data/")) return Request("/api2/data", Method, Data);
+          else throw;
         }
         else throw;
       }
@@ -185,9 +192,10 @@ namespace SynNotes {
     /// </summary>
     internal static TagMeta pushTag(TagItem i) {
       var js = new JavaScriptSerializer();
-      var node = new TagMetaUser();
-      node.index = i.Version;
+      var node = new TagMeta();
+      node.index = i.Index;
       node.name = i.Name;
+      node.version = i.Version;
       var data = js.Serialize(node);
       var url = (i.Version == 0) ? "/api2/tags" : "/api2/tags/"+i.Name;
       var s = RequestRetry(url, "POST", data);
@@ -237,11 +245,9 @@ namespace SynNotes {
     public string mark { get; set; }
     public TagMeta[] tags { get; set; }
   }
-  class TagMetaUser {
+  class TagMeta {
     public string name { get; set; }
     public int index { get; set; }
-  }
-  class TagMeta : TagMetaUser {
     public int version { get; set; }
   }
 }

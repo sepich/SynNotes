@@ -31,7 +31,7 @@ namespace SynNotes {
     //link te reg new acc
     private void linkCreate_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
       linkCreate.LinkVisited = true;
-      System.Diagnostics.Process.Start("http://simplenote.com/");
+      System.Diagnostics.Process.Start("https://app.simplenote.com/signup/");
     }
 
     private void tbEmail_KeyDown(object sender, KeyEventArgs e) {

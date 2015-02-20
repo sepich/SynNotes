@@ -115,6 +115,7 @@ namespace SynNotes {
         if (Sync.Freq != 0) {
           syncTimer.Interval = Sync.Freq * 60 * 1000;
           syncTimer.Start();
+          SnSync(0);
         }
       }, TaskScheduler.FromCurrentSynchronizationContext());
     }
@@ -449,7 +450,7 @@ namespace SynNotes {
     private void initTree() {
       //read tags from db
       TagItem node;
-      using (SQLiteCommand cmd = new SQLiteCommand("SELECT id, name, `index`, expanded, lexer FROM tags ORDER BY `index`", sql)) {
+      using (SQLiteCommand cmd = new SQLiteCommand("SELECT id, name, `index`, expanded, lexer, version FROM tags ORDER BY `index`", sql)) {
         using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
           while (rdr.Read()) {
             node = new TagItem(notes);
@@ -458,6 +459,7 @@ namespace SynNotes {
             node.Index = rdr.GetInt32(2);
             node.Expanded = rdr.GetBoolean(3);
             if (!rdr.IsDBNull(4)) node.Lexer = rdr.GetString(4);
+            if (!rdr.IsDBNull(5)) node.Version = rdr.GetInt32(5);
             tags.Add(node);
           }
         }
@@ -632,12 +634,13 @@ namespace SynNotes {
     private void tree_CellEditFinishing(object sender, CellEditEventArgs e) {
       if (e.Cancel) return;
       var tag = ((TagItem)e.RowObject);
+      tag.Version = 0; // reset version for re-sync
       var delims = new char[] { ' ', ',', ';' };
       var oldval = tag.Name;
       tag.Name = e.NewValue.ToString().Trim(delims);
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
-          cmd.CommandText = "UPDATE tags SET name=?, version=0 WHERE id=?"; // reset version for re-sync
+          cmd.CommandText = "UPDATE tags SET name=?, version=0 WHERE id=?";
           cmd.Parameters.AddWithValue(null, tag.Name);
           cmd.Parameters.AddWithValue(null, tag.Id);
           cmd.ExecuteNonQuery();
@@ -1055,6 +1058,7 @@ namespace SynNotes {
       });
       tree.Roots = tags;
       cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
+      tree.Sort();
       tree.SelectedObjects = from;
       //save to db
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
@@ -1432,6 +1436,23 @@ namespace SynNotes {
       Task.Factory.StartNew<string>(() => {
                 
         try {
+
+          // sync tags
+          var tagindex = Sync.getTags();
+          Parallel.ForEach(tags.FindAll(x => !x.System), (i) => {
+            //foreach(var i in tags.FindAll(x => !x.System)){
+            var meta = tagindex.Find(x => x.name == i.Name); //case insensitive?
+            //delete local
+            if (meta == null && i.Version > 0) deleteTag(i, false);
+            //create or update remote
+            else if (meta == null || (meta.index != i.Index && i.Version >= meta.version)) {
+              var raw = Sync.pushTag(i);
+              UpdateTag(i, raw, ui);
+            }
+            // update local
+            else if (i.Version < meta.version)
+              UpdateTag(i, meta, ui);
+          });
           
           // upload modified from last sync
           if (since > 0) { // only for incremental, as in full-sync they sync in index compare later
@@ -1476,21 +1497,6 @@ namespace SynNotes {
             });
           }
 
-          // sync tags order
-          var tagindex = Sync.getTags();
-          Parallel.ForEach(tags.FindAll(x => !x.System), (i) => {
-            var meta = tagindex.Find(x => x.name.ToLower() == i.Name.ToLower());
-            //delete local
-            if (meta == null && i.Version > 0) deleteTag(i, false);
-            //create or update remote
-            else if (meta == null || (meta.index != i.Index && i.Version >= meta.version)) {
-              var raw = Sync.pushTag(i);
-              UpdateTag(i, raw, ui);
-            }
-            // update local
-            else if (i.Version < meta.version) UpdateTag(i, meta, ui);
-          });
-
           return (num == 0) ? Sync.Email : num + " new";
 
         }
@@ -1512,10 +1518,11 @@ namespace SynNotes {
       conn.Open();
       using (SQLiteTransaction tr = conn.BeginTransaction()) {
         using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
-          cmd.CommandText = "UPDATE tags SET `index`=?, vesion=? WHERE id=?"; // don't update name
+          cmd.CommandText = "UPDATE tags SET `index`=?, version=? WHERE id=?"; // don't update name
           cmd.Parameters.AddWithValue(null, tag.Index);
           cmd.Parameters.AddWithValue(null, tag.Version);
           cmd.Parameters.AddWithValue(null, tag.Id);
+          cmd.ExecuteNonQuery();
         }
         tr.Commit();
       }
@@ -1524,6 +1531,7 @@ namespace SynNotes {
       // sync with ui
       Task t1 = new Task(() => {        
         tree.RefreshObject(tag);
+        tree.Sort();
       });
       t1.Start(ui);
     }
@@ -1600,7 +1608,7 @@ namespace SynNotes {
       // sync with ui
       Task t1 = new Task(() => {
         if (!update) notes.Add(n);
-        if (raw.tags.Length > 0) {
+        if (raw.tags.Length > 0 || n.Tags.Count > 0) {
           var tmp = tree.SelectedObject;
           var tags = string.Join(" ", raw.tags);
           note.ParseTags(tags, n); // read tags (and create if not exist)
