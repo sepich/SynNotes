@@ -38,6 +38,8 @@
       this.splitContainer1 = new System.Windows.Forms.SplitContainer();
       this.pictureBox1 = new System.Windows.Forms.PictureBox();
       this.tree = new BrightIdeasSoftware.TreeListView();
+      this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+      this.fancyRenderer = new SynNotes.FancyRenderer();
       this.cSort = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.treeMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.imageList1 = new System.Windows.Forms.ImageList(this.components);
@@ -53,8 +55,6 @@
       this.scEdit = new ScintillaNET.Scintilla();
       this.lexerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
-      this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-      this.fancyRenderer = new SynNotes.FancyRenderer();
       trayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       trayMenu.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -191,6 +191,15 @@
       this.tree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.tree_ItemDrag);
       this.tree.MouseClick += new System.Windows.Forms.MouseEventHandler(this.tree_MouseClick);
       // 
+      // cName
+      // 
+      this.cName.AspectName = "Name";
+      this.cName.AutoCompleteEditor = false;
+      this.cName.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
+      this.cName.FillsFreeSpace = true;
+      this.cName.Renderer = this.fancyRenderer;
+      this.cName.Text = "Name";
+      // 
       // cSort
       // 
       this.cSort.AspectName = "";
@@ -207,8 +216,7 @@
       // treeMenu
       // 
       this.treeMenu.Name = "treeMenu";
-      this.treeMenu.ShowImageMargin = false;
-      this.treeMenu.Size = new System.Drawing.Size(36, 4);
+      this.treeMenu.Size = new System.Drawing.Size(153, 26);
       // 
       // imageList1
       // 
@@ -422,15 +430,6 @@
       this.notifyIcon1.Text = "SynNotes";
       this.notifyIcon1.Visible = true;
       this.notifyIcon1.Click += new System.EventHandler(this.notifyIcon1_Click);
-      // 
-      // cName
-      // 
-      this.cName.AspectName = "Name";
-      this.cName.AutoCompleteEditor = false;
-      this.cName.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
-      this.cName.FillsFreeSpace = true;
-      this.cName.Renderer = this.fancyRenderer;
-      this.cName.Text = "Name";
       // 
       // Form1
       // 

@@ -81,11 +81,6 @@ namespace SynNotes {
       var ui = TaskScheduler.FromCurrentSynchronizationContext();
       //delay inits after form drawn
       Task.Factory.StartNew(() => {
-       
-
-        // send mouse wheel event to control under cursor
-        Application.AddMessageFilter(new MouseWheelMessageFilter());
-
         // read sync acc
         using (SQLiteCommand cmd = new SQLiteCommand("SELECT value FROM config WHERE name='email'", sql)) {
           var res = cmd.ExecuteScalar();
@@ -111,7 +106,9 @@ namespace SynNotes {
           SnSync(0, ui);// start full sync on start
         }
       }).ContinueWith(t => {
-        // update gui
+        // send mouse wheel event to control under cursor
+        Application.AddMessageFilter(new MouseWheelMessageFilter());
+
         // hotkeys
         hook = new KeyHook();
         hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(HotkeyPressed);
@@ -588,8 +585,6 @@ namespace SynNotes {
     private void tree_SelectionChanged(object sender, EventArgs e) {
       if (scEdit.Modified) note.Save();
       note.ShowSelected();
-      saveTimer.Stop(); //dont autosave on textchange this time
-      statusText.Text = Glob.Saved;
     }
 
     // expand tag by key / mouse click
@@ -1002,10 +997,12 @@ namespace SynNotes {
           break;
         case DropTargetLocation.Item:
           moveNote(e.SourceModels, (TagItem)e.TargetModel, e.StandardDropActionFromKeys);
-          e.RefreshObjects();
-          cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
+          e.RefreshObjects();          
           break;
       }
+      //OLV drops renderer/sort when Roots assigned
+      cName.Renderer = fancyRenderer; 
+      tree.Sort(cSort, SortOrder.Ascending);
     }
 
     //note change/add tag
@@ -1066,8 +1063,6 @@ namespace SynNotes {
         if (!x.System) x.Index = i++;
       });
       tree.Roots = tags;
-      cName.Renderer = fancyRenderer; //OLV drop renderer when Roots assigned
-      tree.Sort();
       tree.SelectedObjects = from;
       //save to db
       using (SQLiteTransaction tr = sql.BeginTransaction()) {
@@ -1084,7 +1079,7 @@ namespace SynNotes {
             }
         }
         tr.Commit();
-      }
+      }      
     }
     #endregion tree drag'n'drop
 
@@ -1440,7 +1435,7 @@ namespace SynNotes {
     /// </summary>
     private void SnSync(double since, TaskScheduler ui=null) {
       if(ui == null) ui = TaskScheduler.FromCurrentSynchronizationContext();
-      statusText.Text = "syncing...";
+      statusText.Text = "Syncing...";
       // detach from ui thread
       Task.Factory.StartNew<string>(() => {
                 
@@ -1506,7 +1501,9 @@ namespace SynNotes {
             });
           }
 
-          return (num == 0) ? Sync.Email : num + " new";
+          var dt = Glob.Epoch.AddSeconds(Sync.LastSync).ToLocalTime();
+          var stat = (num > 0) ? " (" + num + " items)" : "";
+          return String.Format("Last Sync: {0}{1}", dt.ToString("HH:mm"), stat);
 
         }
         catch (AggregateException e) {

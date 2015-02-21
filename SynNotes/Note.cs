@@ -16,8 +16,8 @@ namespace SynNotes {
     class Note {
       private Form1 f;                       // main form 
       public NoteItem Item { get; set; }     // currently opened note
-      private int syncnum;                   // ver of opened note for auto update
       private List<Label> Labels;            // tag labels displayed      
+      private int syncnum;                   // ver of opened note for auto update
 
       public Note(Form1 form) {
         Labels = new List<Label>();
@@ -36,12 +36,13 @@ namespace SynNotes {
           syncnum = n.SyncNum;
         }
         else return; // don't redraw same note (in search mode)
+        f.scEdit.DocumentChange -= f.scEdit_DocumentChange;
 
         using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
           cmd.CommandText = "SELECT content, lexer, topline FROM notes WHERE id=" + Item.Id;
           using (SQLiteDataReader rdr = cmd.ExecuteReader()) {
-            while (rdr.Read()) {
-              f.scEdit.Text = rdr.GetString(0);
+            while (rdr.Read()) {              
+              f.scEdit.Text = rdr.GetString(0);              
               if (rdr.IsDBNull(1)) { //use tag's lexer
                 var lex = "Bash";
                 foreach (var tag in Item.Tags) if (!String.IsNullOrEmpty(tag.Lexer)) {
@@ -63,8 +64,9 @@ namespace SynNotes {
           }
         }
         f.scEdit.Modified = false;
+        f.scEdit.DocumentChange += f.scEdit_DocumentChange;
         f.Text = GetTitle();
-        drawTags();
+        drawTags();        
         //highlight search term and scroll to it
         if (f.tbSearch.ForeColor == SystemColors.WindowText && f.tbSearch.Text.Length > 0) {
           var top = f.scEdit.Lines.Count;
