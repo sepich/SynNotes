@@ -242,6 +242,7 @@ namespace SynNotes {
               cmd.ExecuteNonQuery();
               note.Tags.Clear();
             }
+            var added = false;
             foreach (var tag in tagstr.Split(new char[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries)) {
               if (String.IsNullOrEmpty(tag)) continue;
               if (note.Tags.Exists(x => x.Name.ToLower() == tag.ToLower())) continue;     //skip already assigned
@@ -270,6 +271,13 @@ namespace SynNotes {
               note.Tags.Add(tagItem);
               if (!isSearch) f.tree.RefreshObject(tagItem);
               if (draw) drawTag(tagItem.Name);
+              added = true;
+            }
+            if (draw && added) { // there was some tags actually added, update modifydate for sync
+              note.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
+              cmd.CommandText = "UPDATE notes SET modifydate=? WHERE id=" + note.Id;
+              cmd.Parameters.AddWithValue(null, note.ModifyDate);
+              cmd.ExecuteNonQuery();
             }
           } 
           tr.Commit();
@@ -320,10 +328,14 @@ namespace SynNotes {
       public void UnassignTag(TagItem tag) {
         if (tag == null) return;
         Item.Tags.Remove(tag);
+        Item.ModifyDate = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
         //save to db
         using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
           using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
             cmd.CommandText = "DELETE FROM nt WHERE note="+Item.Id+" AND tag="+tag.Id;
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "UPDATE notes SET modifydate=? WHERE id=" + Item.Id; //update modifydate for sync
+            cmd.Parameters.AddWithValue(null, Item.ModifyDate);
             cmd.ExecuteNonQuery();
           }
           tr.Commit();

@@ -78,21 +78,14 @@ namespace SynNotes {
 
     //non affecting appearance inits
     private void Form1_Shown(object sender, EventArgs e) {
+      var ui = TaskScheduler.FromCurrentSynchronizationContext();
       //delay inits after form drawn
       Task.Factory.StartNew(() => {
-        System.Threading.Thread.Sleep(500);
-      }).ContinueWith(t => {
-        // hotkeys
-        string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
-        tbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
-        hook = new KeyHook();
-        hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(HotkeyPressed);
-        hook.SetHotkey(1, ini.GetValue("Keys", "HotkeyShow", ""));        
-        hook.SetHotkey(2, s);        
-        
+       
+
         // send mouse wheel event to control under cursor
         Application.AddMessageFilter(new MouseWheelMessageFilter());
-        
+
         // read sync acc
         using (SQLiteCommand cmd = new SQLiteCommand("SELECT value FROM config WHERE name='email'", sql)) {
           var res = cmd.ExecuteScalar();
@@ -115,9 +108,18 @@ namespace SynNotes {
         if (Sync.Freq != 0) {
           syncTimer.Interval = Sync.Freq * 60 * 1000;
           syncTimer.Start();
-          SnSync(0);
+          SnSync(0, ui);// start full sync on start
         }
-      }, TaskScheduler.FromCurrentSynchronizationContext());
+      }).ContinueWith(t => {
+        // update gui
+        // hotkeys
+        hook = new KeyHook();
+        hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(HotkeyPressed);
+        hook.SetHotkey(1, ini.GetValue("Keys", "HotkeyShow", ""));
+        string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
+        tbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
+        hook.SetHotkey(2, s);
+      }, ui);
     }
 
     private void Form1_FormClosed(object sender, FormClosedEventArgs e) {
@@ -642,6 +644,13 @@ namespace SynNotes {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
           cmd.CommandText = "UPDATE tags SET name=?, version=0 WHERE id=?";
           cmd.Parameters.AddWithValue(null, tag.Name);
+          cmd.Parameters.AddWithValue(null, tag.Id);
+          cmd.ExecuteNonQuery();
+          // update modifydate of all affected notes for sync
+          var now = (DateTime.UtcNow.Subtract(Glob.Epoch)).TotalSeconds;
+          tag.Notes.ForEach(x => x.ModifyDate = now);
+          cmd.CommandText = "UPDATE notes SET modifydate=? WHERE id IN (SELECT note FROM nt WHERE tag=?)";
+          cmd.Parameters.AddWithValue(null, now);
           cmd.Parameters.AddWithValue(null, tag.Id);
           cmd.ExecuteNonQuery();
         }
@@ -1429,8 +1438,8 @@ namespace SynNotes {
     /// <summary>
     /// do Simplenote sync 
     /// </summary>
-    private void SnSync(double since) {
-      var ui = TaskScheduler.FromCurrentSynchronizationContext();
+    private void SnSync(double since, TaskScheduler ui=null) {
+      if(ui == null) ui = TaskScheduler.FromCurrentSynchronizationContext();
       statusText.Text = "syncing...";
       // detach from ui thread
       Task.Factory.StartNew<string>(() => {
@@ -1454,7 +1463,7 @@ namespace SynNotes {
               UpdateTag(i, meta, ui);
           });
           
-          // upload modified from last sync
+          // upload modified notes from last sync
           if (since > 0) { // only for incremental, as in full-sync they sync in index compare later
             Parallel.ForEach( notes.FindAll(x => x.ModifyDate > since && !String.IsNullOrEmpty(x.Key)), (i) => {
               var raw = Sync.pushNote(i, sql);
@@ -1612,7 +1621,7 @@ namespace SynNotes {
           var tmp = tree.SelectedObject;
           var tags = string.Join(" ", raw.tags);
           note.ParseTags(tags, n); // read tags (and create if not exist)
-          if (tmp != null && tree.SelectedObject != tmp) tree.SelectedObject = tmp;
+          if (tmp != null && tree.SelectedObject != tmp) tree.SelectedObject = tmp; //restore selected position
         }
         tree.RefreshObject(tagAll);
         tree.RefreshObject(tagDeleted);

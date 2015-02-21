@@ -38,16 +38,14 @@
       this.splitContainer1 = new System.Windows.Forms.SplitContainer();
       this.pictureBox1 = new System.Windows.Forms.PictureBox();
       this.tree = new BrightIdeasSoftware.TreeListView();
-      this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-      this.fancyRenderer = new SynNotes.FancyRenderer();
       this.cSort = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.treeMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.imageList1 = new System.Windows.Forms.ImageList(this.components);
       this.statusBar = new System.Windows.Forms.StatusStrip();
-      this.btnAdd = new System.Windows.Forms.ToolStripSplitButton();
-      this.btnPin = new System.Windows.Forms.ToolStripSplitButton();
+      this.btnAdd = new System.Windows.Forms.ToolStripDropDownButton();
+      this.btnPin = new System.Windows.Forms.ToolStripDropDownButton();
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
-      this.btnSync = new System.Windows.Forms.ToolStripSplitButton();
+      this.btnSync = new System.Windows.Forms.ToolStripDropDownButton();
       this.tbSearch = new System.Windows.Forms.TextBox();
       this.btnLexer = new System.Windows.Forms.Label();
       this.tagBox = new System.Windows.Forms.TextBox();
@@ -55,6 +53,8 @@
       this.scEdit = new ScintillaNET.Scintilla();
       this.lexerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+      this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+      this.fancyRenderer = new SynNotes.FancyRenderer();
       trayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       trayMenu.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -167,7 +167,7 @@
       this.tree.OwnerDraw = true;
       this.tree.ShowGroups = false;
       this.tree.ShowHeaderInAllViews = false;
-      this.tree.Size = new System.Drawing.Size(227, 601);
+      this.tree.Size = new System.Drawing.Size(227, 602);
       this.tree.SmallImageList = this.imageList1;
       this.tree.TabIndex = 3;
       this.tree.TabStop = false;
@@ -190,15 +190,6 @@
       this.tree.ItemActivate += new System.EventHandler(this.tree_ItemActivate);
       this.tree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.tree_ItemDrag);
       this.tree.MouseClick += new System.Windows.Forms.MouseEventHandler(this.tree_MouseClick);
-      // 
-      // cName
-      // 
-      this.cName.AspectName = "Name";
-      this.cName.AutoCompleteEditor = false;
-      this.cName.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
-      this.cName.FillsFreeSpace = true;
-      this.cName.Renderer = this.fancyRenderer;
-      this.cName.Text = "Name";
       // 
       // cSort
       // 
@@ -236,7 +227,6 @@
       // 
       // statusBar
       // 
-      this.statusBar.AutoSize = false;
       this.statusBar.BackColor = System.Drawing.SystemColors.Control;
       this.statusBar.GripMargin = new System.Windows.Forms.Padding(0);
       this.statusBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -246,6 +236,7 @@
             this.btnSync});
       this.statusBar.Location = new System.Drawing.Point(0, 624);
       this.statusBar.Name = "statusBar";
+      this.statusBar.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
       this.statusBar.ShowItemToolTips = true;
       this.statusBar.Size = new System.Drawing.Size(227, 22);
       this.statusBar.SizingGrip = false;
@@ -254,34 +245,35 @@
       // btnAdd
       // 
       this.btnAdd.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-      this.btnAdd.DropDownButtonWidth = 0;
       this.btnAdd.Image = ((System.Drawing.Image)(resources.GetObject("btnAdd.Image")));
       this.btnAdd.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
       this.btnAdd.ImageTransparentColor = System.Drawing.Color.Magenta;
-      this.btnAdd.Margin = new System.Windows.Forms.Padding(0);
+      this.btnAdd.Margin = new System.Windows.Forms.Padding(0, 1, 0, 0);
       this.btnAdd.MergeIndex = -2;
       this.btnAdd.Name = "btnAdd";
-      this.btnAdd.Size = new System.Drawing.Size(21, 22);
+      this.btnAdd.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+      this.btnAdd.ShowDropDownArrow = false;
+      this.btnAdd.Size = new System.Drawing.Size(20, 21);
       this.btnAdd.Text = "Add Note (F7)";
-      this.btnAdd.ButtonClick += new System.EventHandler(this.btnAdd_ButtonClick);
+      this.btnAdd.Click += new System.EventHandler(this.btnAdd_ButtonClick);
       // 
       // btnPin
       // 
       this.btnPin.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-      this.btnPin.DropDownButtonWidth = 0;
       this.btnPin.Image = ((System.Drawing.Image)(resources.GetObject("btnPin.Image")));
       this.btnPin.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
       this.btnPin.ImageTransparentColor = System.Drawing.Color.Magenta;
-      this.btnPin.Margin = new System.Windows.Forms.Padding(0);
+      this.btnPin.Margin = new System.Windows.Forms.Padding(0, 1, 0, 0);
       this.btnPin.Name = "btnPin";
-      this.btnPin.Size = new System.Drawing.Size(21, 22);
+      this.btnPin.ShowDropDownArrow = false;
+      this.btnPin.Size = new System.Drawing.Size(20, 21);
       this.btnPin.Text = "Pin Note";
       this.btnPin.Click += new System.EventHandler(this.btnPin_Click);
       // 
       // statusText
       // 
       this.statusText.Name = "statusText";
-      this.statusText.Size = new System.Drawing.Size(118, 17);
+      this.statusText.Size = new System.Drawing.Size(152, 17);
       this.statusText.Spring = true;
       // 
       // btnSync
@@ -290,13 +282,13 @@
       this.btnSync.BackColor = System.Drawing.SystemColors.Control;
       this.btnSync.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
       this.btnSync.DoubleClickEnabled = true;
-      this.btnSync.DropDownButtonWidth = 0;
       this.btnSync.Image = ((System.Drawing.Image)(resources.GetObject("btnSync.Image")));
       this.btnSync.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
       this.btnSync.ImageTransparentColor = System.Drawing.Color.Magenta;
-      this.btnSync.Margin = new System.Windows.Forms.Padding(0);
+      this.btnSync.Margin = new System.Windows.Forms.Padding(0, 1, 0, 0);
       this.btnSync.Name = "btnSync";
-      this.btnSync.Size = new System.Drawing.Size(21, 22);
+      this.btnSync.ShowDropDownArrow = false;
+      this.btnSync.Size = new System.Drawing.Size(20, 21);
       this.btnSync.Text = "Sync (RightClick for Settings)";
       this.btnSync.MouseDown += new System.Windows.Forms.MouseEventHandler(this.btnSync_MouseDown);
       // 
@@ -431,6 +423,15 @@
       this.notifyIcon1.Visible = true;
       this.notifyIcon1.Click += new System.EventHandler(this.notifyIcon1_Click);
       // 
+      // cName
+      // 
+      this.cName.AspectName = "Name";
+      this.cName.AutoCompleteEditor = false;
+      this.cName.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
+      this.cName.FillsFreeSpace = true;
+      this.cName.Renderer = this.fancyRenderer;
+      this.cName.Text = "Name";
+      // 
       // Form1
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -476,7 +477,7 @@
         private System.Windows.Forms.ToolStripStatusLabel statusText;
         private BrightIdeasSoftware.TreeListView tree;
         private BrightIdeasSoftware.OLVColumn cName;
-        private System.Windows.Forms.ToolStripSplitButton btnAdd;
+        private System.Windows.Forms.ToolStripDropDownButton btnAdd;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label label1;
@@ -485,9 +486,9 @@
         private System.Windows.Forms.ContextMenuStrip treeMenu;
         private System.Windows.Forms.Label btnLexer;
         private System.Windows.Forms.ContextMenuStrip lexerMenu;
-        private System.Windows.Forms.ToolStripSplitButton btnPin;
+        private System.Windows.Forms.ToolStripDropDownButton btnPin;
         private FancyRenderer fancyRenderer;
-        private System.Windows.Forms.ToolStripSplitButton btnSync;
+        private System.Windows.Forms.ToolStripDropDownButton btnSync;
     }
 }
 

@@ -85,7 +85,8 @@ namespace SynNotes {
         return Request(Uri, Method, Data);
       }
       catch (WebException e) { // retry if 401-unauth cookie/token expired
-        var ex = (HttpWebResponse)e.Response;
+        var ex = e.Response as HttpWebResponse;
+        if (ex == null) throw;
         if (ex.StatusCode == HttpStatusCode.Unauthorized) {
           if (checkLogin()) return Request(Uri, Method, Data);
           else throw new ApplicationException("Wrong login/password");
