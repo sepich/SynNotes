@@ -45,9 +45,13 @@ namespace SynNotes {
       request.ContentType = ContentType;
       request.UserAgent = UserAgent;
       request.Timeout = 10000; //10sec
+      Debug.WriteLine("Uri: " + Uri);
 
       // send POST
       if (!string.IsNullOrEmpty(Data) && Method == "POST") {
+        Debug.WriteLine("Headers: " + request.Headers);
+        Debug.WriteLine("Data: " + Data);
+        Data=Data.Replace("+","%2B");
         var bytes = Encoding.GetEncoding("UTF-8").GetBytes(Data);
         request.ContentLength = bytes.Length;
         using (var writeStream = request.GetRequestStream()) {
@@ -55,9 +59,7 @@ namespace SynNotes {
         }
       }
       request.CookieContainer = cookies;
-      Debug.WriteLine("Headers: " + request.Headers);
-      Debug.WriteLine("Cookies: " + request.CookieContainer.ToString());
-      Debug.WriteLine("Data: " + Data);
+
 
       string responseValue;
       using (var response = (HttpWebResponse)request.GetResponse()) {        
