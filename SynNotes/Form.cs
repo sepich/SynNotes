@@ -36,9 +36,10 @@ namespace SynNotes {
     TagItem tagAll;                // pointer to ALL tag
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
     public static Timer saveTimer; // autosave
-    public static Timer syncTimer;    // auto-sync
+    public static System.Timers.Timer syncTimer;    // auto-sync
     int treeTopLine, treeSelLine;  // used to restore tree position after restore of window
     string ConnString = "";        //params to connect to db 
+    TaskScheduler ui; 
 
     #region init/close
     public Form1() {
@@ -78,7 +79,7 @@ namespace SynNotes {
 
     //non affecting appearance inits
     private void Form1_Shown(object sender, EventArgs e) {
-      var ui = TaskScheduler.FromCurrentSynchronizationContext();
+      ui = TaskScheduler.FromCurrentSynchronizationContext();
       //delay inits after form drawn
       Task.Factory.StartNew(() => {
         // read sync acc
@@ -95,15 +96,15 @@ namespace SynNotes {
           res = cmd.ExecuteScalar();
           if (res != null) Sync.LastSync = int.Parse((string)res);
         }
-        //init aut-sync timer
+        //init auto-sync timer
         if (syncTimer == null) {
-          syncTimer = new Timer();
-          syncTimer.Tick += timer_sync;
+          syncTimer = new System.Timers.Timer();
+          syncTimer.Elapsed += timer_sync;          
         }
         if (Sync.Freq != 0) {
           syncTimer.Interval = Sync.Freq * 60 * 1000;
           syncTimer.Start();
-          SnSync(0, ui);// start full sync on start
+          SnSync(0); // start full sync on start
         }
       }).ContinueWith(t => {
         // send mouse wheel event to control under cursor
@@ -441,7 +442,7 @@ namespace SynNotes {
           tree.Reveal(tree.SelectedObject, true);
         }
         else tree.EmptyListMsg = "0 results found";
-      }, TaskScheduler.FromCurrentSynchronizationContext());
+      }, ui);
 
     }
 
@@ -1433,8 +1434,7 @@ namespace SynNotes {
     /// <summary>
     /// do Simplenote sync 
     /// </summary>
-    private void SnSync(double since, TaskScheduler ui=null) {
-      if(ui == null) ui = TaskScheduler.FromCurrentSynchronizationContext();
+    private void SnSync(double since) {
       statusText.Text = "Syncing...";
       // detach from ui thread
       Task.Factory.StartNew<string>(() => {
