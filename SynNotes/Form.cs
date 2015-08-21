@@ -1896,6 +1896,7 @@ namespace SynNotes {
     public const string Inherit = "Inherit";
     public const string Changed = "changed";
     public const string Saved = "saved";
+    public const string Unsaved = "error of saving";
     public static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); //unixtime start
   }
 }

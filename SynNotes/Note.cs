@@ -126,19 +126,24 @@ namespace SynNotes {
           f.Text = t;
         }
         //save text
-        using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
-          using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
-            cmd.CommandText = "UPDATE notes SET modifydate=?, title=?, content=?, topline=? WHERE id=?";
-            cmd.Parameters.AddWithValue(null, Item.ModifyDate);
-            cmd.Parameters.AddWithValue(null, Item.Name);
-            cmd.Parameters.AddWithValue(null, f.scEdit.Text);
-            cmd.Parameters.AddWithValue(null, Item.TopLine);
-            cmd.Parameters.AddWithValue(null, Item.Id);
-            cmd.ExecuteNonQuery();
+        try {
+          using (SQLiteTransaction tr = f.sql.BeginTransaction()) {
+            using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
+              cmd.CommandText = "UPDATE notes SET modifydate=?, title=?, content=?, topline=? WHERE id=?";
+              cmd.Parameters.AddWithValue(null, Item.ModifyDate);
+              cmd.Parameters.AddWithValue(null, Item.Name);
+              cmd.Parameters.AddWithValue(null, f.scEdit.Text);
+              cmd.Parameters.AddWithValue(null, Item.TopLine);
+              cmd.Parameters.AddWithValue(null, Item.Id);
+              cmd.ExecuteNonQuery();
+            }
+            tr.Commit();
           }
-          tr.Commit();
+          f.scEdit.Modified = false;
         }
-        f.scEdit.Modified = false;
+        catch {
+          f.statusText.Text = Glob.Unsaved;
+        }
       }
 
       /// <summary>
