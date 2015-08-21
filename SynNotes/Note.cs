@@ -85,6 +85,7 @@ namespace SynNotes {
       /// set scintilla lexer and styles
       /// </summary>
       public void SetLanguage(string lang) {
+        f.scEdit.Styles.ResetDefault();
         foreach (var s in f.lexers["globals"]) {
           if (s.id != 0) {
             f.scEdit.Styles[s.id].ForeColor = s.fgcolor;
@@ -96,10 +97,11 @@ namespace SynNotes {
             f.scEdit.Styles[s.id].Underline = s.underline;
           }
         }
-        f.scEdit.Styles.ClearAll();
+        f.scEdit.Styles.ClearAll(); // i.e. Apply to all
         f.scEdit.Lexing.LexerName = lang;
-        if (Glob.Lexers.Contains(lang) && f.lexers.ContainsKey(lang)) {
-          foreach (var s in f.lexers[lang]) {
+        if (Glob.Lexers.Contains(lang)) {
+          //styles
+          if(f.lexers.ContainsKey(lang)) foreach (var s in f.lexers[lang]) {
             if (s.id != 0) {
               f.scEdit.Styles[s.id].ForeColor = s.fgcolor;
               f.scEdit.Styles[s.id].BackColor = s.bgcolor;
@@ -109,6 +111,10 @@ namespace SynNotes {
               f.scEdit.Styles[s.id].Italic = s.italic;
               f.scEdit.Styles[s.id].Underline = s.underline;
             }
+          }
+          //keywords
+          if (f.keywords.ContainsKey(lang)) for (int i =0; i<f.keywords[lang].Count; i++) {
+            f.scEdit.Lexing.SetKeywords(i, f.keywords[lang][i]);
           }
         }
       }

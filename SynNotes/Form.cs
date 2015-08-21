@@ -35,6 +35,7 @@ namespace SynNotes {
     TagItem tagDeleted;            // pointer to DELETED tag
     TagItem tagAll;                // pointer to ALL tag
     Dictionary<string, List<scStyle>> lexers = new Dictionary<string, List<scStyle>>(StringComparer.InvariantCultureIgnoreCase);
+    Dictionary<string, List<string>> keywords = new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase);
     public static Timer saveTimer; // autosave
     public static System.Timers.Timer syncTimer;    // auto-sync
     int treeTopLine, treeSelLine;  // used to restore tree position after restore of window
@@ -1214,6 +1215,7 @@ namespace SynNotes {
     private void initScintilla() {
       //read theme file
       var file = ini.GetValue("Scintilla", "Theme", "Visual Studio.xml");
+      readKeywords();
       readTheme(file);
       //smart highlight
       scEdit.Indicators[0].Style = IndicatorStyle.RoundBox;
@@ -1240,7 +1242,47 @@ namespace SynNotes {
       else scEdit.Caret.HighlightCurrentLine = false;
     }
 
-    //fills lexers dic with styles
+    //fills in keywords dic
+    private void readKeywords() {
+      var fn="themes\\langs.model.xml";
+      if(!File.Exists(fn)) return;
+
+      string _readTo = "";
+      var s = new XmlReaderSettings();
+      s.IgnoreComments = true;
+      s.IgnoreWhitespace = true;
+      try {
+        var reader = XmlReader.Create(fn, s);
+        reader.ReadStartElement();
+        while (!reader.EOF) {
+          //read lang 
+          if (reader.Name.Equals("Language", StringComparison.OrdinalIgnoreCase) && !reader.IsEmptyElement && reader.HasAttributes) {
+            _readTo = "";
+            while (reader.MoveToNextAttribute()) {
+              if (reader.Name.Equals("name", StringComparison.OrdinalIgnoreCase)) {
+                if (Glob.Lexers.Contains(reader.Value, StringComparer.OrdinalIgnoreCase)) _readTo = reader.Value.ToLower();
+                break;
+              }
+            }
+            if (!String.IsNullOrEmpty(_readTo)) while (!(reader.NodeType == XmlNodeType.EndElement && reader.Name.Equals("Language", StringComparison.OrdinalIgnoreCase))) {
+              if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("Keywords", StringComparison.OrdinalIgnoreCase) ) {
+                if (!keywords.ContainsKey(_readTo)) keywords.Add(_readTo, new List<string>());
+                keywords[_readTo].Add(reader.ReadElementContentAsString());
+              }
+              else reader.Read();
+            }
+          }
+          reader.Read();
+        }
+        reader.Close();
+      }
+      catch (Exception e) {
+        MessageBox.Show("Error reading keywords file: '" + fn + "'\n" + e.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return;
+      }
+    }
+
+    //fills in lexers dic with styles
     private void readTheme(string file) {
       string _readTo = "";
       var s = new XmlReaderSettings();
