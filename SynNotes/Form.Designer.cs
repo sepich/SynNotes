@@ -64,7 +64,6 @@
       ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.tree)).BeginInit();
       this.statusBar.SuspendLayout();
-      ((System.ComponentModel.ISupportInitialize)(this.scEdit)).BeginInit();
       this.SuspendLayout();
       // 
       // trayMenu
@@ -216,7 +215,7 @@
       // treeMenu
       // 
       this.treeMenu.Name = "treeMenu";
-      this.treeMenu.Size = new System.Drawing.Size(153, 26);
+      this.treeMenu.Size = new System.Drawing.Size(61, 4);
       // 
       // imageList1
       // 
@@ -373,47 +372,29 @@
       this.scEdit.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-      this.scEdit.AutoComplete.IsCaseSensitive = false;
-      this.scEdit.AutoComplete.ListString = "";
-      this.scEdit.AutoComplete.MaxHeight = 10;
+      this.scEdit.AutoCDropRestOfWord = true;
+      this.scEdit.AutoCIgnoreCase = true;
+      this.scEdit.AutoCMaxHeight = 10;
+      this.scEdit.AutomaticFold = ((ScintillaNET.AutomaticFold)(((ScintillaNET.AutomaticFold.Show | ScintillaNET.AutomaticFold.Click) 
+            | ScintillaNET.AutomaticFold.Change)));
       this.scEdit.BorderStyle = System.Windows.Forms.BorderStyle.None;
-      this.scEdit.Caret.CurrentLineBackgroundAlpha = 50;
-      this.scEdit.Caret.CurrentLineBackgroundColor = System.Drawing.Color.GreenYellow;
-      this.scEdit.Caret.HighlightCurrentLine = true;
-      this.scEdit.Caret.Width = 2;
-      this.scEdit.ConfigurationManager.IsBuiltInEnabled = false;
-      this.scEdit.ConfigurationManager.IsUserEnabled = false;
-      this.scEdit.ConfigurationManager.Language = "html";
-      this.scEdit.ConfigurationManager.UseXmlReader = false;
-      this.scEdit.Folding.MarkerScheme = ScintillaNET.FoldMarkerScheme.Arrow;
-      this.scEdit.Indentation.ShowGuides = true;
-      this.scEdit.Indentation.SmartIndentType = ScintillaNET.SmartIndent.CPP;
-      this.scEdit.Indentation.TabWidth = 2;
-      this.scEdit.Indentation.UseTabs = false;
-      this.scEdit.IsBraceMatching = true;
-      this.scEdit.LineWrapping.IndentMode = ScintillaNET.LineWrappingIndentMode.Indent;
-      this.scEdit.LineWrapping.IndentSize = 1;
-      this.scEdit.LineWrapping.Mode = ScintillaNET.LineWrappingMode.Word;
-      this.scEdit.LineWrapping.VisualFlags = ScintillaNET.LineWrappingVisualFlags.End;
+      this.scEdit.CaretLineBackColor = System.Drawing.Color.LightYellow;
+      this.scEdit.CaretLineVisible = true;
+      this.scEdit.CaretWidth = 2;
+      this.scEdit.IndentationGuides = ScintillaNET.IndentView.Real;
       this.scEdit.Location = new System.Drawing.Point(0, 0);
       this.scEdit.Margin = new System.Windows.Forms.Padding(0);
-      this.scEdit.Margins.Margin1.Width = 0;
-      this.scEdit.Margins.Margin2.Width = 16;
+      this.scEdit.MouseSelectionRectangularSwitch = true;
       this.scEdit.Name = "scEdit";
       this.scEdit.Size = new System.Drawing.Size(783, 624);
-      this.scEdit.Styles.BraceBad.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.Styles.BraceLight.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.Styles.CallTip.FontName = "Segoe UI\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.Styles.ControlChar.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.Styles.Default.BackColor = System.Drawing.SystemColors.Window;
-      this.scEdit.Styles.Default.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.Styles.IndentGuide.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.Styles.LastPredefined.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.Styles.LineNumber.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
-      this.scEdit.Styles.Max.FontName = "Verdana\0\0\0\0\0\0\0\0\0\0\0\0\0";
       this.scEdit.TabIndex = 2;
-      this.scEdit.DocumentChange += new System.EventHandler<ScintillaNET.NativeScintillaEventArgs>(this.scEdit_DocumentChange);
-      this.scEdit.SelectionChanged += new System.EventHandler(this.scEdit_SelectionChanged);
+      this.scEdit.TabWidth = 2;
+      this.scEdit.UseTabs = false;
+      this.scEdit.WrapIndentMode = ScintillaNET.WrapIndentMode.Indent;
+      this.scEdit.WrapMode = ScintillaNET.WrapMode.Word;
+      this.scEdit.WrapVisualFlags = ScintillaNET.WrapVisualFlags.End;
+      this.scEdit.SavePointLeft += new System.EventHandler<System.EventArgs>(this.scEdit_SavePointLeft);
+      this.scEdit.UpdateUI += new System.EventHandler<ScintillaNET.UpdateUIEventArgs>(this.scEdit_UpdateUI);
       // 
       // lexerMenu
       // 
@@ -458,7 +439,6 @@
       ((System.ComponentModel.ISupportInitialize)(this.tree)).EndInit();
       this.statusBar.ResumeLayout(false);
       this.statusBar.PerformLayout();
-      ((System.ComponentModel.ISupportInitialize)(this.scEdit)).EndInit();
       this.ResumeLayout(false);
 
         }

@@ -28,7 +28,7 @@ namespace SynNotes {
       /// show note for selected item
       /// </summary>
       public void ShowSelected() {
-        if (Item != null && f.tree.RowHeight < 0) Item.TopLine = f.scEdit.Lines.FirstVisibleIndex; //not search, save previous note top line
+        if (Item != null && f.tree.RowHeight < 0) Item.TopLine = f.scEdit.FirstVisibleLine; //not search, save previous note top line
         var n = f.tree.SelectedObject as NoteItem;
         if (n == null) return;
         if (n != Item || syncnum != n.SyncNum) {
@@ -36,7 +36,7 @@ namespace SynNotes {
           syncnum = n.SyncNum;
         }
         else return; // don't redraw same note (in search mode)
-        f.scEdit.DocumentChange -= f.scEdit_DocumentChange;
+        f.scEdit.SavePointLeft -= f.scEdit_SavePointLeft; //don't save on new content loaded
 
         using (SQLiteCommand cmd = new SQLiteCommand(f.sql)) {
           cmd.CommandText = "SELECT content, lexer, topline FROM notes WHERE id=" + Item.Id;
@@ -59,25 +59,30 @@ namespace SynNotes {
                 f.btnLexer.Text = Item.Lexer;                
               }              
               if (Item.TopLine == -1 && !rdr.IsDBNull(2) ) Item.TopLine = rdr.GetInt32(2);
-              f.scEdit.Lines.FirstVisibleIndex = Item.TopLine;
+              f.scEdit.FirstVisibleLine = Item.TopLine;
             }
           }
         }
-        f.scEdit.Modified = false;
-        f.scEdit.DocumentChange += f.scEdit_DocumentChange;
+        f.scEdit.SetSavePoint();
+        f.scEdit.SavePointLeft += f.scEdit_SavePointLeft; //save on change
         f.Text = GetTitle();
-        drawTags();        
+        drawTags();
+   
         //highlight search term and scroll to it
         if (f.tbSearch.ForeColor == SystemColors.WindowText && f.tbSearch.Text.Length > 0) {
           var top = f.scEdit.Lines.Count;
           foreach (var item in f.tbSearch.Text.Split(' ')) {
             if (item.Length == 0) continue;
-            foreach (Range r in f.scEdit.FindReplace.FindAll(item)) {
-              r.SetIndicator(0);
-              if (r.StartingLine.Number < top) top = r.StartingLine.Number;
+            f.scEdit.TargetStart = 0;
+            f.scEdit.TargetEnd = f.scEdit.TextLength;
+            while (f.scEdit.SearchInTarget(item) != -1) {
+              f.scEdit.IndicatorFillRange(f.scEdit.TargetStart, f.scEdit.TargetEnd - f.scEdit.TargetStart);
+              f.scEdit.TargetStart = f.scEdit.TargetEnd;
+              f.scEdit.TargetEnd = f.scEdit.TextLength;
+              if (f.scEdit.LineFromPosition(f.scEdit.TargetStart) < top) top = f.scEdit.LineFromPosition(f.scEdit.TargetStart);
             }
           }
-          f.scEdit.Lines.FirstVisibleIndex = top;
+          f.scEdit.FirstVisibleLine = top;
         }
       }
 
@@ -85,28 +90,27 @@ namespace SynNotes {
       /// set scintilla lexer and styles
       /// </summary>
       public void SetLanguage(string lang) {
-        f.scEdit.Styles.ResetDefault();
         foreach (var s in f.lexers["globals"]) {
           if (s.id != 0) {
             f.scEdit.Styles[s.id].ForeColor = s.fgcolor;
             f.scEdit.Styles[s.id].BackColor = s.bgcolor;
-            if (!String.IsNullOrEmpty(s.fontname)) f.scEdit.Styles[s.id].FontName = s.fontname;
-            if (s.fontsize > 0) f.scEdit.Styles[s.id].Size = s.fontsize;
+            if (!String.IsNullOrEmpty(s.fontname)) f.scEdit.Styles[s.id].Font = s.fontname;
+            if (s.fontsize > 0) f.scEdit.Styles[s.id].SizeF = s.fontsize;
             f.scEdit.Styles[s.id].Bold = s.bold;
             f.scEdit.Styles[s.id].Italic = s.italic;
             f.scEdit.Styles[s.id].Underline = s.underline;
           }
         }
-        f.scEdit.Styles.ClearAll(); // i.e. Apply to all
-        f.scEdit.Lexing.LexerName = lang;
+        f.scEdit.StyleClearAll(); // i.e. Apply to all
+        f.scEdit.Lexer = Lexer.Cpp;  //lang;
         if (Glob.Lexers.Contains(lang)) {
           //styles
           if(f.lexers.ContainsKey(lang)) foreach (var s in f.lexers[lang]) {
             if (s.id != 0) {
               f.scEdit.Styles[s.id].ForeColor = s.fgcolor;
               f.scEdit.Styles[s.id].BackColor = s.bgcolor;
-              if (!String.IsNullOrEmpty(s.fontname)) f.scEdit.Styles[s.id].FontName = s.fontname;
-              if (s.fontsize > 0) f.scEdit.Styles[s.id].Size = s.fontsize;
+              if (!String.IsNullOrEmpty(s.fontname)) f.scEdit.Styles[s.id].Font = s.fontname;
+              if (s.fontsize > 0) f.scEdit.Styles[s.id].SizeF = s.fontsize;
               f.scEdit.Styles[s.id].Bold = s.bold;
               f.scEdit.Styles[s.id].Italic = s.italic;
               f.scEdit.Styles[s.id].Underline = s.underline;
@@ -114,7 +118,7 @@ namespace SynNotes {
           }
           //keywords
           if (f.keywords.ContainsKey(lang)) for (int i =0; i<f.keywords[lang].Count; i++) {
-            f.scEdit.Lexing.SetKeywords(i, f.keywords[lang][i]);
+            f.scEdit.SetKeywords(i, f.keywords[lang][i]);
           }
         }
       }
@@ -145,7 +149,7 @@ namespace SynNotes {
             }
             tr.Commit();
           }
-          f.scEdit.Modified = false;
+          f.scEdit.SetSavePoint();
         }
         catch {
           f.statusText.Text = Glob.Unsaved;

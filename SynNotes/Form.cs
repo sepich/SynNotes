@@ -12,7 +12,6 @@ using System.Runtime.InteropServices;
 using System.Data.SQLite;
 using BrightIdeasSoftware;
 using ScintillaNET;
-using ScintillaNET.Configuration;
 using System.Xml;
 using System.Drawing.Drawing2D;
 using System.Threading.Tasks;
@@ -1217,29 +1216,49 @@ namespace SynNotes {
       var file = ini.GetValue("Scintilla", "Theme", "Visual Studio.xml");
       readKeywords();
       readTheme(file);
+      //folding
+      scEdit.SetProperty("fold", "1");
+      scEdit.SetProperty("fold.compact", "1");
+      scEdit.SetProperty("fold.html", "1");
+      scEdit.SetProperty("fold.quotes.python", "1");
+      scEdit.Margins[2].Type = MarginType.Symbol;
+      scEdit.Margins[2].Mask = Marker.MaskFolders;
+      scEdit.Margins[2].Sensitive = true;
+      scEdit.Margins[2].Width = 20;
+      scEdit.SetFoldMarginColor(true, SystemColors.Window);
+      //for (int i = 25; i <= 31; i++) {
+      //  scEdit.Markers[i].SetForeColor(SystemColors.ControlLightLight);
+      //  scEdit.Markers[i].SetBackColor(SystemColors.ControlDark);
+      //}
+      scEdit.Markers[Marker.Folder].Symbol = MarkerSymbol.Arrow;
+      scEdit.Markers[Marker.FolderOpen].Symbol = MarkerSymbol.ArrowDown;
+      scEdit.Markers[Marker.FolderEnd].Symbol = MarkerSymbol.Arrow;
+      scEdit.Markers[Marker.FolderMidTail].Symbol = MarkerSymbol.TCorner;
+      scEdit.Markers[Marker.FolderOpenMid].Symbol = MarkerSymbol.ArrowDown;
+      scEdit.Markers[Marker.FolderSub].Symbol = MarkerSymbol.VLine;
+      scEdit.Markers[Marker.FolderTail].Symbol = MarkerSymbol.LCorner;
+
       //smart highlight
-      scEdit.Indicators[0].Style = IndicatorStyle.RoundBox;
-      scEdit.Indicators[0].Alpha = 128;
-      scEdit.Indicators[0].Color = lexers["globals"].Find(x => x.id==29).bgcolor;
+      scEdit.IndicatorCurrent = 8;
+      scEdit.Indicators[8].Style = IndicatorStyle.RoundBox;
+      scEdit.Indicators[8].Alpha = 128;
+      scEdit.Indicators[8].ForeColor = lexers["globals"].Find(x => x.id==29).bgcolor;
+      scEdit.Indicators[8].Under = true;
+      scEdit.SearchFlags = SearchFlags.None;
       //find mark
       scEdit.Indicators[1].Style = IndicatorStyle.RoundBox;
       scEdit.Indicators[1].Alpha = 128;
-      scEdit.Indicators[1].Color = lexers["globals"].Find(x => x.id == 31).bgcolor;
+      scEdit.Indicators[1].ForeColor = lexers["globals"].Find(x => x.id == 31).bgcolor;
       //selection
       var s = lexers["globals"].Find(x => x.id == 0 && x.name == "Selected text colour");
       if(s!=null){
-        scEdit.Selection.ForeColor = s.fgcolor;
-        scEdit.Selection.ForeColorUnfocused = s.fgcolor;
-        scEdit.Selection.BackColor = s.bgcolor;
-        scEdit.Selection.BackColorUnfocused = s.bgcolor;
+        scEdit.SetSelectionForeColor(true, s.fgcolor);
+        scEdit.SetSelectionBackColor(true, s.bgcolor);
       }
       //highlight line
       s = lexers["globals"].Find(x => x.id == 0 && x.name == "Current line background colour");
-      if (s != null) {
-        scEdit.Caret.CurrentLineBackgroundColor = s.bgcolor;
-        scEdit.Caret.CurrentLineBackgroundAlpha = 50;
-      }
-      else scEdit.Caret.HighlightCurrentLine = false;
+      if (s != null) scEdit.CaretLineBackColor = s.bgcolor;
+      else scEdit.CaretLineVisible = false;
     }
 
     //fills in keywords dic
@@ -1375,25 +1394,29 @@ namespace SynNotes {
     }
 
     //smart select
-    private void scEdit_SelectionChanged(object sender, EventArgs e) {
-      if (scEdit.Tag!=null && (bool)scEdit.Tag){
-        scEdit.GetRange().ClearIndicator(1);
-        scEdit.Tag = false;
-      }
-      string ss = scEdit.Selection.Text;
-      if (ss.Length > 3 && ss.IndexOfAny(new char[] { ' ', '(',')' }) == -1) {
-        scEdit.FindReplace.Flags = SearchFlags.Empty;
-        foreach (Range r in scEdit.FindReplace.FindAll(ss)) {
-          if (r.Start != scEdit.Selection.Start && r.Start != scEdit.Selection.End) {
-            r.SetIndicator(1);
-            scEdit.Tag = true;
+    private void scEdit_UpdateUI(object sender, UpdateUIEventArgs e) {
+      //selection changed
+      if ((e.Change & UpdateChange.Selection) > 0) { 
+        //cleanup all highlihts if any
+        if (scEdit.Indicators[8].End(0) != scEdit.TextLength) {
+          scEdit.IndicatorClearRange(0, scEdit.TextLength);
+        }
+
+        string ss = scEdit.SelectedText;
+        if (ss.Length > 3 && ss.IndexOfAny(new char[] { ' ', '(', ')' }) == -1) {
+          scEdit.TargetStart = 0;
+          scEdit.TargetEnd = scEdit.TextLength;
+          while (scEdit.SearchInTarget(ss) != -1) {
+            if (scEdit.TargetStart != scEdit.SelectionStart) scEdit.IndicatorFillRange(scEdit.TargetStart, scEdit.TargetEnd - scEdit.TargetStart);
+            scEdit.TargetStart = scEdit.TargetEnd;
+            scEdit.TargetEnd = scEdit.TextLength;
           }
         }
       }
     }
 
     //trigger autosave on change
-    private void scEdit_DocumentChange(object sender, NativeScintillaEventArgs e) {
+    private void scEdit_SavePointLeft(object sender, EventArgs e) {
       if (saveTimer == null) {
         saveTimer = new Timer();
         saveTimer.Interval = 5000;
@@ -1670,6 +1693,10 @@ namespace SynNotes {
 
 
     #endregion sync
+
+
+
+
 
 
 
