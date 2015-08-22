@@ -56,14 +56,6 @@ namespace SynNotes {
         // read settings from ini
         if (File.Exists(userdir + conffile)) ini = new IniFile(userdir + conffile);
         else ini = new IniFile(conffile);
-        this.WindowState = (FormWindowState)FormWindowState.Parse(this.WindowState.GetType(), ini.GetValue("Form", "WindowState", "Normal"));
-        this.Form1_Resize(this, null); //trigger tray icon
-        if (this.WindowState == FormWindowState.Normal && !ini.defaults) {
-          this.Top = Int32.Parse(ini.GetValue("Form", "Top", "100"));
-          this.Left = Int32.Parse(ini.GetValue("Form", "Left", "100"));
-          this.Width = Int32.Parse(ini.GetValue("Form", "Width", "500"));
-          this.Height = Int32.Parse(ini.GetValue("Form", "Height", "400"));
-        }
         // check db
         if (File.Exists(dbfile)) sqlConnect(dbfile);
         else if (File.Exists(userdir + dbfile)) sqlConnect(userdir + dbfile);
@@ -80,6 +72,15 @@ namespace SynNotes {
 
     //non affecting appearance inits
     private void Form1_Shown(object sender, EventArgs e) {
+      this.WindowState = (FormWindowState)FormWindowState.Parse(this.WindowState.GetType(), ini.GetValue("Form", "WindowState", "Normal"));
+      this.Form1_Resize(this, null); //trigger tray icon
+      if (this.WindowState == FormWindowState.Normal && !ini.defaults) {
+        this.Top = Int32.Parse(ini.GetValue("Form", "Top", "100"));
+        this.Left = Int32.Parse(ini.GetValue("Form", "Left", "100"));
+        this.Width = Int32.Parse(ini.GetValue("Form", "Width", "500"));
+        this.Height = Int32.Parse(ini.GetValue("Form", "Height", "400"));
+      }
+
       ui = TaskScheduler.FromCurrentSynchronizationContext();
       //delay inits after form drawn
       Task.Factory.StartNew(() => {
