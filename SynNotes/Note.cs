@@ -102,6 +102,12 @@ namespace SynNotes {
           }
         }
         f.scEdit.StyleClearAll(); // i.e. Apply to all
+        // brace matching
+        f.scEdit.Styles[Style.BraceLight].BackColor = Color.GreenYellow;
+        f.scEdit.Styles[Style.BraceLight].ForeColor = Color.Black;
+        f.scEdit.Styles[Style.BraceBad].ForeColor = Color.Red;
+        f.scEdit.IndentationGuides = IndentView.LookBoth;
+        // set lexer
         switch (lang.ToLower()) {
           case "asm": f.scEdit.Lexer = Lexer.Asm; break;
           case "asp":
@@ -127,6 +133,7 @@ namespace SynNotes {
             f.scEdit.SetProperty("fold.quotes.python", "1");
             f.scEdit.SetProperty("tab.timmy.whinge.level", "1");
             f.scEdit.SetProperty("indent.python.colon", "1");
+            f.scEdit.IndentationGuides = IndentView.LookForward;
             break;
           case "ruby": f.scEdit.Lexer = Lexer.Ruby; break;
           case "sql": f.scEdit.Lexer = Lexer.Sql; break;
@@ -142,7 +149,6 @@ namespace SynNotes {
         f.scEdit.SetProperty("fold", "1");
         f.scEdit.SetProperty("fold.compact", "1");
 
-          //lang;
         if (Glob.Lexers.Contains(lang)) {
           //styles
           if(f.lexers.ContainsKey(lang)) foreach (var s in f.lexers[lang]) {

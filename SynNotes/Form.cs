@@ -38,8 +38,9 @@ namespace SynNotes {
     public static Timer saveTimer; // autosave
     public static System.Timers.Timer syncTimer;    // auto-sync
     int treeTopLine, treeSelLine;  // used to restore tree position after restore of window
-    string ConnString = "";        //params to connect to db 
-    TaskScheduler ui; 
+    string ConnString = "";        // params to connect to db 
+    TaskScheduler ui;
+    int lastCaretPos = 0;          // to check if caret moved
 
     #region init/close
     public Form1() {
@@ -1392,6 +1393,22 @@ namespace SynNotes {
       }
     }
 
+    private static bool IsBrace(int c) {
+      switch (c) {
+        case '(':
+        case ')':
+        case '[':
+        case ']':
+        case '{':
+        case '}':
+        case '<':
+        case '>':
+          return true;
+      }
+
+      return false;
+    }
+
     //smart select
     private void scEdit_UpdateUI(object sender, UpdateUIEventArgs e) {
       //selection changed
@@ -1410,6 +1427,37 @@ namespace SynNotes {
             scEdit.TargetStart = scEdit.TargetEnd;
             scEdit.TargetEnd = scEdit.TextLength;
           }
+        }
+      }
+      //caret moved - brace matching
+      var caretPos = scEdit.CurrentPosition;
+      if (lastCaretPos != caretPos) {
+        lastCaretPos = caretPos;
+        var bracePos1 = -1;
+        var bracePos2 = -1;
+
+        // Is there a brace to the left or right?
+        if (caretPos > 0 && IsBrace(scEdit.GetCharAt(caretPos - 1)))
+          bracePos1 = (caretPos - 1);
+        else if (IsBrace(scEdit.GetCharAt(caretPos)))
+          bracePos1 = caretPos;
+
+        if (bracePos1 >= 0) {
+          // Find the matching brace
+          bracePos2 = scEdit.BraceMatch(bracePos1);
+          if (bracePos2 == Scintilla.InvalidPosition) {
+            scEdit.BraceBadLight(bracePos1);
+            scEdit.HighlightGuide = 0;
+          }
+          else {
+            scEdit.BraceHighlight(bracePos1, bracePos2);
+            scEdit.HighlightGuide = scEdit.GetColumn(bracePos1);
+          }
+        }
+        else {
+          // Turn off brace matching
+          scEdit.BraceHighlight(Scintilla.InvalidPosition, Scintilla.InvalidPosition);
+          scEdit.HighlightGuide = 0;
         }
       }
     }
