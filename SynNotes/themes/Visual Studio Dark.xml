@@ -82,6 +82,30 @@ Note:        I don't claim any ownership of this theme. It is merely a replica o
             <WordsStyle name="COMMENT DOC KEYWORD" styleID="17" fgColor="608B4E" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="COMMENT DOC KEYWORD ERROR" styleID="18" fgColor="608B4E" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
         </LexerType>
+        <LexerType name="markdown" desc="Markdown" ext="">
+          <WordsStyle name="DEFAULT" styleID="0" fgColor="9B9B9B" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="LINE_BEGIN" styleID="1" fgColor="4E9CD6" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="STRONG1" styleID="2" fgColor="9B9B9B" bgColor="1E1E1E" fontName="" fontStyle="1" fontSize="" />
+          <WordsStyle name="STRONG2" styleID="3" fgColor="9B9B9B" bgColor="1E1E1E" fontName="" fontStyle="1" fontSize="" />
+          <WordsStyle name="EM1" styleID="4" fgColor="9B9B9B" bgColor="1E1E1E" fontName="" fontStyle="2" fontSize="" />
+          <WordsStyle name="EM2" styleID="5" fgColor="9B9B9B" bgColor="1E1E1E" fontName="" fontStyle="2" fontSize="" />
+          <WordsStyle name="HEADER1" styleID="6" fgColor="FFFFFF" bgColor="1E1E1E" fontName="" fontStyle="5" fontSize="" />
+          <WordsStyle name="HEADER2" styleID="7" fgColor="8CCCCC" bgColor="1E1E1E" fontName="" fontStyle="5" fontSize="" />
+          <WordsStyle name="HEADER3" styleID="8" fgColor="B5CEA8" bgColor="1E1E1E" fontName="" fontStyle="5" fontSize="" />
+          <WordsStyle name="HEADER4" styleID="9" fgColor="CEB5A8" bgColor="1E1E1E" fontName="" fontStyle="5" fontSize="" />
+          <WordsStyle name="HEADER5" styleID="10" fgColor="FFCCCC" bgColor="1E1E1E" fontName="" fontStyle="5" fontSize="" />
+          <WordsStyle name="HEADER6" styleID="11" fgColor="9B9B9B" bgColor="1E1E1E" fontName="" fontStyle="5" fontSize="" />
+          <WordsStyle name="PRECHAR" styleID="12" fgColor="FF0080" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="ULIST" styleID="13" fgColor="B5CEA8" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="OLIST" styleID="14" fgColor="B5CEA8" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="BLOCKQUOTE" styleID="15" fgColor="D69D85" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="STRIKEOUT" styleID="16" fgColor="CCCCCC" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="HRULE" styleID="17" fgColor="608B4E" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="LINK" styleID="18" fgColor="CCCCFF" bgColor="1E1E1E" fontName="" fontStyle="4" fontSize="" />
+          <WordsStyle name="CODE" styleID="19" fgColor="FFFFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="CODE2" styleID="20" fgColor="FFFFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+          <WordsStyle name="CODEBK" styleID="21" fgColor="FFFFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+        </LexerType>
         <LexerType name="rc" desc="RC" ext="">
             <WordsStyle name="PREPROCESSOR" styleID="9" fgColor="9B9B9B" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="DEFAULT" styleID="11" fgColor="C8C8C8" bgColor="1E1E1E" fontName="" fontStyle="0" fontSize="" />
@@ -708,6 +732,7 @@ Note:        I don't claim any ownership of this theme. It is merely a replica o
             <WordsStyle name="Selected Line" styleID="5" fgColor="C8C8C8" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="Current line background colour" styleID="6" fgColor="C8C8C8" bgColor="000000" fontStyle="0" fontSize="" />
         </LexerType>
+
     </LexerStyles>
     <GlobalStyles>
         <!-- Attention : Don't modify the name of styleID="0" -->

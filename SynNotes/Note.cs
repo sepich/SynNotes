@@ -102,7 +102,47 @@ namespace SynNotes {
           }
         }
         f.scEdit.StyleClearAll(); // i.e. Apply to all
-        f.scEdit.Lexer = Lexer.Cpp;  //lang;
+        switch (lang.ToLower()) {
+          case "asm": f.scEdit.Lexer = Lexer.Asm; break;
+          case "asp":
+          case "html":
+          case "php":
+            f.scEdit.Lexer = Lexer.Html;
+            f.scEdit.SetProperty("fold.html", "1");
+            break;
+          case "batch": f.scEdit.Lexer = Lexer.Batch; break;
+          case "bash": f.scEdit.DirectMessage(NativeMethods.SCI_SETLEXER, new IntPtr(NativeMethods.SCLEX_BASH), IntPtr.Zero); break;
+          case "cpp":
+          case "java":
+            f.scEdit.Lexer = Lexer.Cpp; break;
+          case "css": f.scEdit.Lexer = Lexer.Css; break;
+          case "diff": f.scEdit.DirectMessage(NativeMethods.SCI_SETLEXER, new IntPtr(NativeMethods.SCLEX_DIFF), IntPtr.Zero); break;
+          case "lua": f.scEdit.Lexer = Lexer.Lua; break;
+          case "pascal": f.scEdit.Lexer = Lexer.Pascal; break;
+          case "perl": f.scEdit.Lexer = Lexer.Perl; break;
+          case "powershell": f.scEdit.DirectMessage(NativeMethods.SCI_SETLEXER, new IntPtr(NativeMethods.SCLEX_POWERSHELL), IntPtr.Zero); break;
+          case "ini": f.scEdit.DirectMessage(NativeMethods.SCI_SETLEXER, new IntPtr(NativeMethods.SCLEX_PROPERTIES), IntPtr.Zero); break;          
+          case "python": 
+            f.scEdit.Lexer = Lexer.Python;
+            f.scEdit.SetProperty("fold.quotes.python", "1");
+            f.scEdit.SetProperty("tab.timmy.whinge.level", "1");
+            f.scEdit.SetProperty("indent.python.colon", "1");
+            break;
+          case "ruby": f.scEdit.Lexer = Lexer.Ruby; break;
+          case "sql": f.scEdit.Lexer = Lexer.Sql; break;
+          case "markdown": f.scEdit.Lexer = Lexer.Markdown; break;
+          case "vbscript": f.scEdit.Lexer = Lexer.VbScript; break;
+          case "xml": 
+            f.scEdit.Lexer = Lexer.Xml; 
+            f.scEdit.SetProperty("fold.html", "1");
+            break;
+          case "yaml": f.scEdit.DirectMessage(NativeMethods.SCI_SETLEXER, new IntPtr(NativeMethods.SCLEX_YAML), IntPtr.Zero); break;
+          default: f.scEdit.Lexer = Lexer.Null; break;
+        }
+        f.scEdit.SetProperty("fold", "1");
+        f.scEdit.SetProperty("fold.compact", "1");
+
+          //lang;
         if (Glob.Lexers.Contains(lang)) {
           //styles
           if(f.lexers.ContainsKey(lang)) foreach (var s in f.lexers[lang]) {
