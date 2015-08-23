@@ -15,6 +15,7 @@ using ScintillaNET;
 using System.Xml;
 using System.Drawing.Drawing2D;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace SynNotes {
 
@@ -314,6 +315,10 @@ namespace SynNotes {
       }
       else if (e.KeyCode == Keys.Delete && tree.Focused) deleteSelected();
       else if (e.KeyCode == Keys.F7 && e.Modifiers == Keys.None) createNote();
+      else if (tree.Focused && e.Modifiers == Keys.Control && e.KeyCode == Keys.A){
+        scEdit.SelectAll();
+        this.SelectNextControl(tree, true, true, true, true); //bc lack of scEdit.Focus;
+      }
     }
     #endregion hotkeys
 

@@ -164,6 +164,7 @@
       this.tree.Margin = new System.Windows.Forms.Padding(0);
       this.tree.Name = "tree";
       this.tree.OwnerDraw = true;
+      this.tree.SelectAllOnControlA = false;
       this.tree.ShowGroups = false;
       this.tree.ShowHeaderInAllViews = false;
       this.tree.Size = new System.Drawing.Size(227, 602);
