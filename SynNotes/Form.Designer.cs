@@ -49,6 +49,8 @@
       this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
       this.btnSync = new System.Windows.Forms.ToolStripDropDownButton();
       this.tbSearch = new System.Windows.Forms.TextBox();
+      this.panelFind = new System.Windows.Forms.Panel();
+      this.tbFind = new System.Windows.Forms.TextBox();
       this.btnLexer = new System.Windows.Forms.Label();
       this.tagBox = new System.Windows.Forms.TextBox();
       this.label1 = new System.Windows.Forms.Label();
@@ -64,6 +66,7 @@
       ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.tree)).BeginInit();
       this.statusBar.SuspendLayout();
+      this.panelFind.SuspendLayout();
       this.SuspendLayout();
       // 
       // trayMenu
@@ -113,6 +116,7 @@
       // 
       // splitContainer1.Panel2
       // 
+      this.splitContainer1.Panel2.Controls.Add(this.panelFind);
       this.splitContainer1.Panel2.Controls.Add(this.btnLexer);
       this.splitContainer1.Panel2.Controls.Add(this.tagBox);
       this.splitContainer1.Panel2.Controls.Add(this.label1);
@@ -322,6 +326,29 @@
       this.tbSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbSearch_KeyDown);
       this.tbSearch.Leave += new System.EventHandler(this.cbSearch_Leave);
       // 
+      // panelFind
+      // 
+      this.panelFind.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+      this.panelFind.AutoSize = true;
+      this.panelFind.Controls.Add(this.tbFind);
+      this.panelFind.Location = new System.Drawing.Point(567, 0);
+      this.panelFind.Name = "panelFind";
+      this.panelFind.Padding = new System.Windows.Forms.Padding(3);
+      this.panelFind.Size = new System.Drawing.Size(200, 27);
+      this.panelFind.TabIndex = 3;
+      this.panelFind.Visible = false;
+      // 
+      // tbFind
+      // 
+      this.tbFind.BorderStyle = System.Windows.Forms.BorderStyle.None;
+      this.tbFind.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.tbFind.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+      this.tbFind.Location = new System.Drawing.Point(3, 3);
+      this.tbFind.Name = "tbFind";
+      this.tbFind.Size = new System.Drawing.Size(194, 19);
+      this.tbFind.TabIndex = 0;
+      this.tbFind.TextChanged += new System.EventHandler(this.tbFind_TextChanged);
+      // 
       // btnLexer
       // 
       this.btnLexer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -440,6 +467,8 @@
       ((System.ComponentModel.ISupportInitialize)(this.tree)).EndInit();
       this.statusBar.ResumeLayout(false);
       this.statusBar.PerformLayout();
+      this.panelFind.ResumeLayout(false);
+      this.panelFind.PerformLayout();
       this.ResumeLayout(false);
 
         }
@@ -469,6 +498,8 @@
         private System.Windows.Forms.ToolStripDropDownButton btnPin;
         private FancyRenderer fancyRenderer;
         private System.Windows.Forms.ToolStripDropDownButton btnSync;
+        private System.Windows.Forms.Panel panelFind;
+        private System.Windows.Forms.TextBox tbFind;
     }
 }
 

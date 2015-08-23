@@ -70,19 +70,7 @@ namespace SynNotes {
    
         //highlight search term and scroll to it
         if (f.tbSearch.ForeColor == SystemColors.WindowText && f.tbSearch.Text.Length > 0) {
-          var top = f.scEdit.Lines.Count;
-          foreach (var item in f.tbSearch.Text.Split(' ')) {
-            if (item.Length == 0) continue;
-            f.scEdit.TargetStart = 0;
-            f.scEdit.TargetEnd = f.scEdit.TextLength;
-            while (f.scEdit.SearchInTarget(item) != -1) {
-              f.scEdit.IndicatorFillRange(f.scEdit.TargetStart, f.scEdit.TargetEnd - f.scEdit.TargetStart);
-              f.scEdit.TargetStart = f.scEdit.TargetEnd;
-              f.scEdit.TargetEnd = f.scEdit.TextLength;
-              if (f.scEdit.LineFromPosition(f.scEdit.TargetStart) < top) top = f.scEdit.LineFromPosition(f.scEdit.TargetStart);
-            }
-          }
-          f.scEdit.FirstVisibleLine = top;
+          f.HighlightText(f.tbSearch.Text, true);
         }
       }
 

@@ -120,6 +120,8 @@ namespace SynNotes {
         string s = ini.GetValue("Keys", "HotkeySearch", "Win+`");
         tbSearch.AccessibleDescription = "Search Notes (" + s + ")"; //used for placeholder in search bar
         hook.SetHotkey(2, s);
+        ToolTip tt = new ToolTip();
+        tt.SetToolTip(tbFind, "Enter/F3: FindNext, Shift-F3: FindPrevious");
       }, ui);
     }
 
@@ -302,10 +304,16 @@ namespace SynNotes {
     }
     // local keys
     private void Form1_KeyDown(object sender, KeyEventArgs e) {
+      // ESC
       if (e.KeyCode == Keys.Escape && e.Modifiers == Keys.None) {
         if (tbSearch.ForeColor == SystemColors.WindowText && tbSearch.Text.Length > 0) {
           tbSearch.Text = "";
           if (!tbSearch.Focused) tbSearch.Focus();
+        }
+        else if (tbFind.Visible) {
+          panelFind.Visible = false;
+          scEdit.Focus();
+          scEdit.IndicatorClearRange(0, scEdit.TextLength);
         }
         else {
           treeTopLine = tree.TopItemIndex;
@@ -313,12 +321,28 @@ namespace SynNotes {
           this.WindowState = FormWindowState.Minimized;
         }
       }
-      else if (e.KeyCode == Keys.Delete && tree.Focused) deleteSelected();
-      else if (e.KeyCode == Keys.F7 && e.Modifiers == Keys.None) createNote();
-      else if (tree.Focused && e.Modifiers == Keys.Control && e.KeyCode == Keys.A){
-        scEdit.SelectAll();
-        this.SelectNextControl(tree, true, true, true, true); //bc lack of scEdit.Focus;
+      // Ctrl-F
+      else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.F) {
+        panelFind.Visible = true;
+        tbFind.Focus();
+        tbFind.SelectAll();
+        e.SuppressKeyPress = true;
+        if (tbFind.TextLength > 0) HighlightText(tbFind.Text);
       }
+      // tree hotkeys
+      else if (tree.Focused) {
+        if (e.KeyCode == Keys.Delete && tree.Focused) deleteSelected();
+        else if (e.KeyCode == Keys.F7 && e.Modifiers == Keys.None) createNote();
+        // forward Ctrl-A to scintilla
+        else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.A) {
+          scEdit.SelectAll();
+          scEdit.Focus();
+        }
+      }
+      // Find toolbar hotkeys
+      else if (e.Modifiers == Keys.None && e.KeyCode == Keys.F3) FindNext();
+      else if (e.Modifiers == Keys.Shift && e.KeyCode == Keys.F3) FindPrev();
+      else if (tbFind.Focused && e.KeyCode == Keys.Return) FindNext();
     }
     #endregion hotkeys
 
@@ -1418,23 +1442,11 @@ namespace SynNotes {
 
     //smart select
     private void scEdit_UpdateUI(object sender, UpdateUIEventArgs e) {
-      //selection changed
-      if ((e.Change & UpdateChange.Selection) > 0) { 
-        //cleanup all highlihts if any
-        if (scEdit.Indicators[8].End(0) != scEdit.TextLength) {
-          scEdit.IndicatorClearRange(0, scEdit.TextLength);
-        }
-
+      //selection changed - smart highlight
+      if ((e.Change & UpdateChange.Selection) > 0) {
         string ss = scEdit.SelectedText;
-        if (ss.Length > 3 && ss.IndexOfAny(new char[] { ' ', '(', ')' }) == -1) {
-          scEdit.TargetStart = 0;
-          scEdit.TargetEnd = scEdit.TextLength;
-          while (scEdit.SearchInTarget(ss) != -1) {
-            if (scEdit.TargetStart != scEdit.SelectionStart) scEdit.IndicatorFillRange(scEdit.TargetStart, scEdit.TargetEnd - scEdit.TargetStart);
-            scEdit.TargetStart = scEdit.TargetEnd;
-            scEdit.TargetEnd = scEdit.TextLength;
-          }
-        }
+        if (ss.Length > 3 && ss.IndexOfAny(new char[] { ' ', '(', ')' }) == -1) HighlightText(ss);
+        else HighlightText("");
       }
       //caret moved - brace matching
       var caretPos = scEdit.CurrentPosition;
@@ -1444,10 +1456,8 @@ namespace SynNotes {
         var bracePos2 = -1;
 
         // Is there a brace to the left or right?
-        if (caretPos > 0 && IsBrace(scEdit.GetCharAt(caretPos - 1)))
-          bracePos1 = (caretPos - 1);
-        else if (IsBrace(scEdit.GetCharAt(caretPos)))
-          bracePos1 = caretPos;
+        if (caretPos > 0 && IsBrace(scEdit.GetCharAt(caretPos - 1))) bracePos1 = (caretPos - 1);
+        else if (IsBrace(scEdit.GetCharAt(caretPos))) bracePos1 = caretPos;
 
         if (bracePos1 >= 0) {
           // Find the matching brace
@@ -1748,6 +1758,60 @@ namespace SynNotes {
 
     #endregion sync
 
+    #region find
+    //incremental search in open document
+    private void tbFind_TextChanged(object sender, EventArgs e) {
+      HighlightText(tbFind.Text, true);
+    }
+
+    private void FindNext() {
+      if (tbFind.TextLength == 0) return;
+      scEdit.TargetStart = scEdit.CurrentPosition;
+      scEdit.TargetEnd = scEdit.TextLength;
+      if (scEdit.SearchInTarget(tbFind.Text) != -1) {
+        scEdit.SelectionStart = scEdit.TargetStart;
+        scEdit.SelectionEnd = scEdit.TargetEnd;
+        scEdit.Lines[scEdit.CurrentLine].EnsureVisible(); //unfold
+        scEdit.FirstVisibleLine = scEdit.CurrentLine - 3;
+        HighlightText(tbFind.Text);
+      }
+    }
+
+    private void FindPrev() {
+      if (tbFind.TextLength == 0) return;
+      var i = scEdit.Text.LastIndexOf(tbFind.Text, Math.Max(0, scEdit.CurrentPosition-2), StringComparison.CurrentCultureIgnoreCase);
+      if (i != -1) {
+        scEdit.SelectionStart = i;
+        scEdit.SelectionEnd = i + tbFind.TextLength;
+        scEdit.Lines[scEdit.CurrentLine].EnsureVisible(); //unfold
+        scEdit.FirstVisibleLine = scEdit.CurrentLine - 3;
+        HighlightText(tbFind.Text);
+      }
+    }
+
+    //highligt all words from text provided, might scroll to first occurence
+    internal void HighlightText(string text, bool scrollToFirst=false) {
+      //cleanup all highlihts if any
+      if (scEdit.Indicators[8].End(0) != scEdit.TextLength) {
+        scEdit.IndicatorClearRange(0, scEdit.TextLength);
+      }
+
+      var top = scEdit.Lines.Count + 1;
+      foreach (var item in text.Split(' ')) {
+        if (item.Length == 0) continue;
+        scEdit.TargetStart = 0;
+        scEdit.TargetEnd = scEdit.TextLength;
+        while (scEdit.SearchInTarget(item) != -1) {
+          scEdit.IndicatorFillRange(scEdit.TargetStart, scEdit.TargetEnd - scEdit.TargetStart);
+          scEdit.TargetStart = scEdit.TargetEnd;
+          scEdit.TargetEnd = scEdit.TextLength;
+          if (scrollToFirst && scEdit.LineFromPosition(scEdit.TargetStart) < top) top = scEdit.LineFromPosition(scEdit.TargetStart);
+        }
+      }
+      if (scrollToFirst && top <= scEdit.Lines.Count) scEdit.FirstVisibleLine = top;
+    }
+    #endregion find
+
 
 
 
@@ -1999,7 +2063,8 @@ namespace SynNotes {
     internal const uint SW_RESTORE = 0x09;
     internal const int WM_MOUSEWHEEL = 0x20a;
     
-    #region Lexers
+    #region SCI constants
+    public const uint SCI_SEARCHPREV = 2368;
     public const int SCI_SETLEXER = 4001;
     public const int SCLEX_CONTAINER = 0;
     public const int SCLEX_NULL = 1;
@@ -2120,7 +2185,7 @@ namespace SynNotes {
     public const int SCLEX_IHEX = 118;
     public const int SCLEX_TEHEX = 119;
     public const int SCLEX_AUTOMATIC = 1000;
-    #endregion Lexers
+    #endregion
 
     [DllImport("user32.dll")]
     internal static extern int ShowWindow(IntPtr hWnd, uint Msg);
