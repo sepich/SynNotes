@@ -1189,6 +1189,7 @@ namespace SynNotes {
         using (SQLiteCommand cmd = new SQLiteCommand(sql)) {
           cmd.CommandText = "UPDATE notes SET lexer=?, modifydate=? WHERE id=" + note.Item.Id;
           if (i.Text == Glob.Inherit) {
+            lex = "Bash";
             foreach (var tag in note.Item.Tags) if (!String.IsNullOrEmpty(tag.Lexer)) {
                 lex = tag.Lexer;
                 break;
