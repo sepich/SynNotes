@@ -20,14 +20,14 @@ Theme name : Visual Studio
         <LexerType name="python" desc="Python" ext="">
             <WordsStyle name="DEFAULT" styleID="0" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="COMMENTLINE" styleID="1" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-            <WordsStyle name="NUMBER" styleID="2" fgColor="0060BF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="">alignas alignof noexcept nullptr static_assert thread_local final override</WordsStyle>
-            <WordsStyle name="STRING" styleID="3" fgColor="007BEF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-            <WordsStyle name="CHARACTER" styleID="4" fgColor="007BEF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="NUMBER" styleID="2" fgColor="800080" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="">alignas alignof noexcept nullptr static_assert thread_local final override</WordsStyle>
+            <WordsStyle name="STRING" styleID="3" fgColor="804000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="CHARACTER" styleID="4" fgColor="CC6600" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="KEYWORDS" styleID="5" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" keywordClass="instre1">True False</WordsStyle>
             <WordsStyle name="TRIPLE" styleID="6" fgColor="0060BF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="TRIPLEDOUBLE" styleID="7" fgColor="0060BF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="CLASSNAME" styleID="8" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-            <WordsStyle name="DEFNAME" styleID="9" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="DEFNAME" styleID="9" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="1" fontSize="" />
             <WordsStyle name="OPERATOR" styleID="10" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="IDENTIFIER" styleID="11" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="COMMENTBLOCK" styleID="12" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
@@ -258,17 +258,17 @@ Theme name : Visual Studio
             <WordsStyle name="PHP OPERATOR" styleID="127" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
         </LexerType>
         <LexerType name="php" desc="php" ext="">
-          <WordsStyle name="PHP" styleID="18" fgColor="0000FF" bgColor="FFEFBF" fontName="" fontStyle="0" fontSize="" />
-          <WordsStyle name="PHP DEFAULT" styleID="118" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-          <WordsStyle name="PHP STRING" styleID="119" fgColor="804000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-          <WordsStyle name="PHP SIMPLESTRING" styleID="120" fgColor="804000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="">XmlUtil loadXmlString TopologyXmlTree NotificationArea loadXmlFile debug</WordsStyle>
-          <WordsStyle name="PHP WORD" styleID="121" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="1" fontSize="" keywordClass="instre1" />
-          <WordsStyle name="PHP NUMBER" styleID="122" fgColor="0060BF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-          <WordsStyle name="PHP VARIABLE" styleID="123" fgColor="800080" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-          <WordsStyle name="PHP COMMENT" styleID="124" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-          <WordsStyle name="PHP COMMENTLINE" styleID="125" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
-          <WordsStyle name="PHP STRING VARIABLE" styleID="126" fgColor="0080FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="">alert appendChild arguments array blur checked childNodes className confirm dialogArguments event focus getElementById getElementsByTagName innerHTML keyCode length location null number parentNode push RegExp replace selectNodes selectSingleNode setAttribute split src srcElement test undefined value window</WordsStyle>
-          <WordsStyle name="PHP OPERATOR" styleID="127" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />          
+            <WordsStyle name="PHP" styleID="18" fgColor="0000FF" bgColor="FFEFBF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PHP DEFAULT" styleID="118" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PHP STRING" styleID="119" fgColor="804000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PHP SIMPLESTRING" styleID="120" fgColor="804000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="">XmlUtil loadXmlString TopologyXmlTree NotificationArea loadXmlFile debug</WordsStyle>
+            <WordsStyle name="PHP WORD" styleID="121" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="1" fontSize="" keywordClass="instre1" />
+            <WordsStyle name="PHP NUMBER" styleID="122" fgColor="0060BF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PHP VARIABLE" styleID="123" fgColor="800080" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PHP COMMENT" styleID="124" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PHP COMMENTLINE" styleID="125" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PHP STRING VARIABLE" styleID="126" fgColor="0080FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="">alert appendChild arguments array blur checked childNodes className confirm dialogArguments event focus getElementById getElementsByTagName innerHTML keyCode length location null number parentNode push RegExp replace selectNodes selectSingleNode setAttribute split src srcElement test undefined value window</WordsStyle>
+            <WordsStyle name="PHP OPERATOR" styleID="127" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
         </LexerType>
         <LexerType name="css" desc="CSS" ext="">
             <WordsStyle name="DEFAULT" styleID="0" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />

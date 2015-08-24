@@ -122,6 +122,7 @@ namespace SynNotes {
         hook.SetHotkey(2, s);
         ToolTip tt = new ToolTip();
         tt.SetToolTip(tbFind, "Enter/F3: FindNext, Shift-F3: FindPrevious");
+        panelFind.Height = tbFind.Height + 3;
       }, ui);
     }
 
@@ -320,9 +321,13 @@ namespace SynNotes {
           treeSelLine = tree.SelectedIndex;
           this.WindowState = FormWindowState.Minimized;
         }
+        e.SuppressKeyPress = true;
       }
       // Ctrl-F
       else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.F) {
+        panelFind.Left = (scEdit.LinesOnScreen >= scEdit.Lines.Count) ?
+          scEdit.Width - 200 :
+          scEdit.Width - 199 - SystemInformation.VerticalScrollBarWidth;
         panelFind.Visible = true;
         tbFind.Focus();
         tbFind.SelectAll();
@@ -1446,7 +1451,7 @@ namespace SynNotes {
       if ((e.Change & UpdateChange.Selection) > 0) {
         string ss = scEdit.SelectedText;
         if (ss.Length > 3 && ss.IndexOfAny(new char[] { ' ', '(', ')' }) == -1) HighlightText(ss);
-        else HighlightText("");
+        else if(!tbFind.Visible) HighlightText("");
       }
       //caret moved - brace matching
       var caretPos = scEdit.CurrentPosition;
@@ -1774,7 +1779,7 @@ namespace SynNotes {
         scEdit.Lines[scEdit.CurrentLine].EnsureVisible(); //unfold
         scEdit.FirstVisibleLine = scEdit.CurrentLine - 3;
         HighlightText(tbFind.Text);
-      }
+      }      
     }
 
     private void FindPrev() {
@@ -1802,7 +1807,7 @@ namespace SynNotes {
         scEdit.TargetStart = 0;
         scEdit.TargetEnd = scEdit.TextLength;
         while (scEdit.SearchInTarget(item) != -1) {
-          scEdit.IndicatorFillRange(scEdit.TargetStart, scEdit.TargetEnd - scEdit.TargetStart);
+          if (scEdit.TargetStart != scEdit.SelectionStart) scEdit.IndicatorFillRange(scEdit.TargetStart, scEdit.TargetEnd - scEdit.TargetStart);
           scEdit.TargetStart = scEdit.TargetEnd;
           scEdit.TargetEnd = scEdit.TextLength;
           if (scrollToFirst && scEdit.LineFromPosition(scEdit.TargetStart) < top) top = scEdit.LineFromPosition(scEdit.TargetStart);
