@@ -332,6 +332,7 @@ namespace SynNotes {
           scEdit.Width - 200 :
           scEdit.Width - 199 - SystemInformation.VerticalScrollBarWidth;
         panelFind.Visible = true;
+        panelFind.BringToFront();
         tbFind.Focus();
         tbFind.SelectAll();
         e.SuppressKeyPress = true;
@@ -1782,8 +1783,7 @@ namespace SynNotes {
       scEdit.TargetStart = scEdit.CurrentPosition;
       scEdit.TargetEnd = scEdit.TextLength;
       if (scEdit.SearchInTarget(tbFind.Text) != -1) {
-        scEdit.SelectionStart = scEdit.TargetStart;
-        scEdit.SelectionEnd = scEdit.TargetEnd;
+        scEdit.SetSel(scEdit.TargetStart, scEdit.TargetEnd);
         scEdit.Lines[scEdit.CurrentLine].EnsureVisible(); //unfold
         scEdit.FirstVisibleLine = scEdit.CurrentLine - 3;
         HighlightText(tbFind.Text);
@@ -1792,10 +1792,10 @@ namespace SynNotes {
 
     private void FindPrev() {
       if (tbFind.TextLength == 0) return;
-      var i = scEdit.Text.LastIndexOf(tbFind.Text, Math.Max(0, scEdit.CurrentPosition-2), StringComparison.CurrentCultureIgnoreCase);
-      if (i != -1) {
-        scEdit.SelectionStart = i;
-        scEdit.SelectionEnd = i + tbFind.TextLength;
+      scEdit.TargetStart = Math.Min(scEdit.CurrentPosition, scEdit.AnchorPosition);
+      scEdit.TargetEnd = 0;
+      if (scEdit.SearchInTarget(tbFind.Text) >= 0) {
+        scEdit.SetSel(scEdit.TargetStart, scEdit.TargetEnd);
         scEdit.Lines[scEdit.CurrentLine].EnsureVisible(); //unfold
         scEdit.FirstVisibleLine = scEdit.CurrentLine - 3;
         HighlightText(tbFind.Text);
