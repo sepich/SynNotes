@@ -161,8 +161,8 @@
       this.tree.FullRowSelect = true;
       this.tree.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
       this.tree.HideSelection = false;
-      this.tree.HighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
-      this.tree.HighlightForegroundColor = System.Drawing.SystemColors.HighlightText;
+      this.tree.SelectedBackColor = System.Drawing.SystemColors.Highlight;
+      this.tree.SelectedForeColor = System.Drawing.SystemColors.HighlightText;
       this.tree.IsSearchOnSortColumn = false;
       this.tree.Location = new System.Drawing.Point(0, 23);
       this.tree.Margin = new System.Windows.Forms.Padding(0);
@@ -175,8 +175,8 @@
       this.tree.SmallImageList = this.imageList1;
       this.tree.TabIndex = 3;
       this.tree.TabStop = false;
-      this.tree.UnfocusedHighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
-      this.tree.UnfocusedHighlightForegroundColor = System.Drawing.SystemColors.HighlightText;
+      this.tree.UnfocusedSelectedBackColor = System.Drawing.SystemColors.Highlight;
+      this.tree.UnfocusedSelectedForeColor = System.Drawing.SystemColors.HighlightText;
       this.tree.UseAlternatingBackColors = true;
       this.tree.UseCompatibleStateImageBehavior = false;
       this.tree.UseNotifyPropertyChanged = true;
