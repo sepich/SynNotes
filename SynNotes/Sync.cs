@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using System.Windows.Forms;
@@ -37,21 +36,21 @@ namespace SynNotes {
     }
 
     // REST call
-    private static string Request(string Uri, string Method = "GET", string Data = "", string ContentType = "application/json") {
+    private static string Request(string Url, string Method = "GET", string Data = "", string ContentType = "application/json") {
       //if (Uri.StartsWith("/api2/data") || Uri.StartsWith("/api2/tags/")) 
-      if(Method == "POST") Uri += "?auth=" + Token + "&email=" + Email; // Cuz note API doesn't check cookies ;(
-      var request = (HttpWebRequest)WebRequest.Create(host + Uri);
+      if(Method == "POST") Url += "?auth=" + Token + "&email=" + Email; // Cuz note API doesn't check cookies ;(
+      var request = (HttpWebRequest)WebRequest.Create(host + Url);
       request.Method = Method;
       request.ContentType = ContentType;
       request.UserAgent = UserAgent;
       request.Timeout = 10000; //10sec
-//    Debug.WriteLine("Uri: " + Uri);
+//    Debug.WriteLine("Uri: " + Url);
 
       // send POST
       if (!string.IsNullOrEmpty(Data) && Method == "POST") {
 //      Debug.WriteLine("Headers: " + request.Headers);
+        Data = Uri.EscapeUriString(Data).Replace("+", "%2B");
 //      Debug.WriteLine("Data: " + Data);
-        Data=Data.Replace("+","%2B");
         var bytes = Encoding.GetEncoding("UTF-8").GetBytes(Data);
         request.ContentLength = bytes.Length;
         using (var writeStream = request.GetRequestStream()) {
