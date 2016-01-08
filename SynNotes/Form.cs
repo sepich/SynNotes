@@ -146,6 +146,9 @@ namespace SynNotes {
         ini.SetValue("Form", "Height", this.Height.ToString());
       }
       ini.SetValue("Form", "WindowState", this.WindowState.ToString());
+      if(scEdit.WrapMode == ScintillaNET.WrapMode.Word) ini.SetValue("Scintilla", "WordWrap", "1");
+      else ini.SetValue("Scintilla", "WordWrap", "0");
+
       //autosave      
       if (sql != null) {
         if (scEdit.Modified) note.Save();
@@ -333,6 +336,10 @@ namespace SynNotes {
         tbFind.SelectAll();
         e.SuppressKeyPress = true;
         if (tbFind.TextLength > 0) HighlightText(tbFind.Text);
+      }
+      // Ctrl-U WordWrap
+      else if(e.Modifiers == Keys.Control && e.KeyCode == Keys.U) {
+        scEdit.WrapMode = (scEdit.WrapMode == ScintillaNET.WrapMode.Word) ? ScintillaNET.WrapMode.None : ScintillaNET.WrapMode.Word;
       }
       // tree hotkeys
       else if (tree.Focused) {
@@ -1251,6 +1258,7 @@ namespace SynNotes {
     private void initScintilla() {
       //read theme file
       var file = ini.GetValue("Scintilla", "Theme", "Visual Studio.xml");
+      scEdit.WrapMode = (ini.GetValue("Scintilla", "WordWrap", "1")=="1")? ScintillaNET.WrapMode.Word : ScintillaNET.WrapMode.None;
       readKeywords();
       readTheme(file);
       //folding
