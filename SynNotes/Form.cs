@@ -67,7 +67,7 @@ namespace SynNotes {
         }
         // inits        
         initTree();
-        initScintilla();
+        initScintilla();      
       }
     }
 
@@ -329,8 +329,8 @@ namespace SynNotes {
       // Ctrl-F
       else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.F) {
         panelFind.Left = (scEdit.LinesOnScreen >= scEdit.Lines.Count) ?
-          scEdit.Width - 200 :
-          scEdit.Width - 199 - SystemInformation.VerticalScrollBarWidth;
+          scEdit.Width - panelFind.Width :
+          scEdit.Width - panelFind.Width - SystemInformation.VerticalScrollBarWidth + 1;
         panelFind.Visible = true;
         panelFind.BringToFront();
         tbFind.Focus();
@@ -454,7 +454,9 @@ namespace SynNotes {
       //view
       if (tree.RowHeight < 0) {
         tree.Roots = null;
-        tree.RowHeight = 64;
+        using (Graphics g = this.CreateGraphics()) {
+          tree.RowHeight = (int)g.MeasureString("O", tree.Font).Height * 4; //title and 3 lines of preview
+        }
         tree.CanExpandGetter = null;
         tree.ChildrenGetter = null;
         tree.EmptyListMsg = "";
@@ -1886,7 +1888,7 @@ namespace SynNotes {
 
       var stringSize = g.MeasureString(note.DateShort, this.Font);
       var offset = (int)stringSize.Height + 1;
-      var r2 = new Rectangle(r.X + 3, offset + 5, r.Width, r.Height - offset); //rect search result
+      var r2 = new Rectangle(r.X + 3, offset + 2, r.Width, r.Height - offset); //rect search result     
       using (StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap)) {
         fmt.LineAlignment = StringAlignment.Near;
         fmt.Trimming = StringTrimming.EllipsisCharacter;
@@ -1977,6 +1979,8 @@ namespace SynNotes {
             }
             using (SolidBrush b = new SolidBrush(Color.White)) {
               fmt.Alignment = StringAlignment.Center;
+              fmt.LineAlignment = StringAlignment.Center;
+              badgerect.Y = badgerect.Y + 1;
               g.DrawString(tag.Count.ToString(), f, b, badgerect, fmt); //count
             }
           }

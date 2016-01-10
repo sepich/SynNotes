@@ -38,8 +38,6 @@
       this.splitContainer1 = new System.Windows.Forms.SplitContainer();
       this.pictureBox1 = new System.Windows.Forms.PictureBox();
       this.tree = new BrightIdeasSoftware.TreeListView();
-      this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-      this.fancyRenderer = new SynNotes.FancyRenderer();
       this.cSort = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
       this.treeMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.imageList1 = new System.Windows.Forms.ImageList(this.components);
@@ -53,10 +51,12 @@
       this.tbFind = new System.Windows.Forms.TextBox();
       this.btnLexer = new System.Windows.Forms.Label();
       this.tagBox = new System.Windows.Forms.TextBox();
-      this.label1 = new System.Windows.Forms.Label();
+      this.lbTags = new System.Windows.Forms.Label();
       this.scEdit = new ScintillaNET.Scintilla();
       this.lexerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+      this.cName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+      this.fancyRenderer = new SynNotes.FancyRenderer();
       trayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       trayMenu.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -116,11 +116,11 @@
       // 
       // splitContainer1.Panel2
       // 
+      this.splitContainer1.Panel2.Controls.Add(this.tagBox);
       this.splitContainer1.Panel2.Controls.Add(this.panelFind);
       this.splitContainer1.Panel2.Controls.Add(this.btnLexer);
-      this.splitContainer1.Panel2.Controls.Add(this.tagBox);
-      this.splitContainer1.Panel2.Controls.Add(this.label1);
       this.splitContainer1.Panel2.Controls.Add(this.scEdit);
+      this.splitContainer1.Panel2.Controls.Add(this.lbTags);
       this.splitContainer1.Panel2.RightToLeft = System.Windows.Forms.RightToLeft.No;
       this.splitContainer1.Size = new System.Drawing.Size(1014, 646);
       this.splitContainer1.SplitterDistance = 227;
@@ -152,23 +152,25 @@
       this.tree.BackColor = System.Drawing.SystemColors.Control;
       this.tree.BorderStyle = System.Windows.Forms.BorderStyle.None;
       this.tree.CellEditActivation = BrightIdeasSoftware.ObjectListView.CellEditActivateMode.SingleClick;
+      this.tree.CellEditUseWholeCell = false;
       this.tree.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.cName});
       this.tree.ContextMenuStrip = this.treeMenu;
       this.tree.CopySelectionOnControlC = false;
       this.tree.EmptyListMsg = "";
-      this.tree.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+      this.tree.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
       this.tree.FullRowSelect = true;
       this.tree.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
       this.tree.HideSelection = false;
-      this.tree.SelectedBackColor = System.Drawing.SystemColors.Highlight;
-      this.tree.SelectedForeColor = System.Drawing.SystemColors.HighlightText;
+      this.tree.HighlightBackgroundColor = System.Drawing.SystemColors.Highlight;
+      this.tree.HighlightForegroundColor = System.Drawing.SystemColors.HighlightText;
       this.tree.IsSearchOnSortColumn = false;
       this.tree.Location = new System.Drawing.Point(0, 23);
       this.tree.Margin = new System.Windows.Forms.Padding(0);
       this.tree.Name = "tree";
-      this.tree.OwnerDraw = true;
       this.tree.SelectAllOnControlA = false;
+      this.tree.SelectedBackColor = System.Drawing.SystemColors.Highlight;
+      this.tree.SelectedForeColor = System.Drawing.SystemColors.HighlightText;
       this.tree.ShowGroups = false;
       this.tree.ShowHeaderInAllViews = false;
       this.tree.Size = new System.Drawing.Size(227, 602);
@@ -194,15 +196,6 @@
       this.tree.ItemActivate += new System.EventHandler(this.tree_ItemActivate);
       this.tree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.tree_ItemDrag);
       this.tree.MouseClick += new System.Windows.Forms.MouseEventHandler(this.tree_MouseClick);
-      // 
-      // cName
-      // 
-      this.cName.AspectName = "Name";
-      this.cName.AutoCompleteEditor = false;
-      this.cName.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
-      this.cName.FillsFreeSpace = true;
-      this.cName.Renderer = this.fancyRenderer;
-      this.cName.Text = "Name";
       // 
       // cSort
       // 
@@ -372,7 +365,7 @@
       this.tagBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
       this.tagBox.BackColor = System.Drawing.SystemColors.Window;
       this.tagBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
-      this.tagBox.Location = new System.Drawing.Point(37, 630);
+      this.tagBox.Location = new System.Drawing.Point(37, 628);
       this.tagBox.Margin = new System.Windows.Forms.Padding(0);
       this.tagBox.Name = "tagBox";
       this.tagBox.Size = new System.Drawing.Size(646, 13);
@@ -382,18 +375,19 @@
       this.tagBox.Enter += new System.EventHandler(this.tagBox_Enter);
       this.tagBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tagBox_KeyDown);
       // 
-      // label1
+      // lbTags
       // 
-      this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+      this.lbTags.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-      this.label1.BackColor = System.Drawing.SystemColors.Window;
-      this.label1.Location = new System.Drawing.Point(0, 624);
-      this.label1.Margin = new System.Windows.Forms.Padding(0);
-      this.label1.Name = "label1";
-      this.label1.Size = new System.Drawing.Size(683, 22);
-      this.label1.TabIndex = 2;
-      this.label1.Text = "Tags:";
-      this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+      this.lbTags.BackColor = System.Drawing.SystemColors.Window;
+      this.lbTags.Location = new System.Drawing.Point(0, 624);
+      this.lbTags.Margin = new System.Windows.Forms.Padding(0);
+      this.lbTags.Name = "lbTags";
+      this.lbTags.Padding = new System.Windows.Forms.Padding(0, 0, 0, 2);
+      this.lbTags.Size = new System.Drawing.Size(683, 23);
+      this.lbTags.TabIndex = 2;
+      this.lbTags.Text = "Tags:";
+      this.lbTags.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
       // 
       // scEdit
       // 
@@ -440,10 +434,19 @@
       this.notifyIcon1.Visible = true;
       this.notifyIcon1.Click += new System.EventHandler(this.notifyIcon1_Click);
       // 
+      // cName
+      // 
+      this.cName.AspectName = "Name";
+      this.cName.AutoCompleteEditor = false;
+      this.cName.AutoCompleteEditorMode = System.Windows.Forms.AutoCompleteMode.None;
+      this.cName.FillsFreeSpace = true;
+      this.cName.Renderer = this.fancyRenderer;
+      this.cName.Text = "Name";
+      // 
       // Form1
       // 
-      this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-      this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+      this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+      this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
       this.ClientSize = new System.Drawing.Size(1014, 646);
       this.Controls.Add(this.splitContainer1);
       this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -489,7 +492,7 @@
         private System.Windows.Forms.ToolStripDropDownButton btnAdd;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.PictureBox pictureBox1;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lbTags;
         private System.Windows.Forms.TextBox tagBox;
         private BrightIdeasSoftware.OLVColumn cSort;
         private System.Windows.Forms.ContextMenuStrip treeMenu;

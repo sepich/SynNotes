@@ -24,7 +24,12 @@ namespace SynNotes {
 
       //Convert the unit used by the .NET framework (1/100 inch) 
       //and the unit used by Win32 API calls (twips 1/1440 inch)
-      private const double anInch = 14.4;
+      private double anInch;
+      public RichTextBoxDrawer() {
+        using(var g = this.CreateGraphics() ){
+          anInch = 1440 / g.DpiX;
+        }
+      }
 
       protected override CreateParams CreateParams {
         get {
@@ -43,7 +48,6 @@ namespace SynNotes {
         rectLayoutArea.Bottom = (int)(layoutArea.Bottom * anInch);
         rectLayoutArea.Left = (int)(layoutArea.Left * anInch);
         rectLayoutArea.Right = (int)(layoutArea.Right * anInch);
-
         IntPtr hdc = graphics.GetHdc();
 
         SafeNativeMethods.FORMATRANGE fmtRange;

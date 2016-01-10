@@ -225,10 +225,13 @@ namespace SynNotes {
           }
           Labels.Clear();
         }
-        f.tagBox.Left = 37;
+        using (Graphics g = f.CreateGraphics()) {
+          f.tagBox.Left = (int)g.MeasureString(f.lbTags.Text, f.lbTags.Font).Width + 5; //dpi calc          
+        }
 
         // create labels
         Item.Tags.ForEach(x => drawTag(x.Name));
+        f.tagBox.Width = f.btnLexer.Left - f.tagBox.Left;
       }
 
       /// <summary>

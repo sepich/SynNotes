@@ -11,7 +11,7 @@ using System.Resources;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("sepa.spb.ru")]
 [assembly: AssemblyProduct("SynNotes")]
-[assembly: AssemblyCopyright("Copyleft ©  2015")]
+[assembly: AssemblyCopyright("Copyleft ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -34,5 +34,5 @@ using System.Resources;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("15.08.24.0")]
+[assembly: AssemblyFileVersion("16.01.10.0")]
 [assembly: NeutralResourcesLanguageAttribute("en-US")]
