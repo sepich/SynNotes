@@ -108,6 +108,8 @@ namespace SynNotes {
           case "bash": f.scEdit.DirectMessage(NativeMethods.SCI_SETLEXER, new IntPtr(NativeMethods.SCLEX_BASH), IntPtr.Zero); break;
           case "cpp":
           case "java":
+          case "javascript":
+          case "vex":
             f.scEdit.Lexer = Lexer.Cpp; break;
           case "css": f.scEdit.Lexer = Lexer.Css; break;
           case "diff": f.scEdit.DirectMessage(NativeMethods.SCI_SETLEXER, new IntPtr(NativeMethods.SCLEX_DIFF), IntPtr.Zero); break;

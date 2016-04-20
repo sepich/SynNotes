@@ -2252,7 +2252,7 @@ namespace SynNotes {
   public static class Glob {
     public const string All = "All";
     public const string Deleted = "Deleted";
-    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Cpp", "Css", "Diff", "HTML", "INI", "Java", "Lua", "Markdown", "Pascal", "Perl", "PHP", "Powershell", "Python", "Ruby", "Sql", "VBScript", "Xml", "Yaml", "Null" };
+    public static string[] Lexers = { "Asm", "Asp", "Bash", "Batch", "Cpp", "Css", "Diff", "HTML", "INI", "Java", "Javascript", "Lua", "Markdown", "Pascal", "Perl", "PHP", "Powershell", "Python", "Ruby", "Sql", "VBScript", "VEX", "Xml", "Yaml", "Null" };
     public const string Inherit = "Inherit";
     public const string Changed = "changed";
     public const string Saved = "saved";
