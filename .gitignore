@@ -1,0 +1,5 @@
+packages/
+SynNotes/bin/
+SynNotes/obj/Debug/DesignTimeResolveAssemblyReferences.cache
+SynNotes/obj/
+*.suo

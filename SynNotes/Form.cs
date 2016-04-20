@@ -25,6 +25,7 @@ namespace SynNotes {
     IniFile ini;
     const string conffile = "settings.ini";
     const string dbfile = "notes.db";
+    string dbUserPath = "";         // store optional user configured directory for notes.db
     const string dbver = "1";
     string userdir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SynNotes\\";
     KeyHook hook;                  // global hotkeys hook
@@ -57,8 +58,11 @@ namespace SynNotes {
         // read settings from ini
         if (File.Exists(userdir + conffile)) ini = new IniFile(userdir + conffile);
         else ini = new IniFile(conffile);
+        // read user configured notes.db path, expand environment variables if used in that path
+        dbUserPath = Environment.ExpandEnvironmentVariables(ini.GetValue("SynNotes", "DbPath", ""));
         // check db
-        if (File.Exists(dbfile)) sqlConnect(dbfile);
+        if (File.Exists(dbUserPath + dbfile)) sqlConnect(dbUserPath + dbfile);
+        else if (File.Exists(dbfile)) sqlConnect(dbfile);
         else if (File.Exists(userdir + dbfile)) sqlConnect(userdir + dbfile);
         else {
           sqlConnect(dbfile, false);
@@ -1264,6 +1268,9 @@ namespace SynNotes {
       scEdit.WrapMode = (ini.GetValue("Scintilla", "WordWrap", "1")=="1")? ScintillaNET.WrapMode.Word : ScintillaNET.WrapMode.None;
       readKeywords();
       readTheme(file);
+
+      scStyle defaultStyle = lexers["globals"].First(x => x.name == "Default Style");
+
       //folding
       scEdit.Margins[0].Width = 0;
       scEdit.Margins[1].Width = 0;
@@ -1271,13 +1278,18 @@ namespace SynNotes {
       scEdit.Margins[2].Mask = Marker.MaskFolders;
       scEdit.Margins[2].Sensitive = true;
       scEdit.Margins[2].Width = 20;
-      scEdit.SetFoldMarginColor(true, SystemColors.Window);
-
-      scEdit.Markers[Marker.Folder].SetForeColor(SystemColors.ControlLightLight);
-      scEdit.Markers[Marker.Folder].SetBackColor(SystemColors.ControlDark);
+      //scEdit.SetFoldMarginColor(true, SystemColors.Window);
+      scEdit.SetFoldMarginColor(true, defaultStyle.bgcolor);
+      scEdit.SetFoldMarginHighlightColor(true, defaultStyle.fgcolor);
+      //scEdit.Markers[Marker.Folder].SetForeColor(SystemColors.ControlLightLight);
+      //scEdit.Markers[Marker.Folder].SetBackColor(SystemColors.ControlDark);
+      scEdit.Markers[Marker.Folder].SetForeColor(defaultStyle.bgcolor);
+      scEdit.Markers[Marker.Folder].SetBackColor(defaultStyle.fgcolor);
       scEdit.Markers[Marker.Folder].Symbol = MarkerSymbol.Arrow;
-      scEdit.Markers[Marker.FolderOpen].SetForeColor(SystemColors.ControlDark);
-      scEdit.Markers[Marker.FolderOpen].SetBackColor(SystemColors.ControlLightLight);
+      //scEdit.Markers[Marker.FolderOpen].SetForeColor(SystemColors.ControlDark);
+      //scEdit.Markers[Marker.FolderOpen].SetBackColor(SystemColors.ControlLightLight);
+      scEdit.Markers[Marker.FolderOpen].SetForeColor(defaultStyle.bgcolor);
+      scEdit.Markers[Marker.FolderOpen].SetBackColor(defaultStyle.fgcolor);
       scEdit.Markers[Marker.FolderOpen].Symbol = MarkerSymbol.ArrowDown;
       scEdit.Markers[Marker.FolderEnd].Symbol = MarkerSymbol.Empty; //MarkerSymbol.Arrow;
       scEdit.Markers[Marker.FolderMidTail].Symbol = MarkerSymbol.Empty; //MarkerSymbol.TCorner;
@@ -1389,6 +1401,7 @@ namespace SynNotes {
                 ReadStyle("globals", reader);
               }
             }
+            ApplyGlobalStyleToUI();
           }
           reader.Skip();
         }
@@ -1398,6 +1411,25 @@ namespace SynNotes {
         MessageBox.Show("Error reading theme file: 'themes\\" + file + "'\n" + e.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         return;
       }
+    }
+    
+    // applies the global default style to the Form's UI elements as well
+    private void ApplyGlobalStyleToUI()
+    {
+        if(lexers.ContainsKey("globals"))
+            {
+                scStyle sc = lexers["globals"].First(s => s.name == "Default Style");
+                if (sc != null)
+                {
+                    tree.BackColor = sc.bgcolor;
+                    tree.ForeColor = sc.fgcolor;
+                    tree.UseAlternatingBackColors = false;
+                    tbFind.ForeColor = sc.fgcolor;
+                    tbFind.BackColor = sc.bgcolor;
+                    tbSearch.ForeColor = sc.fgcolor;
+                    tbSearch.BackColor = sc.bgcolor;
+                }
+            }
     }
 
     //parse xml tag attributes to lexer style
